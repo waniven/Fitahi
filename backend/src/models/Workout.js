@@ -55,9 +55,9 @@ const workoutSchema = new Schema(
         workoutDuration: {
             type: Number,
             validate: {
-                validator: function (val) {
-                    // allow undefined/null, but if user types in a number it should be positive
-                    return val == null || val > 0;
+                validator: function (input) {
+                    // allow undefined/null input, but if user types in a number it should be positive
+                    return input == null || input > 0;
                 },
                 message: `Duration must be a positive number.`,
             },
