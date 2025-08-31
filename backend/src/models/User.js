@@ -18,8 +18,5 @@ const userSchema = new Schema(
     { timestamps: true } //will automatically add a timestamp
 )
 
-//email as indexable item
-userSchema.index({ email: 1}, { unique: true });
-
 //add documents to Users collection in DB
 module.exports = model('Users', userSchema);
