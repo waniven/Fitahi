@@ -1,0 +1,61 @@
+import {
+  NavigationContainer,
+  NavigationIndependentTree,
+} from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { StatusBar } from "expo-status-bar";
+import { StyleSheet, View } from "react-native";
+import { Colors } from "../../constants/Colors";
+
+import AddWorkout from "./screens/AddWorkoutScreen";
+import ShowWorkoutDetail from "./screens/WorkoutDetailScreen";
+
+const Stack = createNativeStackNavigator();
+
+export default function WorkoutMainScreen() {
+  const scheme = "dark"; // black theme
+  const theme = Colors[scheme ?? "light"];
+ 
+
+  return (
+    <>
+      <StatusBar style="light" />
+      <NavigationIndependentTree>
+        <NavigationContainer>
+          <Stack.Navigator
+            screenOptions={{
+              headerStyle: {
+                backgroundColor: theme.background,
+                borderBottomColor: "#fff", 
+                borderBottomWidth: 1, 
+                shadowColor: "#fff", 
+                elevation: 4, 
+              },
+              headerTintColor: theme.textPrimary,
+              headerTitleAlign: "center",
+              headerShadowVisible: true, 
+              contentStyle: { backgroundColor: theme.background },
+            }}
+          >
+            <Stack.Screen
+              name="Workouts"
+              component={AddWorkout}
+              options={{
+                title: "Workouts",
+                headerTitleAlign: "center",
+              }}
+            />
+            <Stack.Screen
+              name="ShowWorkoutDetail"
+              component={ShowWorkoutDetail}
+            />
+          </Stack.Navigator>
+        </NavigationContainer>
+      </NavigationIndependentTree>
+    </>
+  );
+}
+//relate from div in HTML to text in react native
+const styles = StyleSheet.create({
+  
+});
