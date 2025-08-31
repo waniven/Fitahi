@@ -3,7 +3,8 @@ const { Schema, model } = require('mongoose');
 //user schema for the database 
 const userSchema = new Schema(
     {
-        name: {type: String, required: true, trim: true},
+        firstname: {type: String, required: true, trim: true},
+        lastname: {type: String, required: true, trim: true},
         email: {
             type: String, 
             required: true,
@@ -11,12 +12,14 @@ const userSchema = new Schema(
             lowercase: true,
             unique: true
         },
-        dateofbirth: {type: String, required: true, trim: true},
+        dateofbirth: {type: String, required: false, trim: true},
         password: {type: String, required: true, trim: true},
     },
     { timestamps: true } //will automatically add a timestamp
 )
 
+//email as indexable item
 userSchema.index({ email: 1}, { unique: true });
 
+//add documents to Users collection in DB
 module.exports = model('Users', userSchema);

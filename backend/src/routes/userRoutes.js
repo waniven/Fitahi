@@ -15,12 +15,12 @@ const isValidId= (id) => mongoose.Types.ObjectId.isValid(id);
 router.post('/', async (req, res, next) => {
     try {
         //get variables from document
-        const { name, email, dateofbirth, password } = req.body;
+        const { fisrtname, lastname, email, dateofbirth, password } = req.body;
 
         //check manditory fields are present 
         switch(true) {
-            case !name:
-                return res.status(400).json({ error: 'Name is required' });
+            case !fisrtname || !lastname:
+                return res.status(400).json({ error: 'Full name is required' });
             case !email:
                 return res.status(400).json({ error: 'Email is required' });
             case !dateofbirth:
@@ -67,7 +67,8 @@ router.patch('/:id', async (req, res, next) => {
         const updates = {}; 
 
         //check data type and add to updates whitelist object
-        if (typeof req.body.name === 'string') updates.name = req.body.name;
+        if (typeof req.body.fisrtname === 'string') updates.fisrtname = req.body.fisrtname;
+        if (typeof req.body.lastname === 'string') updates.lastname = req.body.lastname;
         if (typeof req.body.email === 'string') updates.email = req.body.email;
         if (typeof req.body.password === 'string') updates.password = req.body.password;
         // date comes as a string; cast and validate
