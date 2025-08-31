@@ -1,10 +1,7 @@
 const express = require('express');
-const mongoose = require('mongoose');
 const Workout = require('../models/Workout');
+const validateId = require('../helpers/validateId');
 const router = express.Router();
-
-// helper function to check if an ID is a valid mongoDB objectId
-const isValidId = (id) => mongoose.Types.ObjectId.isValid(id);
 
 /**
  * POST /api/workouts
@@ -32,11 +29,9 @@ router.post('/', async (req, res, next) => {
  */
 router.patch('/:id', async (req, res, next) => {
     try {
-        // firstly, check to see if the workout ID is valid 
+        // firstly, use helper ID validator; return if ID is invalid
         const { id } = req.params;
-        if (!isValidId(id)) {
-            return res.status(400).json({ error: `Invalid workout ID` });
-        }
+        validateId(id);
 
         // if it's valid, update the corresponding workout
         const updatedWorkout = await Workout.findByIdAndUpdate(id, req.body, {
@@ -62,11 +57,9 @@ router.patch('/:id', async (req, res, next) => {
  */
 router.delete('/:id', async (req, res, next) => {
     try {
-        // firstly, check to see if the workout ID is valid 
+        // firstly, use helper ID validator; return if ID is invalid
         const { id } = req.params;
-        if (!isValidId(id)) {
-            return res.status(400).json({ error: `Invalid workout ID` });
-        }
+        validateId(id);
 
         // if valid, delete the workout
         const deletedWorkout = await Workout.findByIdAndDelete(id);
@@ -89,11 +82,9 @@ router.delete('/:id', async (req, res, next) => {
  */
 router.get('/:id', async (req, res, next) => {
     try {
-        // firstly, check to see if the workout ID is valid 
+        // firstly, use helper ID validator; return if ID is invalid
         const { id } = req.params;
-        if (!isValidId(id)) {
-            return res.status(400).json({ error: `Invalid workout ID` });
-        }
+        validateId(id);
 
         // if valid, find the workout by ID
         const workout = await Workout.findById(id);
