@@ -7,7 +7,7 @@ const validateId = (id) => {
         error.status = 400; // attach HTTP status code
         throw error;        // throw error - to be caught by try/catch in routes
     }
-    return true;
+    return true; // if ID is valid, return true
 };
 
 module.exports = validateId;
