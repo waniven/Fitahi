@@ -27,7 +27,7 @@ export const Colors = {
     primaryDark: '#0099CC',
     primaryLight: '#66E0FF',
 
-    background: '#0D0D0D',   // Dark mode background
+    background: '#151824',   // Dark mode background
     backgroundAlt: '#1A1A1A',
 
     textPrimary: '#FFFFFF',
