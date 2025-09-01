@@ -17,22 +17,8 @@ router.post('/', async (req, res, next) => {
         //get variables from document
         const { fisrtname, lastname, email, dateofbirth, password } = req.body;
 
-        //check manditory fields are present 
-        switch(true) {
-            case !fisrtname || !lastname:
-                return res.status(400).json({ error: 'Full name is required' });
-            case !email:
-                return res.status(400).json({ error: 'Email is required' });
-            case !dateofbirth:
-                return res.status(400).json({ error: 'Date of birth is required' });
-            case !password:
-                return res.status(400).json({ error: 'Password is required' });
-            default:
-                break;
-        }
-
         //create a new user 
-        const user = await User.create({ name, email, dateofbirth, password });
+        const user = await User.create({ fisrtname, lastname, email, dateofbirth, password });
         
         //return new user
         return res.status(201).json(user);
@@ -70,12 +56,8 @@ router.patch('/:id', async (req, res, next) => {
         if (typeof req.body.fisrtname === 'string') updates.fisrtname = req.body.fisrtname;
         if (typeof req.body.lastname === 'string') updates.lastname = req.body.lastname;
         if (typeof req.body.email === 'string') updates.email = req.body.email;
+        if (typeof req.body.dateofbirth === 'string') updates.dateofbirth = req.body.dateofbirth;
         if (typeof req.body.password === 'string') updates.password = req.body.password;
-        // date comes as a string; cast and validate
-        if (typeof req.body.dateofbirth === 'string' || req.body.dateofbirth instanceof Date) {
-            const d = new Date(req.body.dateofbirth);
-            if (!Number.isNaN(d.getTime())) updates.dateofbirth = d;
-        }
 
         //check if whitelist object is empty, if so dont update anything
         if(Object.keys(updates).length === 0) {
