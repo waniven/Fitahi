@@ -24,7 +24,7 @@ export default WorkoutItem;
 const styles = StyleSheet.create({
   workoutItem: {
     flex: 2,
-    margin: 3,
+    margin: 2,
     borderRadius: 6,
     backgroundColor: "#d3deffff",
     color: "white",
@@ -32,7 +32,7 @@ const styles = StyleSheet.create({
   },
 
   detailItem: {
-    margin: 4,
+    margin: 8,
   },
 
   workoutName: {
@@ -44,13 +44,13 @@ const styles = StyleSheet.create({
   workoutNameTitle: {
     color: "#black",
     fontSize: 18,
-    margin: 6,
+    margin: 4,
     fontWeight: "600",
   },
 
   workoutText: {
     color: "black",
-    padding: 8,
+    padding: 5,
   },
   
 });
