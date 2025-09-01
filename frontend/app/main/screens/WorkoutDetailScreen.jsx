@@ -1,4 +1,11 @@
-import { Image, StyleSheet, Text, View } from "react-native";
+import {
+  Image,
+  StyleSheet,
+  Text,
+  ScrollView,
+  View,
+  TouchableOpacity,
+} from "react-native";
 import { Colors } from "../../../constants/Colors";
 
 function ShowWorkoutDetail({ route }) {
@@ -6,8 +13,13 @@ function ShowWorkoutDetail({ route }) {
   const theme = Colors[scheme ?? "light"];
   const workout = route.params.workoutDetail;
 
+  function handlerExercise() {}
+
   return (
-    <View style={[styles.workoutsContainer, {backgroundColor: theme.background}]}>
+    <View
+      style={[styles.workoutsContainer, { backgroundColor: theme.background }]}
+    >
+      <ScrollView style={{ flex: 1}}>
       <View style={styles.imageContainer}>
         <Image
           style={styles.image}
@@ -32,12 +44,18 @@ function ShowWorkoutDetail({ route }) {
             <Text style={styles.label}>No. of Reps</Text>
             <Text style={styles.value}>{workout.numOfReps}</Text>
           </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>Dates</Text>
-            <Text style={styles.value}>{workout.numOfSets}</Text>
-          </View>
+          
         </View>
       </View>
+      </ScrollView>
+      <TouchableOpacity
+        style={[styles.button, { backgroundColor: theme.tint }]}
+        onPress={handlerExercise}
+      >
+        <Text style={[styles.buttonText, { color: theme.background }]}>
+          Get Started
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -45,9 +63,11 @@ export default ShowWorkoutDetail;
 const styles = StyleSheet.create({
   workoutsContainer: {
     flex: 1,
+    
   },
   imageContainer: {
     alignItems: "center",
+    borderRadius: 10,
   },
   image: {
     width: "90%",
@@ -58,12 +78,12 @@ const styles = StyleSheet.create({
   items: {
     flex: 2,
     margin: 8,
+    
   },
   itemHeader: {
     flex: 0.7,
     margin: 2,
     padding: 10,
-    
   },
   itemContent: {
     flex: 2,
@@ -81,13 +101,17 @@ const styles = StyleSheet.create({
     color: "white",
   },
   row: {
-    backgroundColor: "#0A84ff",
+    backgroundColor: "rgba(113, 183, 254, 0.4)",
+    opacity: 30,
     margin: 5,
     padding: 16,
     flexDirection: "row",
     justifyContent: "space-between",
     paddingVertical: 6,
     borderBottomWidth: 1,
+    borderRadius: 8,
+    paddingVertical: 12,
+    
   },
   label: {
     fontSize: 16,
@@ -97,5 +121,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "200",
     color: "white",
+  },
+  button: {
+    padding: 16,
+    borderRadius: 10,
+    alignItems: "center",
+    margin: 15,
+    bottom: 40,
+    
+  },
+  buttonText: { 
+    fontSize: 17, 
+    fontWeight: "700",
   },
 });

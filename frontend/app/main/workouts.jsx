@@ -48,6 +48,10 @@ export default function WorkoutMainScreen() {
             <Stack.Screen
               name="ShowWorkoutDetail"
               component={ShowWorkoutDetail}
+              options={{
+                title: "Workout Overview",
+                headerTitleAlign: "center",
+              }}
             />
           </Stack.Navigator>
         </NavigationContainer>
