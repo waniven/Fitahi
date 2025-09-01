@@ -140,6 +140,14 @@ export default function Home() {
           <Text style={[styles.navText, { color: theme.textPrimary }]}>Home</Text>
         </TouchableOpacity>
 
+        <TouchableOpacity
+          style={styles.navItem}
+          onPress={() => router.push("/main/biometrics")} // Only functional nav tab
+        >
+          <Ionicons name="fitness-outline" size={26} color={theme.tint} />
+          <Text style={[styles.navText, { color: theme.textPrimary }]}>Biometrics</Text>
+        </TouchableOpacity>
+
         <TouchableOpacity style={styles.navItem}>
           <Ionicons name="stats-chart-outline" size={26} color={theme.tint} />
           <Text style={[styles.navText, { color: theme.textPrimary }]}>Analytics</Text>
