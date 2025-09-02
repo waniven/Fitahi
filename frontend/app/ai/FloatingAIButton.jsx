@@ -26,17 +26,21 @@ export default function FloatingAIButton() {
 
   return (
     <>
+      {/* Chatbox */}
       {chatVisible && <AIChatbox onClose={() => setChatVisible(false)} />}
 
-      <Animated.View style={[styles.buttonWrapper, position.getLayout()]}>
-        <TouchableOpacity
-          onPress={() => setChatVisible(true)}
-          activeOpacity={0.8}
-          style={[styles.button, { backgroundColor: theme.tint }]}
-        >
-          <AIassistant size={40} color={theme.background} />
-        </TouchableOpacity>
-      </Animated.View>
+      {/* Floating button: only show if chatbox is not visible */}
+      {!chatVisible && (
+        <Animated.View style={[styles.buttonWrapper, position.getLayout()]}>
+          <TouchableOpacity
+            onPress={() => setChatVisible(true)}
+            activeOpacity={0.8}
+            style={[styles.button, { backgroundColor: theme.tint }]}
+          >
+            <AIassistant size={40} color={theme.background} />
+          </TouchableOpacity>
+        </Animated.View>
+      )}
     </>
   );
 }

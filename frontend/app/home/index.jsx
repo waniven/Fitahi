@@ -1,3 +1,4 @@
+//home//index
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import {
@@ -18,7 +19,7 @@ import FloatingAIButton from "../ai/FloatingAIButton";
 const { width } = Dimensions.get("window");
 
 export default function Home() {
-  const theme = Colors[useColorScheme() ?? "light"];
+  const theme = Colors[useColorScheme() ?? "dark"];
   const router = useRouter();
 
   // grid card width (2 per row with spacing)

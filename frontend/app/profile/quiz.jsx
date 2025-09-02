@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
 import { Dimensions, FlatList, StyleSheet, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
 import { Colors } from '../../constants/Colors';
-import { questions } from '../../constants/quizData';
+import { questions } from '../../constants/quizData'; // quiz questions/answers location
 
 const { width } = Dimensions.get('window');
 
@@ -23,6 +23,17 @@ export default function Quiz() {
       setCurrentIndex(nextIndex);
     } else {
       console.log('User answers:', { ...answers, [questionId]: option });
+      router.replace('/home');
+    }
+  };
+
+  const handleSkip = () => {
+    if (currentIndex < questions.length - 1) {
+      const nextIndex = currentIndex + 1;
+      flatListRef.current?.scrollToIndex({ index: nextIndex, animated: true });
+      setCurrentIndex(nextIndex);
+    } else {
+      console.log('User skipped final question');
       router.replace('/home');
     }
   };
@@ -56,6 +67,11 @@ export default function Quiz() {
           </TouchableOpacity>
         );
       })}
+
+      {/* Skip button bottom-left */}
+      <TouchableOpacity style={[styles.skipButton, { backgroundColor: theme.backgroundAlt }]} onPress={handleSkip}>
+        <Text style={[styles.skipText, { color: theme.tint }]}>Skip</Text>
+      </TouchableOpacity>
     </View>
   );
 
@@ -83,7 +99,7 @@ export default function Quiz() {
           const index = Math.round(e.nativeEvent.contentOffset.x / width);
           setCurrentIndex(index);
         }}
-        scrollEnabled={true} // allow swipe back and forth
+        scrollEnabled={true}
       />
 
       {/* Progress dots */}
@@ -109,7 +125,7 @@ export default function Quiz() {
 const styles = StyleSheet.create({
   headerContainer: {
     paddingHorizontal: 20,
-    paddingTop: 80, // increased top margin to push header lower
+    paddingTop: 80,
     paddingBottom: 20,
     alignItems: 'flex-start',
   },
@@ -129,4 +145,22 @@ const styles = StyleSheet.create({
   optionText: { fontSize: 18, textAlign: 'center', fontWeight: '700' },
   dotsContainer: { flexDirection: 'row', justifyContent: 'center', marginVertical: 12 },
   dot: { width: 12, height: 12, borderRadius: 6, marginHorizontal: 6 },
+
+  skipButton: {
+    position: 'absolute',
+    bottom: 20,
+    left: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 25, // pill shape for skip button
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 4,
+  },
+  skipText: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
 });

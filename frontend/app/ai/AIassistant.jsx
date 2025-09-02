@@ -8,7 +8,7 @@ export default function AIassistant({ size = 40, color = "#096686" }) {
       width={size}
       height={size}
       viewBox="0 0 100 100"
-      fill={color} //icon color customizable
+      fill={color} //icon color customizable to fit theme
     >
       <Path d="M49.6,25.8c7.2,0,13,5.8,13,13v3.3c-4.3-0.5-8.7-0.7-13-0.7c-4.3,0-8.7,0.2-13,0.7v-3.3 
         C36.6,31.7,42.4,25.8,49.6,25.8z"/>

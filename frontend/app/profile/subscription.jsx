@@ -14,7 +14,7 @@ export default function Subscription() {
   const router = useRouter();
 
   const handleUpgrade = (planId) => {
-    // You can connect payment logic here
+    //payment logic?
     router.push("/paymentscreen");
   };
 
