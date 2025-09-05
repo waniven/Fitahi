@@ -4,7 +4,7 @@ import WorkoutInput from "../../../components/workouts/WorkoutInput";
 import WorkoutItem from "../../../components/workouts/WorkoutItem";
 import { Colors } from "../../../constants/Colors";
 
-function AddWorkout({ navigation }) {
+function CreateWorkout({ navigation }) {
   const scheme = useColorScheme(); // black theme
   const theme = Colors[scheme ?? "light"];
   const [modalIsVisible, setModalIsVisible] = useState(false);
@@ -43,7 +43,7 @@ function AddWorkout({ navigation }) {
 
   function renderItemData(itemData) {
     function pressHandler() {
-      navigation.navigate("ShowWorkoutDetail", {
+      navigation.navigate("Workouts", {
         workoutDetail: itemData.item,
       });
     }
@@ -86,7 +86,7 @@ function AddWorkout({ navigation }) {
   );
 }
 
-export default AddWorkout;
+export default CreateWorkout;
 
 const styles = StyleSheet.create({
   appContainer: {

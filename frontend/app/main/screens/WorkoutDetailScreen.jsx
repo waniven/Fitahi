@@ -5,16 +5,22 @@ import {
   ScrollView,
   View,
   TouchableOpacity,
+  useColorScheme,
 } from "react-native";
 import { Colors } from "../../../constants/Colors";
+import globalStyles from "../../../styles/globalStyles";
 
-function ShowWorkoutDetail({ route }) {
-  const scheme = "dark"; // black theme
+function ShowWorkoutDetail({ route, navigation }) {
+  const scheme = useColorScheme(); // black theme
   const theme = Colors[scheme ?? "light"];
   const workout = route.params.workoutDetail;
 
-  function handlerExercise() {}
-
+  function handlerExercise() {
+    navigation.navigate("StartExercise", {
+      workoutDetail: workout,
+    })
+  }
+    
   return (
     <View
       style={[styles.workoutsContainer, { backgroundColor: theme.background }]}
