@@ -4,16 +4,18 @@ import {
 } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { StatusBar } from "expo-status-bar";
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, View, useColorScheme} from "react-native";
 import { Colors } from "../../constants/Colors";
 
 import AddWorkout from "./screens/AddWorkoutScreen";
 import ShowWorkoutDetail from "./screens/WorkoutDetailScreen";
+import StartExercise from "./screens/StartExerciseScreen";
+import CreateWorkout from "./screens/CreateWorkoutScreen";
 
 const Stack = createNativeStackNavigator();
 
 export default function WorkoutMainScreen() {
-  const scheme = "dark"; // black theme
+  const scheme = useColorScheme(); // black theme
   const theme = Colors[scheme ?? "light"];
  
 
@@ -38,6 +40,14 @@ export default function WorkoutMainScreen() {
             }}
           >
             <Stack.Screen
+              name="CreateWorkout"
+              component={CreateWorkout}
+              options={{
+                title: "Workouts",
+                headerTitleAlign: "center",
+              }}
+            />
+            <Stack.Screen
               name="Workouts"
               component={AddWorkout}
               options={{
@@ -52,6 +62,10 @@ export default function WorkoutMainScreen() {
                 title: "Workout Overview",
                 headerTitleAlign: "center",
               }}
+            />
+            <Stack.Screen
+              name="StartExercise"
+              component={StartExercise}
             />
           </Stack.Navigator>
         </NavigationContainer>
