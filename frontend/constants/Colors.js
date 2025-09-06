@@ -20,6 +20,8 @@ export const Colors = {
     overlayDark: 'rgba(40, 31, 69, 0.6)',
     overlayLight: 'rgba(255,255,255,0.1)',
 
+    inputField: '#E4F8FF',
+
     tint: '#00CFFF',          // for buttons/dots in your code
   },
   dark: {
@@ -40,6 +42,8 @@ export const Colors = {
 
     overlayDark: 'rgba(0,0,0,0.6)',
     overlayLight: 'rgba(255,255,255,0.1)',
+
+    inputField: '#E4F8FF',
 
     tint: '#4F9AFF',
   },

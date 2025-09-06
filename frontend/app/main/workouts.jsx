@@ -6,6 +6,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { StatusBar } from "expo-status-bar";
 import { StyleSheet, View, useColorScheme} from "react-native";
 import { Colors } from "../../constants/Colors";
+import { Font } from "@/constants/Font";
 
 import AddWorkout from "./screens/AddWorkoutScreen";
 import ShowWorkoutDetail from "./screens/WorkoutDetailScreen";
@@ -35,15 +36,16 @@ export default function WorkoutMainScreen() {
               },
               headerTintColor: theme.textPrimary,
               headerTitleAlign: "center",
+              headerTitleStyle: {fontFamily: Font.bold},
               headerShadowVisible: true, 
-              contentStyle: { backgroundColor: theme.background },
+              contentStyle: { backgroundColor: theme.background},
             }}
           >
             <Stack.Screen
               name="CreateWorkout"
               component={CreateWorkout}
               options={{
-                title: "Workouts",
+                title: "Workout Log",
                 headerTitleAlign: "center",
               }}
             />
@@ -51,7 +53,7 @@ export default function WorkoutMainScreen() {
               name="Workouts"
               component={AddWorkout}
               options={{
-                title: "Workouts",
+                title: "Workout Log",
                 headerTitleAlign: "center",
               }}
             />

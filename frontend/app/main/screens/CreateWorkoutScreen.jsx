@@ -1,87 +1,118 @@
 import { useState } from "react";
-import { Button, FlatList, StyleSheet, View, useColorScheme } from "react-native";
+import {
+  Text,
+  FlatList,
+  StyleSheet,
+  View,
+  useColorScheme,
+  Dimensions,
+  Platform,
+} from "react-native";
 import WorkoutInput from "../../../components/workouts/WorkoutInput";
 import WorkoutItem from "../../../components/workouts/WorkoutItem";
 import { Colors } from "../../../constants/Colors";
+import { Font } from "@/constants/Font";
+import Fab from "@/components/FloatingActionButton";
 
+// Create a workout which pops up a workout input and display the created workout
 function CreateWorkout({ navigation }) {
-  const scheme = useColorScheme(); // black theme
+  const scheme = useColorScheme();
   const theme = Colors[scheme ?? "light"];
   const [modalIsVisible, setModalIsVisible] = useState(false);
+  const [workout, setWorkout] = useState([]);
 
-  const [workout, setworkout] = useState([]);
+  const NAV_BAR_HEIGHT = 64; // adjust to the actual nav height
+  const BOX_MAX_HEIGHT = Math.round(Dimensions.get("window").height * 0.7); // box height cap
 
-  //Add workout name visible
+  const isEmpty = workout.length === 0;
+
+  // Controls whether workout input box pops up
   function startaddWorkoutName() {
     setModalIsVisible(true);
   }
 
-  //Add workout name end not visible
+  //Turns off workout input box after creating a workout
   function endaddWorkoutName() {
     setModalIsVisible(false);
   }
-  //Add workout name
-  function addWorkout(workout) {
-    setworkout((currentworkout) => [...currentworkout, workout]);
-    endaddWorkoutName();
-  }
-  //Add workout type
-  function addWorkoutType(enteredWorkoutType) {
-    setworkout((currentworkout) => [
-      ...currentworkout,
-      { text: enteredWorkoutName, id: Math.random().toString() },
-    ]);
+
+  //Add workout ???
+  function addWorkout(newWorkout) {
+    setWorkout((curr) => [...curr, newWorkout]);
     endaddWorkoutName();
   }
 
-  //Delete filling text workout
-  function deleteWorkoutHandler(id) {
-    setworkout((currentworkout) => {
-      return currentworkout.filter((workout) => workout.id !== id);
-    });
-  }
-
-  function renderItemData(itemData) {
+  //Render item: list all created workouts and allow to click on???
+  function renderItemData({ item }) {
     function pressHandler() {
-      navigation.navigate("Workouts", {
-        workoutDetail: itemData.item,
-      });
+      navigation.navigate("Workouts", { workoutDetail: item });
     }
-
     return (
-      <WorkoutItem //Render item to the list
-        text={itemData.item.name}
-        id={itemData.item.id}
-        workoutType={itemData.item.type}
-        // onDeleteItem={deleteWorkoutHandler}
+      <WorkoutItem
+        text={item.name}
+        id={item.id}
+        workoutType={item.type}
         onPress={pressHandler}
       />
     );
   }
 
-  return (
-    <View style={[styles.appContainer, {backgroundColor: theme.background}]}>
-      <Button
-        title="Create Workouts"
-        color="#0A84FF"
-        onPress={startaddWorkoutName}
-      />
+  const TextFont = {
+    color: theme.textPrimary,
+    fontFamily: Font.semibold,
+  }
 
+  return (
+    <View style={[styles.screen, { backgroundColor: theme.background }]}>
       <WorkoutInput
         visible={modalIsVisible}
         onAddWorkout={addWorkout}
         onCancel={endaddWorkoutName}
       />
-      <View style={styles.workoutContainer}>
-        <FlatList
-          data={workout}
-          renderItem={renderItemData}
-          keyExtractor={(item, index) => {
-            return item.id;
-          }}
-          alwaysBounceVertical={false}
+
+      {/* Invisible scrollable box shown only when there are workouts */}
+      {!isEmpty && (
+        <View style={[styles.invisibleBox, { maxHeight: BOX_MAX_HEIGHT }]}>
+          <FlatList
+            data={workout}
+            keyExtractor={(item) => item.id}
+            renderItem={renderItemData}
+            contentContainerStyle={[
+              styles.listContent,
+              { paddingBottom: NAV_BAR_HEIGHT + 100 }, // room for FAB + nav
+            ]}
+            showsVerticalScrollIndicator
+          />
+        </View>
+      )}
+
+      {/* Spacer so content doesn't collide with FAB/nav */}
+      <View style={{ height: NAV_BAR_HEIGHT + 24 }} />
+
+      {/* No workout created state: center of display with text above the + button */}
+      {isEmpty ? (
+        <View style={styles.fabContainerEmpty}>
+          <Text style={[styles.emptyText, TextFont]}>
+            Create your first workout
+          </Text>
+          <Fab
+            floating={false} // inline — not absolute
+            onPress={startaddWorkoutName}
+            color={theme.tint}
+            iconColor={theme.textPrimary}
+            accessibilityLabel="Create workout"
+          ></Fab>
+        </View>
+      ) : (
+        // Have Workouts: + button centered above the nav bar
+        <Fab
+          onPress={startaddWorkoutName}
+          color={theme.tint}
+          iconColor={theme.textPrimary}
+          bottom={NAV_BAR_HEIGHT + 16}
+          accessibilityLabel="Create workout"
         />
-      </View>
+      )}
     </View>
   );
 }
@@ -89,20 +120,25 @@ function CreateWorkout({ navigation }) {
 export default CreateWorkout;
 
 const styles = StyleSheet.create({
-  appContainer: {
-    flex: 1,
-    paddingTop: 16,
-    paddingHorizontal: 16,
-    margin: 10,
-    alignItems: 'center',
-  },
+  screen: { flex: 1, paddingHorizontal: 16, paddingTop: 12 },
 
-  buttonCreate: {
-    flex: 1,
-    marginTop: 100,
-  },
+  // Invisible scrollable box (no border/background)
+  invisibleBox: { overflow: "hidden" },
+  listContent: { paddingHorizontal: 12, paddingVertical: 10, gap: 8 },
 
-  workoutContainer: {
-    flex: 3,
+  // No Workout: center of the entire screen
+  fabContainerEmpty: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0, // fill screen
+    alignItems: "center",
+    justifyContent: "center", // centers both text and button
+    zIndex: 9999,
+    ...(Platform.OS === "android" ? { elevation: 10 } : {}),
   },
+  centerInner: { alignItems: "center", gap: 10 },
+  emptyText: { fontSize: 24, margin: 20},
+
 });
