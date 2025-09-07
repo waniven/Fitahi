@@ -6,6 +6,8 @@ import ModalCloseButton from "../ModalCloseButton";
 import PrimaryButton from "../PrimaryButton";
 import { useEffect } from "react";
 
+import ExerciseInput from "./ExerciseInput";
+
 import {
   View,
   TextInput,
@@ -26,16 +28,41 @@ function WorkoutInput(props) {
   const [selectedWorkoutType, setWorkoutType] = useState("");
   const [selectedDays, setSelectedDays] = useState([]);
   const [showErrors, setShowErrors] = useState(false);
+  const [workout, setWorkout] = useState("");
+  const [modalIsVisible, setModalIsVisible] = useState(false);
 
   useEffect(() => {
     if (props.visible) resetForm();
   }, [props.visible]);
 
+  // startAddExercise pop ups a new input to enter exercises and save data into workout type
+  function startAddExercise() {
+    addExcersies();
+    setModalIsVisible(true);
+  }
+
+  // endAddExercise turns off Add Excersise Input
+  function endAddExercise() {
+    setModalIsVisible(false);
+  }
+
+  //Reset form
   function resetForm() {
     setEnteredWorkoutText("");
     setWorkoutType("");
     setSelectedDays([]);
     setShowErrors(false);
+  }
+
+  //addExercises adds exercise to workout
+  function addExcersies() {
+    const workout = new Workout()
+    workout.id = Math.random().toString();
+    workout.name = enteredWorkoutText,
+    workout.type = selectedWorkoutType,
+    workout.selectedDays = selectedDays;
+
+    setWorkout(workout);
   }
 
   function workoutInputHandler(enteredText) {
@@ -72,16 +99,20 @@ function WorkoutInput(props) {
       return;
     }
 
-    const workout = new Workout(
-      Math.random().toString(),
-      enteredWorkoutText,
-      selectedWorkoutType,
-      selectedDays
-    );
-    setShowErrors(false);
-    props.onAddWorkout(workout);
-    resetForm();
-    props.onCancel?.();
+    if (isNameValid && isTypeValid && isDaysValid) {
+        startAddExercise();
+      }
+
+    // const workout = new Workout(
+    //   Math.random().toString(),
+    //   enteredWorkoutText,
+    //   selectedWorkoutType,
+    //   selectedDays
+    // );
+    // setShowErrors(false);
+    // props.onAddWorkout(workout);
+    // resetForm();
+    // props.onCancel?.();
   }
 
   function cancelAddWorkout() {
@@ -90,6 +121,15 @@ function WorkoutInput(props) {
     setSelectedDays([]);
     setShowErrors(false);
     props.onCancel();
+    resetForm();
+    props.onCancel?.();
+  }
+
+  function onSaveExercises(payload) {
+    workout.excersices = payload
+    setWorkout(workout)
+    setShowErrors(false);
+    props.onAddWorkout(workout);
     resetForm();
     props.onCancel?.();
   }
@@ -205,13 +245,15 @@ function WorkoutInput(props) {
             </View>
 
             {isTypeInvalid && (
-              <Text style={{
-                color: theme.error,
-                marginLeft: 10,
-                marginTop: 6,
-                fontFamily: Font.regular,
-                fontSize: 12,
-              }}>
+              <Text
+                style={{
+                  color: theme.error,
+                  marginLeft: 10,
+                  marginTop: 6,
+                  fontFamily: Font.regular,
+                  fontSize: 12,
+                }}
+              >
                 Please choose one workout type
               </Text>
             )}
@@ -271,16 +313,27 @@ function WorkoutInput(props) {
             })}
           </View>
           {isDayInvalid && (
-              <Text style={{
+            <Text
+              style={{
                 color: theme.error,
                 marginLeft: 10,
                 marginTop: 1,
                 fontFamily: Font.regular,
                 fontSize: 12,
-              }}>
-                Please choose at least one day
-              </Text>
-            )}
+              }}
+            >
+              Please choose at least one day
+            </Text>
+          )}
+
+          <ExerciseInput
+            visible={modalIsVisible}
+            workout={workout}
+            // onAddExcersie={startAddExercise}
+            onCancel={endAddExercise}
+            onSave={onSaveExercises}
+          />
+
           {/* Buttons */}
           <PrimaryButton
             title="Next"
@@ -397,9 +450,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     gap: 8,
   },
-  fieldGroup: {
-
-  },
+  fieldGroup: {},
   typeBtn: {
     borderWidth: 0,
     borderRadius: 8,
@@ -410,6 +461,4 @@ const styles = StyleSheet.create({
     width: "100%",
     alignSelf: "center",
   },
-  
-  
 });

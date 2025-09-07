@@ -1,312 +1,372 @@
-import DateTimePicker from "@react-native-community/datetimepicker";
-import { Picker } from "@react-native-picker/picker";
-import { useState } from "react";
+import React, { useEffect, useState } from "react";
+import {
+  Modal,
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  StyleSheet,
+  useColorScheme,
+} from "react-native";
 import { Colors } from "@/constants/Colors";
 import { Font } from "@/constants/Font";
-import Workout from "./models/Workout";
+import ModalCloseButton from "../ModalCloseButton";
+import PrimaryButton from "../PrimaryButton";
+import Exercise from "./models/Exercise"; 
 
-import {
-  View,
-  TextInput,
-  Button,
-  StyleSheet,
-  Modal,
-  Text,
-  TouchableOpacity,
-  useColorScheme
-} from "react-native";
-
-function WorkoutInput(props) {
+function ExerciseInput(props) {
   const scheme = useColorScheme();
   const theme = Colors[scheme ?? "light"];
-  const [enteredWorkoutText, setEnteredWorkoutText] = useState("");
-  const [selectedWorkoutType, setWorkoutType] = useState("");
-  const [enteredWorkoutSet, setEnteredWorkoutSetText] = useState("");
-  const [enteredWorkoutRep, setEnteredWorkoutRepText] = useState("");
-  const [selectedDates, setSelectedDates] = useState([]);
-  const [currentDates, setCurrentDate] = useState(new Date());
-  const [show, setShow] = useState(false);
 
-  const onChange = (event, date) => {
-    setShow(false);
-    if (event.type === "set" && date) {
-      const dateString = date.toDateString();
-      if (!selectedDates.some((d) => d.toDateString() === dateString)) {
-        setSelectedDates((current) => [...current, date]);
-      } else {
-        alert("You already selected this date!");
+  const [exercises, setExercises] = useState([]);
+  const [showErrors, setShowErrors] = useState(false);
+
+  const makeExercise = () => ({
+    id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    name: "",
+    reps: "",
+    sets: "",
+    weight: "",
+    rest: "",
+    duration: "",
+    
+  });
+
+  useEffect(() => {
+    if (props.visible) resetForm();
+  }, [props.visible]);
+
+  function resetForm() {
+    setExercises([makeExercise()]);
+    setShowErrors(false);
+  }
+
+  function updateExercise(id, field, value) {
+    setExercises((curr) =>
+      curr.map((ex) => (ex.id === id ? { ...ex, [field]: value } : ex))
+    );
+  }
+
+  function addExerciseCard() {
+    setExercises((curr) => [...curr, makeExercise()]);
+  }
+
+  function removeExerciseCard(id) {
+    setExercises((curr) => curr.filter((ex) => ex.id !== id));
+  }
+
+  function onCancel() {
+    resetForm();
+    props.onCancel?.();
+  }
+
+  function toNumber(v) {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  function onSave() {
+    setShowErrors(true);
+    // Validation: require name, reps, sets, rest for each card
+    for (let i = 0; i < exercises.length; i++) {
+      const ex = exercises[i];
+      if (!ex.name.trim() || !ex.reps.trim() || !ex.sets.trim() || !ex.rest.trim()) {
+        return; // errors will show under fields
       }
     }
-  };
 
-  function workoutInputHandler(enteredText) {
-    setEnteredWorkoutText(enteredText);
+    const payload = exercises.map((ex) =>
+      new Exercise(
+        ex.id,
+        ex.name.trim(),
+        toNumber(ex.sets),
+        toNumber(ex.reps),
+        toNumber(ex.duration),
+        toNumber(ex.weight),
+        toNumber(ex.rest),
+        ex.imageUrl
+      )
+    );
+
+    props.onSave?.(payload);  // send Exercise[] to parent
+    resetForm();
+    props.onCancel?.();
   }
 
-  function workoutTypeInputHandler(enteredText) {
-    setWorkoutType(enteredText);
-  }
-
-  function workoutSetHandler(enteredText) {
-    setEnteredWorkoutSetText(enteredText);
-  }
-
-  function workoutRepHandler(enteredText) {
-    setEnteredWorkoutRepText(enteredText);
-  }
-
-  function addWorkoutHandler() {
-    const workout = new Workout(
-      Math.random().toString(),
-      enteredWorkoutText,
-      selectedWorkoutType,
-      enteredWorkoutSet,
-      enteredWorkoutRep,
-      selectedDates,
-      
-    )
-    
-    props.onAddWorkout(workout);
-
-    setEnteredWorkoutSetText("");
-    setEnteredWorkoutRepText("");
-    setSelectedDates([]);
-  }
-
-  function cancelAddWorkout() {
-    setEnteredWorkoutText("");
-    setWorkoutType("");
-    props.onCancel();
-  }
-
-  const TextFont = {
-    color: theme.background,
-  }
+  const fieldInputStyle = [
+    styles.input,
+    {
+      backgroundColor: theme.textPrimary,
+      color: "#0B2239",
+      borderColor: theme.overlayLight,
+      fontFamily: Font.regular,
+    },
+  ];
+  const labelStyle = [
+    styles.label,
+    { color: theme.background, fontFamily: Font.semibold },
+  ];
 
   return (
-    <Modal visible={props.visible} animationType="slide" transparent={true}>
+    <Modal visible={props.visible} animationType="slide" transparent>
       <View style={styles.modalOverlay}>
-        <View style={[styles.modalContent, { backgroundColor: theme.textPrimary }]}>
-          <Text style={[styles.header, TextFont, {fontFamily: Font.bold}]}>
-            Workout Specifications
-          </Text>
-          <Text style={[styles.text, TextFont, {fontFamily: Font.regular}]}>
-            What will you be working on?
-          </Text>
-          <Text style={[styles.text, TextFont, {fontFamily: Font.semibold}]}>
-            NAME YOUR WORKOUT*
-          </Text>
-          <TextInput
-            style={styles.textInput}
-            placeholder="Workout Name"
-            onChangeText={workoutInputHandler}
-            value={enteredWorkoutText}
-          />
+        <View
+          style={[styles.modalContent, { backgroundColor: theme.textPrimary }]}
+        >
+          <ModalCloseButton onPress={onCancel} />
 
-          <View style={styles.pickerBox}>
-            <Picker
-              selectedValue={selectedWorkoutType}
-              onValueChange={(itemValue) => setWorkoutType(itemValue)}
+          <Text
+            style={[
+              styles.header,
+              { color: theme.background, fontFamily: Font.bold },
+            ]}
+          >
+            Exercises
+          </Text>
+          <Text
+            style={[
+              styles.subheader,
+              { color: theme.background, fontFamily: Font.regular },
+            ]}
+          >
+            What exercises will you be performing?
+          </Text>
+
+          <ScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={{ paddingBottom: 140 }}
+            showsVerticalScrollIndicator
+          >
+            {exercises.map((ex, idx) => {
+              const nameError = showErrors && !ex.name.trim();
+              const repsError = showErrors && !ex.reps.trim();
+              const setsError = showErrors && !ex.sets.trim();
+              const restError = showErrors && !ex.rest.trim();
+
+              return (
+                <View
+                  key={ex.id}
+                  style={[styles.card, { backgroundColor: theme.inputField }]}
+                >
+                  <Text
+                    style={[
+                      styles.cardTitle,
+                      { color: theme.background, fontFamily: Font.bold, fontSize: 16 },
+                    ]}
+                  >
+                    EXERCISE {idx + 1}
+                  </Text>
+
+                  {/* Name */}
+                  <Text style={labelStyle}>EXERCISE NAME *</Text>
+                  <TextInput
+                    placeholder="Exercise name"
+                    placeholderTextColor="#4C5A6A"
+                    fontFamily={Font.regular}
+                    style={[
+                      ...fieldInputStyle,
+                      nameError && { borderColor: theme.error, marginBottom: 6 },
+                    ]}
+                    value={ex.name}
+                    onChangeText={(t) => updateExercise(ex.id, "name", t)}
+                  />
+                  {nameError ? (
+                    <Text style={[styles.err, { color: theme.error, fontFamily: Font.regular }]}>
+                      Required
+                    </Text>
+                  ) : null}
+
+                  {/* Reps & Sets (same row) */}
+                  <View style={styles.row}>
+                    <View style={styles.col}>
+                      <Text style={labelStyle}>REPS *</Text>
+                      <TextInput
+                        placeholder="Reps"
+                        placeholderTextColor="#4C5A6A"
+                        keyboardType="numeric"
+                        style={[
+                          ...fieldInputStyle,
+                          repsError && { borderColor: theme.error, marginBottom: 6 },
+                        ]}
+                        value={ex.reps}
+                        onChangeText={(t) => updateExercise(ex.id, "reps", t)}
+                      />
+                      {repsError ? (
+                        <Text style={[styles.err, { color: theme.error }]}>
+                          Required
+                        </Text>
+                      ) : null}
+                    </View>
+
+                    <View style={styles.col}>
+                      <Text style={labelStyle}>SETS *</Text>
+                      <TextInput
+                        placeholder="Sets"
+                        placeholderTextColor="#4C5A6A"
+                        keyboardType="numeric"
+                        style={[
+                          ...fieldInputStyle,
+                          setsError && { borderColor: theme.error, marginBottom: 6 },
+                        ]}
+                        value={ex.sets}
+                        onChangeText={(t) => updateExercise(ex.id, "sets", t)}
+                      />
+                      {setsError ? (
+                        <Text style={[styles.err, { color: theme.error }]}>
+                          Required
+                        </Text>
+                      ) : null}
+                    </View>
+                  </View>
+
+                  {/* Weight & Rest (same row) */}
+                  <View style={styles.row}>
+                    <View style={styles.col}>
+                      <Text style={labelStyle}>WEIGHT</Text>
+                      <TextInput
+                        placeholder="Weight"
+                        placeholderTextColor="#4C5A6A"
+                        keyboardType="numeric"
+                        style={fieldInputStyle}
+                        value={ex.weight}
+                        onChangeText={(t) => updateExercise(ex.id, "weight", t)}
+                      />
+                    </View>
+
+                    <View style={styles.col}>
+                      <Text style={labelStyle}>REST TIME *</Text>
+                      <TextInput
+                        placeholder="Seconds"
+                        placeholderTextColor="#4C5A6A"
+                        keyboardType="numeric"
+                        style={[
+                          ...fieldInputStyle,
+                          restError && { borderColor: theme.error, marginBottom: 6 },
+                        ]}
+                        value={ex.rest}
+                        onChangeText={(t) => updateExercise(ex.id, "rest", t)}
+                      />
+                      {restError ? (
+                        <Text style={[styles.err, { color: theme.error }]}>
+                          Required
+                        </Text>
+                      ) : null}
+                    </View>
+                  </View>
+
+                  {/* Duration + Delete */}
+                  <View style={[styles.row, { alignItems: "flex-end" }]}>
+                    <View style={[styles.col, { flex: 1 }]}>
+                      <Text style={labelStyle}>DURATION</Text>
+                      <TextInput
+                        placeholder="Seconds"
+                        placeholderTextColor="#4C5A6A"
+                        keyboardType="numeric"
+                        style={[...fieldInputStyle, { marginBottom: 0 }]}
+                        value={ex.duration}
+                        onChangeText={(t) =>
+                          updateExercise(ex.id, "duration", t)
+                        }
+                      />
+                    </View>
+
+                    <TouchableOpacity
+                      onPress={() => removeExerciseCard(ex.id)}
+                      activeOpacity={0.7}
+                      style={[
+                        styles.deleteBtn,
+                        { borderColor: theme.error, backgroundColor: theme.error },
+                      ]}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Delete exercise ${idx + 1}`}
+                    >
+                      <Text
+                        style={{ color: theme.textPrimary, fontFamily: Font.bold }}
+                      >
+                        Delete
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              );
+            })}
+
+            {/* Add Exercise */}
+            <TouchableOpacity
+              onPress={addExerciseCard}
+              activeOpacity={0.8}
+              style={[styles.addBtn, { borderColor: theme.tint }]}
             >
-              <Picker.Item
-                style={styles.workoutType}
-                label="Select workout type"
-                value=""
-                enabled={false}
-              />
-              <Picker.Item
-                label="Strength Training"
-                value="strength-training"
-              />
-              <Picker.Item label="Cadio/Aerobic" value="carido-aerobic" />
-            </Picker>
-          </View>
+              <Text style={{ color: theme.tint, fontFamily: Font.bold }}>
+                + Add Exercise
+              </Text>
+            </TouchableOpacity>
+          </ScrollView>
 
-          <TextInput
-            style={styles.textInput}
-            placeholder="No. of Sets"
-            onChangeText={workoutSetHandler}
-            value={enteredWorkoutSet}
+          {/* Save Workout */}
+          <PrimaryButton
+            title="Save Workout"
+            onPress={onSave}
+            floating
+            extraBottom={20}
+            insetLR={14}
+            tabBarHeight={0}
+            style={{ width: "100%" }}
           />
-
-          <TextInput
-            style={styles.textInput}
-            placeholder="No. of Reps"
-            onChangeText={workoutRepHandler}
-            value={enteredWorkoutRep}
-          />
-
-          <TouchableOpacity
-            onPress={() => setShow(true)}
-            style={styles.selectDateButton}
-          >
-            <Text style={{ color: "white", fontSize: 16 }}>Select Date</Text>
-          </TouchableOpacity>
-
-          {show && (
-            <DateTimePicker
-              value={currentDates}
-              mode="date"
-              display="spinner"
-              onChange={onChange}
-            />
-          )}
-
-          <View
-            style={{
-              marginVertical: 14,
-              flexDirection: selectedDates.length > 1 ? "row" : "column",
-              flexWrap: "wrap",
-              justifyContent: "center",
-              alignItems: "center",
-            }}
-          >
-            {selectedDates.map((d, index) => (
-              <TouchableOpacity
-                key={index}
-                onPress={() => {
-                  // Remove the clicked date, maybe add a 'x' button to indicate: LATER
-                  setSelectedDates((current) =>
-                    current.filter((date) => date.getTime() !== d.getTime())
-                  );
-                }}
-                style={{
-                  backgroundColor: "#ffffff33",
-                  paddingVertical: 6,
-                  paddingHorizontal: 12,
-                  borderRadius: 6,
-                  margin: 4,
-                }}
-              >
-                <Text style={{ color: "white" }}>{d.toDateString()}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          <View style={styles.buttonContainer}>
-            <View style={styles.button}>
-              <Button
-                title="Add Workout"
-                onPress={addWorkoutHandler}
-                color="#4F9AFF"
-              />
-            </View>
-            <View style={styles.button}>
-              <Button
-                title="Cancel"
-                onPress={cancelAddWorkout}
-                color="#1e34a0ff"
-              />
-            </View>
-          </View>
         </View>
       </View>
     </Modal>
   );
 }
 
-export default WorkoutInput;
+export default ExerciseInput;
 
 const styles = StyleSheet.create({
-  pageContainer: {
-    flex: 1,
-    justifyContent: "center",
-    padding: 14,
-    borderBottomWidth: 1,
-    backgroundColor: "#151824",
-  },
-  emptyContainer: {
-    flex: 0.5,
-  },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: "flex-end",   // push content to bottom
-  },
+  modalOverlay: { flex: 1, justifyContent: "flex-end" },
   modalContent: {
-    height: "90%",   // 2/3 of screen
-    backgroundColor: "#151824",
+    height: "93%",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 14,
   },
-  header: {
-    fontSize: 22,
-    margin: 10,
-    paddingTop: 10,
-  },
-  text: {
-    fontSize: 14,
-    marginBottom: 20,
-    paddingLeft: 12,
+  header: { fontSize: 22, margin: 8, paddingTop: 6 },
+  subheader: { fontSize: 14, marginBottom: 16, paddingLeft: 12 },
 
-  },
-  inputContainer: {
-    flex: 3,
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 14,
-    borderBottomWidth: 1,
-    backgroundColor: "#151824",
-  },
-  image: {
-    width: 100,
-    height: 100,
-    margin: 20,
-  },
-  textInput: {
+  card: { borderRadius: 12, padding: 12, marginBottom: 14 },
+  cardTitle: { fontSize: 14, marginBottom: 8, paddingLeft: 4 },
+
+  label: { fontSize: 12, marginBottom: 6, paddingLeft: 4 },
+  input: {
     borderWidth: 1,
-    borderColor: "#ffffffff",
-    backgroundColor: "#ffffffff",
-    color: "#120438",
     borderRadius: 8,
-    width: "100%",
-    padding: 16,
-    margin: 5,
-    
-    
-  },
-  buttonContainer: {
-    marginTop: 16,
-    height: "25%",
-    flexDirection: "row",
-    borderRadius: 10,
-  },
-  button: {
-    width: "45%",
-    marginHorizontal: 8,
-    borderRadius: 9,
-  },
-  datesDetail: {
-    backgroundColor: "#ffffff33",
-    paddingVertical: 6,
+    paddingVertical: 12,
     paddingHorizontal: 12,
-    borderRadius: 6,
-    margin: 4,
+    marginBottom: 14,
   },
-  selectDateButton: {
-    backgroundColor: "#007bffff",
-    paddingVertical: 15,
-    paddingHorizontal: 25,
+
+  row: { flexDirection: "row", gap: 10 },
+  col: { flex: 1 },
+
+  deleteBtn: {
+    alignSelf: "flex-end",
+    height: 44,
+    paddingHorizontal: 16,
     borderRadius: 10,
-    marginTop: 5,
-  },
-  pickerBox: {
     borderWidth: 1,
-    borderColor: "#ffffffff",
-    backgroundColor: "#ffffffff",
-    color: "#0b0223ff",
-    borderRadius: 8,
-    width: "100%",
-    margin: 5,
-    height: 50,
     justifyContent: "center",
-    paddingHorizontal: 6,
-    overflow: "hidden",
+    marginLeft: 10,
+    marginTop: 0,
   },
-  workoutType: {
-    color: "#666668ff",
-    fontSize: 14.5,
-    
+
+  addBtn: {
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 4,
   },
+
+  err: { fontSize: 12, marginLeft: 6, marginTop: -6 },
 });

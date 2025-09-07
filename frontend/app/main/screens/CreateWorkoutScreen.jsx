@@ -45,7 +45,7 @@ function CreateWorkout({ navigation }) {
   //Render item: list all created workouts and allow to click on???
   function renderItemData({ item }) {
     function pressHandler() {
-      navigation.navigate("Workouts", { workoutDetail: item });
+      navigation.navigate("StartExercise", { workoutDetail: item });
     }
     return (
       <WorkoutItem

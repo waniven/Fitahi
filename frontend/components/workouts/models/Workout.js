@@ -3,20 +3,14 @@ class Workout {
         id,
         name,
         type,
-        numOfSets,
-        numOfReps,
-        dates,
-        duration,
-        imageUrl
+        selectedDays,
+        excersices
     ) {
         this.id = id;
         this.name = name;
         this.type = type;
-        this.numOfSets = numOfSets;
-        this.numOfReps = numOfReps;
-        this.dates = dates;
-        this.duration = duration;
-        this.imageUrl = imageUrl;
+        this.selectedDays = selectedDays;
+        this.excersices = excersices;
     }
 }
 
