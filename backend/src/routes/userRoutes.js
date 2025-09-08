@@ -15,15 +15,21 @@ const isValidId= (id) => mongoose.Types.ObjectId.isValid(id);
 router.post('/', async (req, res, next) => {
     try {
         //get variables from document
-        const { fisrtname, lastname, email, dateofbirth, password } = req.body;
+        const { firstname, lastname, email, dateofbirth, password } = req.body;
+
+        //cehck of manditory fields exsist
+        if (!firstname || !lastname || !email || !dateofbirth || !password) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
 
         //create a new user 
-        const user = await User.create({ fisrtname, lastname, email, dateofbirth, password });
+        const user = await User.create({ firstname, lastname, email, dateofbirth, password });
         
         //return new user
         return res.status(201).json(user);
 
     } catch (err) {
+
         //duplicate email 
         if(err.code === 11000) {
             return res.status(409).json({ error: 'Email already exists' });
@@ -53,7 +59,7 @@ router.patch('/:id', async (req, res, next) => {
         const updates = {}; 
 
         //check data type and add to updates whitelist object
-        if (typeof req.body.fisrtname === 'string') updates.fisrtname = req.body.fisrtname;
+        if (typeof req.body.firstname === 'string') updates.firstname = req.body.firstname;
         if (typeof req.body.lastname === 'string') updates.lastname = req.body.lastname;
         if (typeof req.body.email === 'string') updates.email = req.body.email;
         if (typeof req.body.dateofbirth === 'string') updates.dateofbirth = req.body.dateofbirth;
@@ -120,6 +126,7 @@ router.delete('/:id', async (req, res, next) => {
 /**
  * GET /api/users/:id
  * Get a single user
+ * For testing only
  */
 router.get('/:id', async (req, res, next) => {
     try{
