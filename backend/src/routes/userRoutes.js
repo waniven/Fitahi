@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const User = require('../models/User');
+const auth = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -44,16 +45,12 @@ router.post('/', async (req, res, next) => {
  * PATCH /api/users/:id
  * Update a user (partial)
  * body: { name, email, dateofbirth, password }
+ * auth needed
  */
-router.patch('/:id', async (req, res, next) => {
+router.patch('/:id', auth, async (req, res, next) => {
     try{
-        //id obj 
-        const { id } = req.params;
-
-        //check if id is valid
-        if(!isValidId(id)) {
-            return res.status(400).json({ error: 'Invalid user id' });
-        }
+        //id from users session
+        const id = req.user.id;
 
         //whitelist object, will add allowed fields
         const updates = {}; 
@@ -98,10 +95,10 @@ router.patch('/:id', async (req, res, next) => {
  * DELETE /api/users/:id
  * Delete a user
  */
-router.delete('/:id', async (req, res, next) => {
+router.delete('/:id', auth, async (req, res, next) => {
     try{
-        //id obj 
-        const { id } = req.params;
+        //id from users session
+        const id = req.user.id; 
 
         //check if id is valid
         if(!isValidId(id)) {
@@ -124,10 +121,31 @@ router.delete('/:id', async (req, res, next) => {
 });
 
 /**
+ * GET /api/me
+ * users own profile
+ * need to auth their token
+**/
+router.get('/me', auth , async (req, res, next) => {
+    try {
+        //get users own profile
+        const me = await User.findById(req.user.id);
+        
+        //return error if user profile not found
+        if (!me) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        //return users own profile
+        return res.json(me);
+    } catch (err) {
+        return next(err);
+    }
+});
+
+/**
  * GET /api/users/:id
  * Get a single user
  * For testing only
- */
 router.get('/:id', async (req, res, next) => {
     try{
         //id obj 
@@ -153,5 +171,6 @@ router.get('/:id', async (req, res, next) => {
         return next(err);
     }
 });
+*/
 
 module.exports = router;
