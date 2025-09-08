@@ -4,13 +4,13 @@ class Workout {
         name,
         type,
         selectedDays,
-        excersices
+        exercises
     ) {
         this.id = id;
         this.name = name;
         this.type = type;
         this.selectedDays = selectedDays;
-        this.excersices = excersices;
+        this.exercises = exercises;
     }
 }
 

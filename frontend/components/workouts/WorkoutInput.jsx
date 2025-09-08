@@ -21,6 +21,7 @@ import {
 
 const DAYS = ["M", "T", "W", "T", "F", "S", "S"];
 
+//WorkoutInput lets user fill out workout and exercises
 function WorkoutInput(props) {
   const scheme = useColorScheme();
   const theme = Colors[scheme ?? "light"];
@@ -28,16 +29,27 @@ function WorkoutInput(props) {
   const [selectedWorkoutType, setWorkoutType] = useState("");
   const [selectedDays, setSelectedDays] = useState([]);
   const [showErrors, setShowErrors] = useState(false);
-  const [workout, setWorkout] = useState("");
+  const [workout, setWorkout] = useState(null);
   const [modalIsVisible, setModalIsVisible] = useState(false);
 
   useEffect(() => {
-    if (props.visible) resetForm();
-  }, [props.visible]);
+    if (props.visible) {
+      if (props.workoutToEdit) {
+        // Editing mode
+        setEnteredWorkoutText(props.workoutToEdit.name || "");
+        setWorkoutType(props.workoutToEdit.type || "");
+        setSelectedDays(props.workoutToEdit.selectedDays || []);
+        setWorkout(props.workoutToEdit);
+      } else {
+        // Adding mode, reset form
+        resetForm();
+      }
+    }
+  }, [props.visible, props.workoutToEdit]);
 
   // startAddExercise pop ups a new input to enter exercises and save data into workout type
   function startAddExercise() {
-    addExcersies();
+    // addExcersies();
     setModalIsVisible(true);
   }
 
@@ -54,31 +66,23 @@ function WorkoutInput(props) {
     setShowErrors(false);
   }
 
-  //addExercises adds exercise to workout
-  function addExcersies() {
-    const workout = new Workout()
-    workout.id = Math.random().toString();
-    workout.name = enteredWorkoutText,
-    workout.type = selectedWorkoutType,
-    workout.selectedDays = selectedDays;
-
-    setWorkout(workout);
-  }
-
+  //workoutInputHandler sets workout name
   function workoutInputHandler(enteredText) {
     setEnteredWorkoutText(enteredText);
   }
-
+  //workoutTypeInputHandler sets selected workout type
   function workoutTypeInputHandler(enteredText) {
     setWorkoutType(enteredText);
   }
-
+  
+  //toggleDay sets selected days
   function toggleDay(idx) {
     setSelectedDays((prev) =>
       prev.includes(idx) ? prev.filter((i) => i !== idx) : [...prev, idx]
     );
   }
 
+  //addWorkoutHandler checks all fields are filled and saved a temporary workout
   function addWorkoutHandler() {
     const isNameValid = enteredWorkoutText.trim().length > 0;
     const isTypeValid = !!selectedWorkoutType;
@@ -99,22 +103,26 @@ function WorkoutInput(props) {
       return;
     }
 
-    if (isNameValid && isTypeValid && isDaysValid) {
-        startAddExercise();
-      }
-
-    // const workout = new Workout(
-    //   Math.random().toString(),
-    //   enteredWorkoutText,
-    //   selectedWorkoutType,
-    //   selectedDays
-    // );
-    // setShowErrors(false);
-    // props.onAddWorkout(workout);
-    // resetForm();
-    // props.onCancel?.();
+    // Build a draft object to pass into ExerciseInput
+    const draft = props.workoutToEdit
+      ? {
+          ...props.workoutToEdit,
+          name: enteredWorkoutText,
+          type: selectedWorkoutType,
+          selectedDays,
+        }
+      : new Workout(
+          Math.random().toString(),
+          enteredWorkoutText,
+          selectedWorkoutType,
+          selectedDays
+        );
+    setWorkout(draft);
+    setShowErrors(false);
+    startAddExercise();
   }
 
+  //cancelAddWorkout let user cancel workout and go back to Workout Log
   function cancelAddWorkout() {
     setEnteredWorkoutText("");
     setWorkoutType("");
@@ -125,13 +133,24 @@ function WorkoutInput(props) {
     props.onCancel?.();
   }
 
+  //onSaveExercises saves all exercises on the draft workout
   function onSaveExercises(payload) {
-    workout.excersices = payload
-    setWorkout(workout)
+    // Merge exercises into the current draft (add or edit)
+    const base = workout ?? {};
+    const updatedWorkout = {
+      ...base,
+      name: enteredWorkoutText,
+      type: selectedWorkoutType,
+      selectedDays,
+      exercises: payload,
+    };
+
+    setWorkout(updatedWorkout);
     setShowErrors(false);
-    props.onAddWorkout(workout);
-    resetForm();
-    props.onCancel?.();
+    props.onAddWorkout(updatedWorkout); // <-- use the updated object, not stale state
+    setModalIsVisible(false); // close ExerciseInput
+    resetForm(); // clear WorkoutInput fields
+    props.onCancel?.(); // close WorkoutInput modal
   }
 
   const TextFont = {
@@ -328,8 +347,7 @@ function WorkoutInput(props) {
 
           <ExerciseInput
             visible={modalIsVisible}
-            workout={workout}
-            // onAddExcersie={startAddExercise}
+            workout={workout} // when editing, contains existing exercises
             onCancel={endAddExercise}
             onSave={onSaveExercises}
           />

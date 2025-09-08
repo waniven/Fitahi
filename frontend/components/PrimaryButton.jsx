@@ -1,4 +1,3 @@
-// components/PrimaryButton.js
 import React from "react";
 import {
   TouchableOpacity,

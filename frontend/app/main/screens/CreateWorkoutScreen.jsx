@@ -9,7 +9,7 @@ import {
   Platform,
 } from "react-native";
 import WorkoutInput from "../../../components/workouts/WorkoutInput";
-import WorkoutItem from "../../../components/workouts/WorkoutItem";
+import ListCardItem from "@/components/ListCardItem";
 import { Colors } from "../../../constants/Colors";
 import { Font } from "@/constants/Font";
 import Fab from "@/components/FloatingActionButton";
@@ -20,6 +20,8 @@ function CreateWorkout({ navigation }) {
   const theme = Colors[scheme ?? "light"];
   const [modalIsVisible, setModalIsVisible] = useState(false);
   const [workout, setWorkout] = useState([]);
+  const [selectedWorkout, setSelectedWorkout] = useState('');
+  
 
   const NAV_BAR_HEIGHT = 64; // adjust to the actual nav height
   const BOX_MAX_HEIGHT = Math.round(Dimensions.get("window").height * 0.7); // box height cap
@@ -36,23 +38,48 @@ function CreateWorkout({ navigation }) {
     setModalIsVisible(false);
   }
 
-  //Add workout ???
-  function addWorkout(newWorkout) {
-    setWorkout((curr) => [...curr, newWorkout]);
+  //saveWorkout saves the created workout to the defined list
+  function saveWorkout(workout) {
+    if (selectedWorkout) {
+      // Edit mode → replace existing workout
+      setWorkout((current) =>
+        current.map((w) => (w.id === workout.id ? workout : w))
+      );
+    } else {
+      // Add mode → append
+      setWorkout((current) => [...current, workout]);
+    }
+
+    setSelectedWorkout(null); // reset after save
     endaddWorkoutName();
   }
 
-  //Render item: list all created workouts and allow to click on???
+  //deleteWorkoutHandler deletes a workout based on a supplied workout's id
+  function deleteWorkoutHandler(id) {
+    setWorkout((currentworkout) => {
+      return currentworkout.filter((workout) => workout.id !== id);
+    });
+  }
+
+  //startEditWorkout sets the current selected workout and open workout input to edit
+  function startEditWorkout(item) {
+    setSelectedWorkout(item);
+    setModalIsVisible(true);
+  }
+
+  //Render item: list all created workouts and allow to click on
   function renderItemData({ item }) {
-    function pressHandler() {
-      navigation.navigate("StartExercise", { workoutDetail: item });
+    function startWorkoutSreen(item) {
+      navigation.navigate("StartWorkoutScreen", { workoutDetail: item });
     }
     return (
-      <WorkoutItem
-        text={item.name}
-        id={item.id}
-        workoutType={item.type}
-        onPress={pressHandler}
+      
+
+      <ListCardItem
+        workout={item}
+        onEdit={startEditWorkout}
+        onDelete={deleteWorkoutHandler}
+        onStart={startWorkoutSreen}
       />
     );
   }
@@ -66,8 +93,12 @@ function CreateWorkout({ navigation }) {
     <View style={[styles.screen, { backgroundColor: theme.background }]}>
       <WorkoutInput
         visible={modalIsVisible}
-        onAddWorkout={addWorkout}
-        onCancel={endaddWorkoutName}
+        workoutToEdit={selectedWorkout}
+        onAddWorkout={saveWorkout}
+        onCancel={() => {
+          setSelectedWorkout(null);      // reset if cancelled
+          endaddWorkoutName();
+        }}
       />
 
       {/* Invisible scrollable box shown only when there are workouts */}

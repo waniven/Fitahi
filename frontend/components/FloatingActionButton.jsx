@@ -1,4 +1,3 @@
-// components/Fab.js
 import React from "react";
 import { View, TouchableOpacity, StyleSheet, Platform } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";

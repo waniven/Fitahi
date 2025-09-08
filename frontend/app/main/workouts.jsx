@@ -8,9 +8,9 @@ import { StyleSheet, View, useColorScheme} from "react-native";
 import { Colors } from "../../constants/Colors";
 import { Font } from "@/constants/Font";
 
-import AddWorkout from "./screens/AddWorkoutScreen";
 import ShowWorkoutDetail from "./screens/WorkoutDetailScreen";
 import StartExercise from "./screens/StartExerciseScreen";
+import StartWorkoutScreen from "./screens/StartWorkoutScreen";
 import CreateWorkout from "./screens/CreateWorkoutScreen";
 
 const Stack = createNativeStackNavigator();
@@ -49,21 +49,17 @@ export default function WorkoutMainScreen() {
                 headerTitleAlign: "center",
               }}
             />
-            <Stack.Screen
-              name="Workouts"
-              component={AddWorkout}
-              options={{
-                title: "Workout Log",
-                headerTitleAlign: "center",
-              }}
-            />
-            <Stack.Screen
+            {/* <Stack.Screen
               name="ShowWorkoutDetail"
               component={ShowWorkoutDetail}
               options={{
                 title: "Workout Overview",
                 headerTitleAlign: "center",
               }}
+            />  */}
+            <Stack.Screen
+              name="StartWorkoutScreen"
+              component={StartWorkoutScreen}
             />
             <Stack.Screen
               name="StartExercise"

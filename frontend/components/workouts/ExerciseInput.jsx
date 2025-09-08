@@ -15,6 +15,7 @@ import ModalCloseButton from "../ModalCloseButton";
 import PrimaryButton from "../PrimaryButton";
 import Exercise from "./models/Exercise"; 
 
+//ExerciseInput let user set exercises in a workout
 function ExerciseInput(props) {
   const scheme = useColorScheme();
   const theme = Colors[scheme ?? "light"];
@@ -33,39 +34,68 @@ function ExerciseInput(props) {
     
   });
 
-  useEffect(() => {
-    if (props.visible) resetForm();
-  }, [props.visible]);
+  const fromModelToForm = (ex) => ({
+    id: ex?.id ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    name: ex?.name ?? "",
+    reps: ex?.numOfReps !== undefined ? String(ex.numOfReps) : "",
+    sets: ex?.numOfSets !== undefined ? String(ex.numOfSets) : "",
+    weight: ex?.weight !== undefined ? String(ex.weight) : "",
+    rest: ex?.rest !== undefined ? String(ex.rest) : "",
+    duration: ex?.duration !== undefined ? String(ex.duration) : "",
+    imageUrl: ex?.imageUrl ?? "",
+  });
 
+ 
+  useEffect(() => {
+    if (!props.visible) return;
+    const existing = props.workout?.exercises;
+    if (Array.isArray(existing) && existing.length > 0) {
+      // Seed with current workout's exercises
+      setExercises(existing.map(fromModelToForm));
+      setShowErrors(false);
+    } else {
+      // No exercises yet, start with one blank card
+      setExercises([makeExercise()]);
+      setShowErrors(false);
+    }
+  }, [props.visible, props.workout]);
+
+  //resetForm allows to reset form to original state
   function resetForm() {
     setExercises([makeExercise()]);
     setShowErrors(false);
   }
 
+  //updateExercise updates the current exercises with new values
   function updateExercise(id, field, value) {
     setExercises((curr) =>
       curr.map((ex) => (ex.id === id ? { ...ex, [field]: value } : ex))
     );
   }
 
+  //addExerciseCard adds each exercise input into an array
   function addExerciseCard() {
     setExercises((curr) => [...curr, makeExercise()]);
   }
 
+  //removeExerciseCard removes a selected exercise card
   function removeExerciseCard(id) {
     setExercises((curr) => curr.filter((ex) => ex.id !== id));
   }
 
+  //onCancel allows to click X to go back to Workout Input
   function onCancel() {
     resetForm();
     props.onCancel?.();
   }
 
+  //toNumber converts value to a number
   function toNumber(v) {
     const n = Number(v);
     return Number.isFinite(n) ? n : 0;
   }
 
+  //onSave checks each exercise form is valid and save them into an array and send back to the parent
   function onSave() {
     setShowErrors(true);
     // Validation: require name, reps, sets, rest for each card
@@ -177,7 +207,7 @@ function ExerciseInput(props) {
                     </Text>
                   ) : null}
 
-                  {/* Reps & Sets (same row) */}
+                  {/* Reps & Sets */}
                   <View style={styles.row}>
                     <View style={styles.col}>
                       <Text style={labelStyle}>REPS *</Text>
@@ -220,7 +250,7 @@ function ExerciseInput(props) {
                     </View>
                   </View>
 
-                  {/* Weight & Rest (same row) */}
+                  {/* Weight & Rest */}
                   <View style={styles.row}>
                     <View style={styles.col}>
                       <Text style={labelStyle}>WEIGHT</Text>
