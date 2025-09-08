@@ -1,153 +1,147 @@
-// app/login.jsx
+// app/auth/Login.jsx
+import React, { useState } from "react";
+import { SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
-import { useState } from "react";
-import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  useColorScheme
-} from "react-native";
 import { Colors } from "../../constants/Colors";
-import globalStyles from "../../styles/globalStyles";
+import FitahiLogo from "../../constants/FitahiLogo";
+import CustomInput from "../../components/common/CustomInput";
+import CustomButton from "../../components/common/CustomButton";
+import globalStyles from "../../styles/globalStyles"; 
 
 export default function Login() {
   const router = useRouter();
-  const scheme = useColorScheme();
-  const theme = Colors[scheme ?? "light"];
+  const theme = Colors["dark"];
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  // Form state
+  
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
 
-  const validateEmail = (email) =>
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  
+  // Error state ("Incorrect password/email")
+ 
+  const [error, setError] = useState("");
+
+  // Update form fields dynamically
+
+  const updateField = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    if (error) setError(""); // clear error while typing
+  };
+
+
+  // Handle login with validation
 
   const handleLogin = () => {
-    if (!email || !password) {
-      alert("Please fill in all fields.");
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!formData.email || !emailRegex.test(formData.email)) {
+      setError("Please enter a valid email");
       return;
     }
-    if (!validateEmail(email)) {
-      alert("Please enter a valid email.");
+    if (!formData.password) {
+      setError("Incorrect email or Password");
       return;
     }
-    router.replace("/home");
+
+    // after login go to homepage
+    router.push("/home");
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      style={{ flex: 1, backgroundColor: theme.background }}
-    >
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       <ScrollView
-        contentContainerStyle={styles.container}
-        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.contentContainer}
+        showsVerticalScrollIndicator={false}
       >
-        <Text
-          style={[
-            globalStyles.textBold,
-            styles.title,
-            { color: theme.textPrimary },
-          ]}
-        >
-          Log In
+        {/* 
+            Logo
+            */}
+        <View style={styles.logoContainer}>
+          <FitahiLogo width={260} height={100} fill="#FFFFFF" />
+        </View>
+
+        {/* 
+            Welcome Text
+             */}
+        <Text style={[globalStyles.welcomeText, { color: "#00A2FF", fontSize: 28, textAlign: "center" }]}>
+          Welcome back!
+        </Text>
+        <Text style={[globalStyles.cardText, { color: "#00A2FF", fontSize: 16, marginBottom: 30, textAlign: "center"}]}>
+          Please log in with your email and password
         </Text>
 
-        {/* Email Input */}
-        <TextInput
-          style={[styles.input, { borderColor: theme.tint, color: theme.textPrimary }]}
-          placeholder="Email"
-          placeholderTextColor={theme.textSecondary}
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
+        {/*
+            Form Inputs
+           */}
+        <View style={styles.formContainer}>
+          <CustomInput
+            label="Email Address"
+            placeholder="Email Address"
+            value={formData.email}
+            onChangeText={(text) => updateField("email", text)}
+          />
 
-        {/* Password Input */}
-        <TextInput
-          style={[styles.input, { borderColor: theme.tint, color: theme.textPrimary }]}
-          placeholder="Password"
-          placeholderTextColor={theme.textSecondary}
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-        />
+          <CustomInput
+            label="Password"
+            placeholder="Password"
+            value={formData.password}
+            onChangeText={(text) => updateField("password", text)}
+            secureTextEntry
+          />
 
-        {/* Login Button */}
-        <TouchableOpacity
-          style={[styles.button, { backgroundColor: theme.tint }]}
-          onPress={handleLogin}
-        >
-          <Text
-            style={[globalStyles.textBold, styles.buttonText, { color: theme.background }]}
-          >
-            Log In
-          </Text>
-        </TouchableOpacity>
+          {/* 
+              Error message
+              */}
+          {error ? <Text style={styles.errorText}>{error}</Text> : null}
+        </View>
 
-        {/* Signup Link */}
-        <TouchableOpacity onPress={() => router.replace("/signup")}>
-          <Text
-            style={[
-              globalStyles.textRegular,
-              styles.link,
-              { color: theme.tint },
-            ]}
-          >
-            Don't have an account? Sign Up
-          </Text>
-        </TouchableOpacity>
+        {/* Login Button*/}
+        <View style={{ width: "100%", alignItems: "center", marginTop: 20 }}>
+          <CustomButton
+            title="Log In"
+            onPress={handleLogin}
+            size="large"
+            style={{ width: 370, paddingVertical: 18, borderRadius: 30 }}
+          />
+        </View>
       </ScrollView>
-    </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
+
 const styles = StyleSheet.create({
   container: {
-    flexGrow: 1,
-    justifyContent: "center",
-    padding: 30,
+    flex: 1,
   },
-  title: {
-    fontSize: 32,
-    marginBottom: 36,
-    textAlign: "center",
-  },
-  input: {
-    borderWidth: 1.5,
-    borderRadius: 16,
+  contentContainer: {
     paddingHorizontal: 20,
-    paddingVertical: 14,
-    fontSize: 16,
-    marginBottom: 20,
-    backgroundColor: "#1c1c1c", // dark card feel
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 6,
-  },
-  button: {
-    paddingVertical: 16,
-    borderRadius: 16,
+    paddingTop: 80, 
+    paddingBottom: 40,
     alignItems: "center",
-    marginBottom: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 8,
   },
-  buttonText: {
-    fontSize: 18,
+  logoContainer: {
+    marginBottom: 30,
   },
-  link: {
+  welcomeText: {
     textAlign: "center",
-    fontSize: 16,
-    textDecorationLine: "underline",
+    marginBottom: 6,
+    fontWeight: "700", 
+  },
+  subText: {
+    textAlign: "center",
+    marginBottom: 30,
+  },
+  formContainer: {
+    width: "100%",
+    alignItems: "center",
+  },
+  errorText: {
+    color: "#FF4D4D",
+    fontSize: 14,
+    marginTop: 10,
   },
 });

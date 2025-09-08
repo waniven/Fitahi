@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, Text, useColorScheme, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Colors } from '../../constants/Colors';
 import globalStyles from '../../styles/globalStyles';
 import CustomInput from '../../components/common/CustomInput';
@@ -49,7 +49,7 @@ const dateValidation = (date) => {
  */
 export default function SignUp() {
   const router = useRouter();
-  const theme = Colors[useColorScheme() ?? 'light'];
+  const theme = Colors["dark"];
 
   // Form state
   const [formData, setFormData] = useState({
@@ -74,7 +74,6 @@ export default function SignUp() {
       [field]: value
     }));
     
-    // Clear error for this field when user starts typing
     if (errors[field]) {
       setErrors(prev => ({
         ...prev,
@@ -90,31 +89,26 @@ export default function SignUp() {
   const validateForm = () => {
     const newErrors = {};
     
-    // Validate first name
     const firstNameError = nameValidation(formData.firstName);
     if (firstNameError || !formData.firstName.trim()) {
       newErrors.firstName = firstNameError || 'First name is required';
     }
     
-    // Validate last name
     const lastNameError = nameValidation(formData.lastName);
     if (lastNameError || !formData.lastName.trim()) {
       newErrors.lastName = lastNameError || 'Last name is required';
     }
     
-    // Validate email
     const emailError = emailValidation(formData.email);
     if (emailError || !formData.email.trim()) {
       newErrors.email = emailError || 'Email is required';
     }
     
-    // Validate password
     const passwordError = passwordValidation(formData.password);
     if (passwordError || !formData.password.trim()) {
       newErrors.password = passwordError || 'Password is required';
     }
     
-    // Validate date of birth
     const dateError = dateValidation(selectedDate);
     if (dateError) {
       newErrors.dateOfBirth = dateError;
@@ -129,7 +123,6 @@ export default function SignUp() {
    */
   const handleContinue = () => {
     if (validateForm()) {
-      // Form is valid, proceed to next step
       console.log('Form data:', {
         ...formData,
         dateOfBirth: selectedDate
@@ -146,18 +139,16 @@ export default function SignUp() {
     >
       {/* Header */}
       <View style={styles.header}>
-        <Text style={[styles.title, globalStyles.textBold, { color: theme.textPrimary }]}>
+        <Text style={[styles.title, globalStyles.welcomeText, { color: theme.textPrimary }]}>
           We're happy to have you!
         </Text>
-        <Text style={[styles.subtitle, globalStyles.textRegular, { color: theme.textSecondary }]}>
+        <Text style={[styles.subtitle, globalStyles.cardText, { color: theme.textSecondary }]}>
           Now let's set up your profile.
         </Text>
       </View>
 
       {/* Form Fields */}
       <View style={styles.formContainer}>
-        
-        {/* First Name */}
         <CustomInput
           label="First Name"
           placeholder="First Name"
@@ -168,7 +159,6 @@ export default function SignUp() {
           required
         />
 
-        {/* Last Name */}
         <CustomInput
           label="Last Name"
           placeholder="Last Name"
@@ -179,7 +169,6 @@ export default function SignUp() {
           required
         />
 
-        {/* Date of Birth */}
         <CustomInput
           label="Date of Birth"
           placeholder="Choose a date"
@@ -190,7 +179,6 @@ export default function SignUp() {
           required
         />
 
-        {/* Email Address */}
         <CustomInput
           label="Email Address"
           placeholder="Email address"
@@ -202,7 +190,6 @@ export default function SignUp() {
           required
         />
 
-        {/* Password */}
         <CustomInput
           label="Password"
           placeholder="Password"
@@ -213,7 +200,6 @@ export default function SignUp() {
           errorMessage={errors.password}
           required
         />
-
       </View>
 
       {/* Continue Button */}
@@ -281,6 +267,6 @@ const styles = StyleSheet.create({
   
   // Continue button styling
   continueButton: {
-    width: 370, // Match input width
+    width: 370,
   },
 });

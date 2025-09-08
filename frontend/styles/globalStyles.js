@@ -1,56 +1,39 @@
 // styles/globalStyles.js
-//Styles we can import 
+// Styles we can import 
 import { StyleSheet } from 'react-native';
 
 const globalStyles = StyleSheet.create({
   // ========================//
   // ========================//
-  // Layout Helpers
-  // ========================//
+  // Layout Helpers          //
   // ========================//
   container: { flex: 1, paddingHorizontal: 20 },
   row: { flexDirection: 'row', alignItems: 'center' },
   spacedRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   center: { justifyContent: 'center', alignItems: 'center' },
 
-
-
   // ========================//
-  // ========================//
-  // Header
-  // ========================//
+  // Header                  //
   // ========================//
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 },
-  welcomeText: { fontWeight: '600', fontSize: 18 },
+  welcomeText: { fontWeight: '600', fontSize: 18, fontFamily: 'Montserrat_700Bold' },
   profileCircle: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
 
-
-
   // ========================//
-  // ========================//
-  // Calendar / Date selector
-  // ========================//
+  // Calendar / Date selector//
   // ========================//
   dateRow: { flexDirection: 'row', justifyContent: 'space-around', paddingVertical: 12 },
   dateCircle: { width: 50, height: 60, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
   dateCircleActive: { backgroundColor: '#444' },
-  dayText: { fontSize: 12, marginBottom: 2 },
-
-
+  dayText: { fontSize: 12, marginBottom: 2, fontFamily: 'Montserrat_400Regular' },
 
   // ========================//
-  // ========================//
-  // Banner
-  // ========================//
+  // Banner                  //
   // ========================//
   bannerImage: { width: '90%', height: 180, borderRadius: 12, alignSelf: 'center', marginVertical: 12 },
 
-
-
   // ========================//
-  // ========================//
-  // Premium card
-  // ========================//
+  // Premium card            //
   // ========================//
   premiumCard: {
     flexDirection: 'row',
@@ -66,14 +49,10 @@ const globalStyles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 4,
   },
-  premiumText: { marginLeft: 8, fontSize: 16, fontWeight: '600' },
-
-
+  premiumText: { marginLeft: 8, fontSize: 16, fontWeight: '600', fontFamily: 'Montserrat_700Bold' },
 
   // ========================//
-  // ========================//
-  // Grid / Cards
-  // ========================//
+  // Grid / Cards            //
   // ========================//
   card: {
     borderRadius: 16,
@@ -85,14 +64,10 @@ const globalStyles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 3,
   },
-  cardText: { fontWeight: '600', fontSize: 16 },
-
-
+  cardText: { fontWeight: '600', fontSize: 16, fontFamily: 'Montserrat_700Bold' },
 
   // ========================//
-  // ========================//
-  // Bottom nav
-  // ========================//
+  // Bottom nav              //
   // ========================//
   bottomNav: {
     flexDirection: 'row',
@@ -104,8 +79,14 @@ const globalStyles = StyleSheet.create({
     bottom: 0,
     width: '100%',
   },
-  navItem: { alignItems: 'center' },
-  navText: { fontSize: 12, marginTop: 2 },
+  navItem: { 
+    alignItems: 'center' 
+  },
+  navText: { 
+    fontSize: 12, 
+    marginTop: 2, 
+    fontFamily: 'Montserrat_700Bold' 
+  },
 });
 
 export default globalStyles;

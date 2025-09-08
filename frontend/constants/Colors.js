@@ -17,7 +17,7 @@ export const Colors = {
     warning: '#FFC107',
     error: '#FF5252',
 
-    overlayDark: 'rgba(0,0,0,0.6)',
+    overlayDark: 'rgba(40, 31, 69, 0.6)',
     overlayLight: 'rgba(255,255,255,0.1)',
 
     tint: '#00CFFF',          // for buttons/dots in your code
@@ -27,8 +27,8 @@ export const Colors = {
     primaryDark: '#0099CC',
     primaryLight: '#66E0FF',
 
-    background: '#0D0D0D',   // Dark mode background
-    backgroundAlt: '#1A1A1A',
+    background: '#151924',   // Dark mode background
+    backgroundAlt: '#151924',
 
     textPrimary: '#FFFFFF',
     textSecondary: '#B3B3B3',
@@ -41,6 +41,6 @@ export const Colors = {
     overlayDark: 'rgba(0,0,0,0.6)',
     overlayLight: 'rgba(255,255,255,0.1)',
 
-    tint: '#00CFFF',
+    tint: '#4F9AFF',
   },
 };
