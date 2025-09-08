@@ -2,13 +2,13 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { Dimensions, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View, Modal, TextInput,} from "react-native";
+import { Dimensions, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View, Modal, TextInput, } from "react-native";
 import { Colors } from "../../constants/Colors";
 import FloatingAIButton from "../ai/FloatingAIButton";
 import FitahiLogo from "../../constants/FitahiLogo";
 import { Calendar } from "react-native-calendars";
 import Toast from "react-native-toast-message";
-import globalStyles from "../../styles/globalStyles"; 
+import globalStyles from "../../styles/globalStyles";
 
 const { width } = Dimensions.get("window");
 
@@ -91,12 +91,12 @@ export default function Home() {
               backgroundColor: "#fff",          // calender background
               calendarBackground: "#fff",       // Calendar container 
               textSectionTitleColor: "#000",    // Weekday headers black
-              todayTextColor: "#000",           
+              todayTextColor: "#000",
               todayBackgroundColor: theme.tint, // highight current day
-              dayTextColor: "#000",             
-              monthTextColor: "#000",           
+              dayTextColor: "#000",
+              monthTextColor: "#000",
               arrowColor: theme.tint,           // Navigation arrows 
-              textDisabledColor: "#999",        
+              textDisabledColor: "#999",
               textDayFontSize: 14,
               textMonthFontSize: 16,
               textDayHeaderFontSize: 12,
@@ -205,6 +205,13 @@ export default function Home() {
           >
             <Text style={[globalStyles.cardText, { color: theme.tint }]}>🗺️ Gym Finder</Text>
           </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.card, { width: cardWidth, backgroundColor: "#fff" }]}
+            onPress={() => router.push("/main/biometrics")}
+          >
+            <Text style={[globalStyles.cardText, { color: theme.tint }]}>📏 Biometrics Log</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
 
@@ -289,107 +296,107 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
 
   // Logo
-  logoContainer: { 
-    alignItems: "center", 
-    marginVertical: 10, 
-    marginTop: 70 
+  logoContainer: {
+    alignItems: "center",
+    marginVertical: 10,
+    marginTop: 70
   },
 
   // Calendar + Reminders Card
-  widgetCard: { 
-    borderRadius: 16, 
-    padding: 12, 
-    marginHorizontal: 20, 
-    marginVertical: 10, 
-    flexDirection: "row", 
+  widgetCard: {
+    borderRadius: 16,
+    padding: 12,
+    marginHorizontal: 20,
+    marginVertical: 10,
+    flexDirection: "row",
     backgroundColor: "#fff"
   },
-  remindersContainer: { 
-    flex: 1, 
-    marginTop: 0 
+  remindersContainer: {
+    flex: 1,
+    marginTop: 0
   },
-  reminderItem: { 
-    paddingVertical: 8, 
-    borderBottomWidth: 1, 
-    borderBottomColor: "#444" 
+  reminderItem: {
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#444"
   },
 
   // Premium card
-  premiumCard: { 
-    flexDirection: "row", 
-    alignItems: "center", 
-    padding: 16, 
-    borderRadius: 12, 
-    marginHorizontal: 20, 
-    marginBottom: 16, 
-    shadowColor: "#f3ededff", 
-    shadowOpacity: 0.1, 
-    shadowRadius: 6, 
-    elevation: 4, 
-    marginTop: 30 
+  premiumCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 16,
+    borderRadius: 12,
+    marginHorizontal: 20,
+    marginBottom: 16,
+    shadowColor: "#f3ededff",
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 4,
+    marginTop: 30
   },
-  closeButton: { 
-    marginLeft: "auto" 
+  closeButton: {
+    marginLeft: "auto"
   },
 
   // Quick log button grid
-  row: { 
-    flexDirection: "row", 
-    justifyContent: "space-between", 
-    paddingHorizontal: 20, 
-    marginBottom: 16 
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    marginBottom: 16
   },
-  card: { 
-    borderRadius: 16, 
-    padding: 20, 
-    alignItems: "center", 
-    shadowColor: "#000", 
-    shadowOpacity: 0.1, 
-    shadowRadius: 6, 
-    elevation: 3 
+  card: {
+    borderRadius: 16,
+    padding: 20,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 3
   },
 
   // Bottom navigation
-  bottomNav: { 
-    flexDirection: "row", 
-    justifyContent: "space-around", 
-    paddingVertical: 12, 
-    borderTopLeftRadius: 20, 
-    borderTopRightRadius: 20, 
-    position: "absolute", 
-    bottom: 0, 
-    width: "100%" 
+  bottomNav: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    paddingVertical: 12,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    position: "absolute",
+    bottom: 0,
+    width: "100%"
   },
-  navItem: { 
-    alignItems: "center" 
+  navItem: {
+    alignItems: "center"
   },
 
   // Modal
-  modalBackground: { 
-    flex: 1, 
-    justifyContent: "center", 
-    alignItems: "center", 
-    backgroundColor: "rgba(0,0,0,0.6)", 
-    paddingHorizontal: 20 
+  modalBackground: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.6)",
+    paddingHorizontal: 20
   },
   modalContent: {
-     width: "100%", 
-     borderRadius: 16, 
-     padding: 20, 
-     shadowColor: "#000", 
-     shadowOpacity: 0.2, 
-     shadowRadius: 6, 
-     elevation: 6 
+    width: "100%",
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 6
   },
-  modalButtons: { 
-    flexDirection: "row", 
-    justifyContent: "space-between" 
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between"
   },
-  modalButton: { 
-    flex: 1, 
-    paddingVertical: 12, 
-    borderRadius: 8, 
-    alignItems: "center", 
-    marginHorizontal: 4 
+  modalButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    marginHorizontal: 4
   },
 });
