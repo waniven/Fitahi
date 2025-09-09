@@ -3,6 +3,10 @@ import { TextInput, View, Text, StyleSheet, TouchableOpacity, Platform } from 'r
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Colors } from '../../constants/Colors';
 
+/**
+ * CustomInput - Reusable input component with validation and date picker support
+ * Maintains white background even in error states for optimal text visibility
+ */
 const CustomInput = ({
   placeholder,
   value,
@@ -26,6 +30,10 @@ const CustomInput = ({
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [tempDate, setTempDate] = useState(null);
 
+  /**
+   * Handles text input changes and validation
+   * @param {string} text - Input text value
+   */
   const handleTextChange = (text) => {
     if (onChangeText) {
       onChangeText(text);
@@ -41,6 +49,9 @@ const CustomInput = ({
     }
   };
 
+  /**
+   * Handles input focus state and date picker activation
+   */
   const handleFocus = () => {
     if (isDatePicker) {
       setTempDate(selectedDate || new Date());
@@ -50,6 +61,9 @@ const CustomInput = ({
     setIsFocused(true);
   };
 
+  /**
+   * Handles input blur state and validation
+   */
   const handleBlur = () => {
     setIsFocused(false);
     
@@ -63,6 +77,11 @@ const CustomInput = ({
     }
   };
 
+  /**
+   * Formats date for display in readable format
+   * @param {Date} date - Date object to format
+   * @returns {string} Formatted date string
+   */
   const formatDate = (date) => {
     if (!date) return '';
     const options = { year: 'numeric', month: 'long', day: 'numeric' };
@@ -72,6 +91,10 @@ const CustomInput = ({
   const displayError = errorMessage || localError;
   const hasError = !!displayError;
 
+  /**
+   * Determines border color based on input state
+   * @returns {string} Color value for border
+   */
   const getBorderColor = () => {
     if (hasError) return Colors.light.error;
     if (isFocused || (isDatePicker && showDatePicker)) return Colors.light.primary;
@@ -198,46 +221,40 @@ const CustomInput = ({
 };
 
 const styles = StyleSheet.create({
-  // Main container for the entire input component
   container: {
     marginBottom: 20,
   },
   
-  // Label text styling with uppercase formatting
   label: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#FFFFFF', // White text for dark backgrounds
+    color: '#FFFFFF',
     marginBottom: 8,
     letterSpacing: 0.5,
   },
   
-  // Required field indicator (red asterisk)
   required: {
     color: '#FF5252',
   },
   
-  // Main input container with exact dimensions (370 x 58)
   inputContainer: {
     width: 370,
     height: 58,
     borderWidth: 1.5,
     borderRadius: 12,
-    borderColor: 'rgba(255,255,255,0.1)', // Subtle border for dark theme
-    backgroundColor: '#FFFFFF', // White background for input
+    borderColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: '#FFFFFF',
     paddingHorizontal: 16,
     justifyContent: 'center',
   },
   
-  // Text input field styling
   input: {
     fontSize: 16,
-    color: '#151924', // Dark text on white background
+    color: '#151924',
     height: '100%',
-    padding: 0, // Remove default padding to maintain exact dimensions
+    padding: 0,
   },
   
-  // Container for date picker display elements
   datePickerContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -245,33 +262,28 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   
-  // Date text display styling
   dateText: {
     fontSize: 16,
     flex: 1,
   },
   
-  // Chevron indicator for date picker
   chevron: {
     fontSize: 20,
     color: '#999999',
     fontWeight: 'bold',
-    transform: [{ rotate: '90deg' }], // Rotate to point down
+    transform: [{ rotate: '90deg' }],
   },
   
-  // Error state styling for input container
   inputError: {
-    borderColor: '#FF5252', // Red border for errors
-    backgroundColor: 'rgba(255, 82, 82, 0.05)', // Light red background tint
+    borderColor: '#FF5252',
+    // Removed the background color tint to keep white background
   },
   
-  // Disabled state styling
   inputDisabled: {
     backgroundColor: 'rgba(255,255,255,0.1)',
     opacity: 0.6,
   },
   
-  // Error message text styling
   errorText: {
     fontSize: 12,
     color: '#FF5252',
@@ -279,58 +291,51 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   
-  // Full-screen overlay for iOS date picker modal
   datePickerOverlay: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent backdrop
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'flex-end',
-    zIndex: 1000, // Ensure it appears above other elements
+    zIndex: 1000,
   },
   
-  // Date picker modal container (iOS)
   datePickerModal: {
-    backgroundColor: '#F8F9FA', // Light gray background
+    backgroundColor: '#F8F9FA',
     borderTopLeftRadius: 12,
     borderTopRightRadius: 12,
-    paddingBottom: 34, // Safe area for iPhone home indicator
+    paddingBottom: 34,
   },
   
-  // Header section with Cancel/Done buttons
   datePickerHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5E7', // Light border
+    borderBottomColor: '#E5E5E7',
     backgroundColor: '#F8F9FA',
   },
   
-  // Individual button styling in header
   datePickerButton: {
     paddingVertical: 8,
     paddingHorizontal: 12,
   },
   
-  // Button text styling
   datePickerButtonText: {
     fontSize: 16,
-    color: '#007AFF', // iOS system blue
+    color: '#007AFF',
   },
   
-  // Done button emphasis
   doneButton: {
     fontWeight: '600',
   },
   
-  // Date picker component styling
   datePicker: {
     backgroundColor: '#F8F9FA',
-    height: 216, // Standard iOS picker height
+    height: 216,
   },
 });
 
