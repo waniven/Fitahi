@@ -2,101 +2,79 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { Dimensions, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View, Modal, TextInput,} from "react-native";
+import {Dimensions, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View, Modal, TextInput} from "react-native";
 import { Colors } from "../../constants/Colors";
 import FloatingAIButton from "../ai/FloatingAIButton";
 import FitahiLogo from "../../constants/FitahiLogo";
 import { Calendar } from "react-native-calendars";
 import Toast from "react-native-toast-message";
-import globalStyles from "../../styles/globalStyles"; 
+import globalStyles from "../../styles/globalStyles";
 
 const { width } = Dimensions.get("window");
 
 export default function Home() {
   const theme = Colors["dark"];
   const router = useRouter();
-  const cardWidth = (width - 60) / 2; // Two cards per row with spacing
+  const cardWidth = (width - 60) / 2;
 
   const [showPremium, setShowPremium] = useState(true);
-  const [reminders, setReminders] = useState([]); // All reminders
+  const [reminders, setReminders] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(""); // Selected calendar date
-  const [currentReminder, setCurrentReminder] = useState({ id: "", text: "" }); // Editing or adding reminders
+  const [selectedDate, setSelectedDate] = useState("");
+  const [currentReminder, setCurrentReminder] = useState({ id: "", text: "" });
 
-  // Marked dates for the calendar
   const markedDates = reminders.reduce((acc, r) => {
-    acc[r.date] = { marked: true, dotColor: theme.tint }; // Blue dot for reminders on calender
+    acc[r.date] = { marked: true, dotColor: theme.tint };
     return acc;
   }, {});
 
-  // Save or update a reminder
   const saveReminder = () => {
     if (!currentReminder.text) return;
 
     if (currentReminder.id) {
-      // Update existing reminder
       setReminders((prev) =>
         prev.map((r) =>
           r.id === currentReminder.id ? { ...r, text: currentReminder.text } : r
         )
       );
-      Toast.show({
-        type: "success",
-        text1: "Reminder Updated",
-        text2: `${currentReminder.text}`,
-      });
+      Toast.show({ type: "success", text1: "Reminder Updated", text2: currentReminder.text });
     } else {
-      // Add new reminder
-      const newReminder = {
-        id: Date.now().toString(),
-        date: selectedDate,
-        text: currentReminder.text,
-      };
+      const newReminder = { id: Date.now().toString(), date: selectedDate, text: currentReminder.text };
       setReminders((prev) => [...prev, newReminder]);
-      Toast.show({
-        type: "success",
-        text1: "Reminder Added",
-        text2: `${currentReminder.text}`,
-      });
+      Toast.show({ type: "success", text1: "Reminder Added", text2: currentReminder.text });
     }
     setModalVisible(false);
   };
 
-  // Delete a reminder
   const deleteReminder = (id) => {
     const deleted = reminders.find((r) => r.id === id);
     setReminders((prev) => prev.filter((r) => r.id !== id));
-
-    Toast.show({
-      type: "info",
-      text1: "Reminder Deleted",
-      text2: `${deleted.text}`,
-    });
+    Toast.show({ type: "info", text1: "Reminder Deleted", text2: deleted.text });
     setModalVisible(false);
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 140 }}>
-        {/* logo */}
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background, overflow: "visible" }]}>
+      <ScrollView contentContainerStyle={{ paddingBottom: 160 }}>
+        {/* Logo */}
         <View style={styles.logoContainer}>
           <FitahiLogo width={320} height={140} fill="#FFFFFF" />
         </View>
 
-        {/*calendars and reminders */}
+        {/* Calendar + Reminders */}
         <View style={[styles.widgetCard, { backgroundColor: "#fff" }]}>
           <Calendar
             style={{ borderRadius: 16, backgroundColor: "#fff" }}
             theme={{
-              backgroundColor: "#fff",          // calender background
-              calendarBackground: "#fff",       // Calendar container 
-              textSectionTitleColor: "#000",    // Weekday headers black
-              todayTextColor: "#000",           
-              todayBackgroundColor: theme.tint, // highight current day
-              dayTextColor: "#000",             
-              monthTextColor: "#000",           
-              arrowColor: theme.tint,           // Navigation arrows 
-              textDisabledColor: "#999",        
+              backgroundColor: "#fff",
+              calendarBackground: "#fff",
+              textSectionTitleColor: "#000",
+              todayTextColor: "#000",
+              todayBackgroundColor: theme.tint,
+              dayTextColor: "#000",
+              monthTextColor: "#000",
+              arrowColor: theme.tint,
+              textDisabledColor: "#999",
               textDayFontSize: 14,
               textMonthFontSize: 16,
               textDayHeaderFontSize: 12,
@@ -104,9 +82,9 @@ export default function Home() {
               selectedDayTextColor: "#fff",
             }}
             current={new Date().toISOString().split("T")[0]}
-            hideExtraDays={true}
+            hideExtraDays
             firstDay={1}
-            enableSwipeMonths={true}
+            enableSwipeMonths
             markedDates={markedDates}
             onDayPress={(day) => {
               setSelectedDate(day.dateString);
@@ -114,8 +92,6 @@ export default function Home() {
               setModalVisible(true);
             }}
           />
-
-          {/* Reminders next to calender*/}
           <View style={styles.remindersContainer}>
             <Text style={[globalStyles.cardText, { color: "#000" }]}>Reminders</Text>
             {reminders
@@ -138,7 +114,7 @@ export default function Home() {
           </View>
         </View>
 
-        {/* premium card */}
+        {/* Premium */}
         {showPremium && (
           <View style={[styles.premiumCard, { backgroundColor: "#fff" }]}>
             <Ionicons name="diamond-outline" size={20} color={theme.tint} />
@@ -149,7 +125,7 @@ export default function Home() {
           </View>
         )}
 
-        {/* quick log cards */}
+        {/* Quick log cards */}
         <View style={styles.row}>
           <TouchableOpacity
             style={[styles.card, { width: cardWidth, backgroundColor: "#fff" }]}
@@ -157,7 +133,6 @@ export default function Home() {
           >
             <Text style={[globalStyles.cardText, { color: theme.tint }]}>📊 Your Analytics</Text>
           </TouchableOpacity>
-
           <TouchableOpacity
             style={[styles.card, { width: cardWidth, backgroundColor: "#fff" }]}
             onPress={() => router.push("/main/reminders")}
@@ -173,7 +148,6 @@ export default function Home() {
           >
             <Text style={[globalStyles.cardText, { color: theme.tint }]}>🏋️ Workout Log</Text>
           </TouchableOpacity>
-
           <TouchableOpacity
             style={[styles.card, { width: cardWidth, backgroundColor: "#fff" }]}
             onPress={() => router.push("/main/nutrition")}
@@ -189,7 +163,6 @@ export default function Home() {
           >
             <Text style={[globalStyles.cardText, { color: theme.tint }]}>💊 Supplement Log</Text>
           </TouchableOpacity>
-
           <TouchableOpacity
             style={[styles.card, { width: cardWidth, backgroundColor: "#fff" }]}
             onPress={() => router.push("/main/waterlog")}
@@ -208,39 +181,31 @@ export default function Home() {
         </View>
       </ScrollView>
 
-      {/* bottom navigation */}
+      {/* Bottom Nav */}
       <View style={[styles.bottomNav, { backgroundColor: "#fff" }]}>
         <TouchableOpacity style={styles.navItem} onPress={() => router.push("/home/index")}>
           <Ionicons name="home-outline" size={26} color={theme.tint} />
           <Text style={[globalStyles.navText, { color: theme.tint }]}>Home</Text>
         </TouchableOpacity>
-
         <TouchableOpacity style={styles.navItem} onPress={() => router.push("/main/analytics")}>
           <Ionicons name="stats-chart-outline" size={26} color={theme.tint} />
           <Text style={[globalStyles.navText, { color: theme.tint }]}>Analytics</Text>
         </TouchableOpacity>
-
         <TouchableOpacity style={styles.navItem} onPress={() => router.push("/main/supplements")}>
           <Ionicons name="medkit-outline" size={26} color={theme.tint} />
           <Text style={[globalStyles.navText, { color: theme.tint }]}>Supplements</Text>
         </TouchableOpacity>
-
         <TouchableOpacity style={styles.navItem} onPress={() => router.push("/profile/AccountSettings")}>
           <Ionicons name="settings-outline" size={26} color={theme.tint} />
           <Text style={[globalStyles.navText, { color: theme.tint }]}>Settings</Text>
         </TouchableOpacity>
       </View>
 
-      {/* floating ai button */}
+      {/* Floating AI Button */}
       <FloatingAIButton />
 
-      {/* reminder modal */}
-      <Modal
-        visible={modalVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setModalVisible(false)}
-      >
+      {/* Reminder Modal */}
+      <Modal visible={modalVisible} transparent animationType="slide" onRequestClose={() => setModalVisible(false)}>
         <View style={styles.modalBackground}>
           <View style={[styles.modalContent, { backgroundColor: "#fff" }]}>
             <Text style={[globalStyles.cardText, { color: "#000" }]}>
@@ -253,26 +218,16 @@ export default function Home() {
               value={currentReminder.text}
               onChangeText={(text) => setCurrentReminder({ ...currentReminder, text })}
             />
-
             <View style={styles.modalButtons}>
               {currentReminder.id && (
-                <TouchableOpacity
-                  style={[styles.modalButton, { backgroundColor: "#FF4D4D" }]}
-                  onPress={() => deleteReminder(currentReminder.id)}
-                >
+                <TouchableOpacity style={[styles.modalButton, { backgroundColor: "#FF4D4D" }]} onPress={() => deleteReminder(currentReminder.id)}>
                   <Text style={[globalStyles.cardText, { color: "#fff" }]}>Delete</Text>
                 </TouchableOpacity>
               )}
-              <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: theme.tint }]}
-                onPress={saveReminder}
-              >
+              <TouchableOpacity style={[styles.modalButton, { backgroundColor: theme.tint }]} onPress={saveReminder}>
                 <Text style={[globalStyles.cardText, { color: "#fff" }]}>Save</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: "#888" }]}
-                onPress={() => setModalVisible(false)}
-              >
+              <TouchableOpacity style={[styles.modalButton, { backgroundColor: "#888" }]} onPress={() => setModalVisible(false)}>
                 <Text style={[globalStyles.cardText, { color: "#fff" }]}>Cancel</Text>
               </TouchableOpacity>
             </View>
@@ -286,23 +241,21 @@ export default function Home() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-
-  // Logo
+  container: { 
+    flex: 1 
+  },
   logoContainer: { 
     alignItems: "center", 
     marginVertical: 10, 
     marginTop: 70 
   },
-
-  // Calendar + Reminders Card
   widgetCard: { 
     borderRadius: 16, 
     padding: 12, 
     marginHorizontal: 20, 
     marginVertical: 10, 
     flexDirection: "row", 
-    backgroundColor: "#fff"
+    backgroundColor: "#fff" 
   },
   remindersContainer: { 
     flex: 1, 
@@ -313,8 +266,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1, 
     borderBottomColor: "#444" 
   },
-
-  // Premium card
   premiumCard: { 
     flexDirection: "row", 
     alignItems: "center", 
@@ -331,8 +282,6 @@ const styles = StyleSheet.create({
   closeButton: { 
     marginLeft: "auto" 
   },
-
-  // Quick log button grid
   row: { 
     flexDirection: "row", 
     justifyContent: "space-between", 
@@ -348,8 +297,6 @@ const styles = StyleSheet.create({
     shadowRadius: 6, 
     elevation: 3 
   },
-
-  // Bottom navigation
   bottomNav: { 
     flexDirection: "row", 
     justifyContent: "space-around", 
@@ -358,13 +305,12 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 20, 
     position: "absolute", 
     bottom: 0, 
-    width: "100%" 
+    width: "100%", 
+    zIndex: 10 
   },
   navItem: { 
     alignItems: "center" 
   },
-
-  // Modal
   modalBackground: { 
     flex: 1, 
     justifyContent: "center", 
@@ -372,14 +318,14 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.6)", 
     paddingHorizontal: 20 
   },
-  modalContent: {
-     width: "100%", 
-     borderRadius: 16, 
-     padding: 20, 
-     shadowColor: "#000", 
-     shadowOpacity: 0.2, 
-     shadowRadius: 6, 
-     elevation: 6 
+  modalContent: { 
+    width: "100%", 
+    borderRadius: 16, 
+    padding: 20, 
+    shadowColor: "#000", 
+    shadowOpacity: 0.2, 
+    shadowRadius: 6, 
+    elevation: 6 
   },
   modalButtons: { 
     flexDirection: "row", 

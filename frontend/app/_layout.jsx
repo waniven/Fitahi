@@ -2,6 +2,7 @@ import { Montserrat_400Regular, Montserrat_700Bold, useFonts } from '@expo-googl
 import { Slot } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
+import AIProvider from './ai/AIContext';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -19,5 +20,10 @@ export default function RootLayout() {
   }, [fontsLoaded]);
 
   if (!fontsLoaded) return null;
-  return <Slot />;
+
+  return (
+    <AIProvider>
+      <Slot />
+    </AIProvider>
+  );
 }

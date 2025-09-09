@@ -1,62 +1,35 @@
-import { useEffect, useRef, useState } from "react";
-import { Animated, Dimensions, Keyboard, StyleSheet, TouchableOpacity, useColorScheme } from "react-native";
-import { Colors } from "../../constants/Colors";
-import AIassistant from "./AIassistant";
-import AIChatbox from "./AIChatbox";
-
-const { width, height } = Dimensions.get("window");
+import { useContext } from "react";
+import { TouchableOpacity, StyleSheet, Text } from "react-native";
+import { AIContext } from "./AIContext";
 
 export default function FloatingAIButton() {
-  const scheme = useColorScheme();
-  const theme = Colors[scheme ?? "light"];
-  const [chatVisible, setChatVisible] = useState(false);
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
-
-  const position = useRef(new Animated.ValueXY({ x: width - 80, y: height - 140 })).current;
-
-  // Adjust button when keyboard shows/hides
-  useEffect(() => {
-    const showSub = Keyboard.addListener("keyboardDidShow", (e) => setKeyboardHeight(e.endCoordinates.height));
-    const hideSub = Keyboard.addListener("keyboardDidHide", () => setKeyboardHeight(0));
-    return () => {
-      showSub.remove();
-      hideSub.remove();
-    };
-  }, []);
+  //access togglechat from context
+  const { toggleChat } = useContext(AIContext);
 
   return (
-    <>
-      {/* Chatbox */}
-      {chatVisible && <AIChatbox onClose={() => setChatVisible(false)} />}
-
-      {/* Floating button: only show if chatbox is not visible */}
-      {!chatVisible && (
-        <Animated.View style={[styles.buttonWrapper, position.getLayout()]}>
-          <TouchableOpacity
-            onPress={() => setChatVisible(true)}
-            activeOpacity={0.8}
-            style={[styles.button, { backgroundColor: theme.tint }]}
-          >
-            <AIassistant size={40} color={theme.background} />
-          </TouchableOpacity>
-        </Animated.View>
-      )}
-    </>
+    //tapple button
+    <TouchableOpacity style={styles.fab} onPress={toggleChat} activeOpacity={0.8}>
+      <Text style={styles.fabText}>💬</Text>
+    </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
-  buttonWrapper: { position: "absolute", zIndex: 999 },
-  button: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
+  fab: {
+    position: "absolute",   //floats above other content
+    bottom: 80,  //distance from bottom
+    right: 24, // distance from the right edge
+    backgroundColor: "#6761d7ff", 
+    width: 64, // circular button
+    height: 64, // circular button height
+    borderRadius: 32, 
+    justifyContent: "center",  //centers vertically
+    alignItems: "center", //center horizontically 
+    elevation: 6,
+    zIndex: 9999, //stays above other Ui layout
+  },
+  fabText: {
+    fontSize: 28,
+    color: "white",
   },
 });

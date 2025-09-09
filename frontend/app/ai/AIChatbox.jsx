@@ -1,125 +1,118 @@
-// AI Chatbox
 import { useEffect, useRef, useState } from "react";
-import {Animated, Dimensions, FlatList, KeyboardAvoidingView, Keyboard, PanResponder, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View, Modal,} from "react-native";
+import { Animated, Dimensions, FlatList, KeyboardAvoidingView, Modal, PanResponder, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View} from "react-native";
 import { Colors } from "../../constants/Colors";
-import globalStyles from "../../styles/globalStyles"; 
+import globalStyles from "../../styles/globalStyles";
+import { AILocal } from "../../constants/AILocal";
 
-const { height } = Dimensions.get("window");
+//screen height for dragging to close
+const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
-export default function AIChatbox({ onClose }) {
+//constants for spacing
+const CHAT_TOP = 80; //distance from top screen
+const CHAT_SIDE = 20;  //horizontal margin
+const CHAT_BOTTOM = 40; // bottom margin/ so it stays above the navigation bar
+const INPUT_ROW_HEIGHT = 56;
+
+export default function AIChatbox({ onClose, messages, setMessages }) {
   const scheme = "dark";
   const theme = Colors[scheme ?? "dark"];
 
-  // State
-  const [messages, setMessages] = useState([
-    {
-      id: "0",
-      text: "Hey there! I'm Darwin. What can I assist you with today?",
-      fromAI: true,
-    },
-  ]);
+  // Live chat starts empty on open
+  const [chatMessages, setChatMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [historyVisible, setHistoryVisible] = useState(false);
+  const [showScrollDown, setShowScrollDown] = useState(false);
 
-  // Animation for drag-down gesture
-  const translateY = useRef(new Animated.Value(0)).current;
-
-  // Ref for scrolling to end
   const flatListRef = useRef(null);
 
-  // PanResponder for swipe down to close
+  // Drag-to-close using PanResponder
+  const translateY = useRef(new Animated.Value(0)).current;
   const panResponder = useRef(
     PanResponder.create({
-      onMoveShouldSetPanResponder: (_, gesture) => gesture.dy > 0,
-      onPanResponderMove: (_, gesture) => {
-        if (gesture.dy > 0) translateY.setValue(gesture.dy);
+      onMoveShouldSetPanResponder: (_, g) => g.dy > 0, //repond to downward drags
+      onPanResponderMove: (_, g) => {
+        if (g.dy > 0) translateY.setValue(g.dy); //move chatbox down
       },
-      onPanResponderRelease: (_, gesture) => {
-        if (gesture.dy > 150) {
+      onPanResponderRelease: (_, g) => {
+        if (g.dy > 150) {
+
+          //animate off screen and close 
           Animated.timing(translateY, {
-            toValue: height,
+            toValue: SCREEN_HEIGHT,
             duration: 200,
             useNativeDriver: true,
-          }).start(onClose); // Close the chatbox
+          }).start(() => onClose?.());
         } else {
+          //else go to back to original position
           Animated.spring(translateY, { toValue: 0, useNativeDriver: true }).start();
         }
       },
     })
   ).current;
 
-  /**
-   * Sends user message and generates a placeholder AI response
-   */
-  const sendMessage = async () => {
-    if (!input.trim()) return;
+  //autoscroll down when new message gets sent
+  useEffect(() => {
+    if (chatMessages.length > 0) {
+      setTimeout(() => {
+        flatListRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }
+  }, [chatMessages]);
 
-    const userMsg = { id: Date.now().toString(), text: input, fromAI: false };
+  //send message and simulate response from ai
+  const sendMessage = async (text) => {
+    const clean = text?.trim();
+    if (!clean) return;
+
+    const userMsg = { id: Date.now().toString(), text: clean, fromAI: false };
+    
+    setChatMessages((prev) => [...prev, userMsg]); //update external state
+    
     setMessages((prev) => [...prev, userMsg]);
+
     setInput("");
     setLoading(true);
 
-    // Simulate AI response delay
-    setTimeout(() => {
-      const aiMsg = {
-        id: (Date.now() + 1).toString(),
-        text: "Conversation coming soon.",
-        fromAI: true,
-      };
+    try {
+      await new Promise((r) => setTimeout(r, 350)); // simulate processing
+      const aiText = await AILocal(clean); //local AI response
+      const aiMsg = { id: (Date.now() + 1).toString(), text: aiText, fromAI: true };
+
+      setChatMessages((prev) => [...prev, aiMsg]);
       setMessages((prev) => [...prev, aiMsg]);
+    } catch (e) {
+      const errMsg = { id: Date.now().toString(), text: "Sorry I can't process your request right now. Please try again later", fromAI: true };
+      setChatMessages((prev) => [...prev, errMsg]);
+      setMessages((prev) => [...prev, errMsg]);
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
-  // Auto-scroll to bottom when messages update
-  useEffect(() => {
-    flatListRef.current?.scrollToEnd({ animated: true });
-  }, [messages]);
-
-  // Scroll to bottom when keyboard appears
-  useEffect(() => {
-    const showSub = Keyboard.addListener("keyboardDidShow", () => {
-      flatListRef.current?.scrollToEnd({ animated: true });
-    });
-    return () => showSub.remove();
-  }, []);
-
-  /**
-   * Renders individual chat bubbles
-   */
+  //render message bubble
   const renderItem = ({ item }) => (
     <View
       style={[
         styles.messageBubble,
         {
-          alignSelf: item.fromAI ? "flex-start" : "flex-end",
-          backgroundColor: item.fromAI ? theme.tint : theme.backgroundAlt,
+          alignSelf: item.fromAI ? "flex-start" : "flex-end", //align left-right
+          backgroundColor: item.fromAI ? theme.tint : "#007AFF",  //ai colour and user colour
         },
       ]}
     >
-      <Text
-        style={[
-          { color: item.fromAI ? theme.background : theme.textPrimary },
-          globalStyles.textRegular, 
-        ]}
-      >
+      <Text style={[{ color:"#FFF" }, globalStyles.textRegular]}>
         {item.text}
       </Text>
     </View>
   );
 
   return (
-    <>
-      {/* Chatbox container with drag-down gesture */}
-      <Animated.View
-        style={[styles.container, { backgroundColor: theme.background, transform: [{ translateY }] }]}
-        {...panResponder.panHandlers}
-      >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          keyboardVerticalOffset={Platform.OS === "ios" ? 80 : 0}
-          style={{ flex: 1 }}
+    <Modal visible animationType="slide" transparent>
+      <View style={styles.overlay}>
+        <Animated.View
+          style={[styles.container, { backgroundColor: theme.background, transform: [{ translateY }] }]}
+          {...panResponder.panHandlers}
         >
           {/* Header */}
           <View style={styles.header}>
@@ -131,75 +124,92 @@ export default function AIChatbox({ onClose }) {
             </TouchableOpacity>
           </View>
 
-          {/* Messages list */}
+          {/* Chat Messages */}
           <FlatList
             ref={flatListRef}
-            data={messages}
+            data={chatMessages} 
             keyExtractor={(item) => item.id}
             renderItem={renderItem}
-            contentContainerStyle={{ padding: 12, paddingBottom: 80 }}
+            contentContainerStyle={{ padding: 12, paddingBottom: INPUT_ROW_HEIGHT + 24 }}
+            keyboardShouldPersistTaps="handled"
+            onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+            onScroll={(e) => {
+              const offsetY = e.nativeEvent.contentOffset.y;
+              const contentHeight = e.nativeEvent.contentSize.height;
+              const layoutHeight = e.nativeEvent.layoutMeasurement.height;
+              const isAtBottom = offsetY + layoutHeight >= contentHeight - 50;
+              setShowScrollDown(!isAtBottom);
+            }}
+            scrollEventThrottle={100}
           />
 
-          {/* Loading indicator */}
+          {/* Scroll-to-bottom button */}
+          {showScrollDown && (
+            <TouchableOpacity
+              style={[styles.scrollButton, { backgroundColor: theme.tint }]}
+              onPress={() => flatListRef.current?.scrollToEnd({ animated: true })}
+            >
+              <Text style={[globalStyles.textBold, { color: theme.background, fontSize: 16 }]}>↓</Text>
+            </TouchableOpacity>
+          )}
+
+          {/* Typing indicator */}
           {loading && (
-            <Text style={[globalStyles.textRegular, { color: theme.tint, margin: 8 }]}>
+            <Text style={[globalStyles.textRegular, { color: theme.tint, marginHorizontal: 12 }]}>
               Darwin is typing...
             </Text>
           )}
 
-          {/* Input + buttons */}
-          <View style={[styles.inputContainer, { paddingBottom: Platform.OS === "ios" ? 16 : 8 }]}>
-            <TextInput
-              style={[styles.input, { backgroundColor: theme.backgroundAlt, color: theme.textPrimary }, globalStyles.textRegular]}
-              placeholder="Type a message..."
-              placeholderTextColor={theme.textSecondary}
-              value={input}
-              onChangeText={setInput}
-              onSubmitEditing={sendMessage}
-            />
+          {/* Input Row */}
+          <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} keyboardVerticalOffset={CHAT_TOP}>
+            <View style={[styles.inputBar, { backgroundColor: "#020114ff" }]}>
+              <TextInput
+                style={[styles.input, { backgroundColor: theme.backgroundAlt, color: "#FFF" }, globalStyles.textRegular]}
+                placeholder="Type your message..."
+                placeholderTextColor={theme.textSecondary}
+                value={input}
+                onChangeText={setInput}
+                onSubmitEditing={() => sendMessage(input)}
+                returnKeyType="send"
+              />
+              <TouchableOpacity style={[styles.iconBtn, { backgroundColor: theme.tint }]} onPress={() => setHistoryVisible(true)}>
+                <Text style={[globalStyles.textBold, { color: theme.background, fontSize: 18 }]}>≡</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.sendButton, { backgroundColor: theme.tint }]} onPress={() => sendMessage(input)}>
+                <Text style={[globalStyles.textBold, { color: theme.background }]}>Send</Text>
+              </TouchableOpacity>
+            </View>
+          </KeyboardAvoidingView>
+        </Animated.View>
+      </View>
 
-            {/* Past Conversations Button */}
-            <TouchableOpacity style={styles.optionsButton} onPress={() => setHistoryVisible(true)}>
-              <View style={styles.dotsContainer}>
-                <View style={styles.dot} />
-                <View style={styles.dot} />
-                <View style={styles.dot} />
-              </View>
-            </TouchableOpacity>
-
-            {/* Send Button */}
-            <TouchableOpacity style={[styles.sendButton, { backgroundColor: theme.tint }]} onPress={sendMessage}>
-              <Text style={[globalStyles.textBold, { color: theme.background }]}>Send</Text>
-            </TouchableOpacity>
-          </View>
-        </KeyboardAvoidingView>
-      </Animated.View>
-
-      {/* Past Conversations Modal */}
-      <Modal visible={historyVisible} animationType="slide" transparent={true}>
+      {/* Past Conversations */}
+      <Modal visible={historyVisible} animationType="fade" transparent>
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: theme.backgroundAlt }]}>
-            <Text style={[styles.modalTitle, globalStyles.textBold, { color: theme.textPrimary }]}>
-              Past Conversations
+            <Text style={[globalStyles.textBold, { color: theme.textPrimary, fontSize: 20, marginBottom: 12 }]}>
+              History
             </Text>
-            {/* past conversation need backend for sving*/}
-            <TouchableOpacity style={styles.modalClose} onPress={() => setHistoryVisible(false)}>
+            <TouchableOpacity onPress={() => setHistoryVisible(false)} style={{ paddingVertical: 12, alignItems: "center" }}>
               <Text style={[globalStyles.textBold, { color: "red" }]}>Close</Text>
             </TouchableOpacity>
           </View>
         </View>
       </Modal>
-    </>
+    </Modal>
   );
 }
 
 const styles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    paddingTop: CHAT_TOP,
+    paddingBottom: CHAT_BOTTOM,
+    paddingHorizontal: CHAT_SIDE,
+    justifyContent: "center",
+  },
   container: {
-    position: "absolute",
-    top: 80,
-    left: 20,
-    right: 20,
-    bottom: 40,
+    flex: 1,
     borderRadius: 20,
     overflow: "hidden",
     borderWidth: 1,
@@ -207,7 +217,8 @@ const styles = StyleSheet.create({
     shadowColor: "#000",
     shadowOpacity: 0.3,
     shadowRadius: 8,
-    elevation: 6,
+    elevation: 8,
+    backgroundColor: "#000",
   },
   header: {
     flexDirection: "row",
@@ -216,8 +227,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#333",
   },
-  headerText: { 
-    fontSize: 18, 
+  headerText: {
+    fontSize: 18,
   },
   messageBubble: {
     padding: 12,
@@ -225,39 +236,43 @@ const styles = StyleSheet.create({
     marginVertical: 4,
     maxWidth: "80%",
   },
-  inputContainer: { 
-    flexDirection: "row", 
-    padding: 8 
+  inputBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+    borderTopWidth: 1,
+    borderTopColor: "#333",
   },
-  input: { 
-    flex: 1, 
-    borderRadius: 20, 
-    paddingHorizontal: 12, 
-    height: 40 
+  input: {
+    flex: 1,
+    height: 40,
+    borderRadius: 20,
+    paddingHorizontal: 12,
+  },
+  iconBtn: {
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    height: 40,
+    marginLeft: 8,
   },
   sendButton: {
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 20,
     paddingHorizontal: 16,
+    height: 40,
     marginLeft: 8,
   },
-  optionsButton: {
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 12,
-    marginRight: 8,
-  },
-  dotsContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    width: 14,
-  },
-  dot: { 
-    width: 4,
-    height: 4, 
-    borderRadius: 2, 
-    backgroundColor: "#fff" 
+  scrollButton: {
+    position: "absolute",
+    right: 16,
+    bottom: INPUT_ROW_HEIGHT + 60,
+    padding: 10,
+    borderRadius: 20,
+    elevation: 4,
   },
   modalOverlay: {
     flex: 1,
@@ -268,13 +283,5 @@ const styles = StyleSheet.create({
   modalContent: {
     borderRadius: 16,
     padding: 16,
-  },
-  modalTitle: { 
-    fontSize: 20, 
-    marginBottom: 12 
-  },
-  modalClose: { 
-    paddingVertical: 12, 
-    alignItems: "center" 
   },
 });

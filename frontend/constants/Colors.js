@@ -2,7 +2,7 @@
 
 export const Colors = {
   light: {
-    primary: '#00CFFF',       // Electric Blue - main CTA color
+    primary: '#00CFFF',       // Electric Blue 
     primaryDark: '#0099CC',
     primaryLight: '#66E0FF',
 

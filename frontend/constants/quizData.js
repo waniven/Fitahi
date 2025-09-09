@@ -2,7 +2,7 @@
 export const questions = [
 
   { id: 'Goal', question: 'What is your main goal?', options: ['Lose weight', 'Build muscle', 'Endurance'] },
-  {id: 'Experience', question:   'What is your trainingg level?', options: ['Beginner', 'intermediate', 'Advanced']},
+  {id: 'Experience', question:   'What is your training level?', options: ['Beginner', 'intermediate', 'Advanced']},
   { id: 'Time training', question: 'how many days per week do you train?', options: ['1-2', '3-4', '5-6', '7'] },
   { id: 'Time', question: 'How long do you usually train?', options: ['10-15 min', '15-30 min', '30-45 min', '45-60 min','1-2 hours'] },
   {id:  'Preference', question: 'Do you prefer more upper body or lower body days?', options: ['Upper Body', 'Lower Body', 'Balanced'] },
