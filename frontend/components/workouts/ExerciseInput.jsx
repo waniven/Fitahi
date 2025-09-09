@@ -13,7 +13,8 @@ import { Colors } from "@/constants/Colors";
 import { Font } from "@/constants/Font";
 import ModalCloseButton from "../ModalCloseButton";
 import PrimaryButton from "../PrimaryButton";
-import Exercise from "./models/Exercise"; 
+import Exercise from "./models/Exercise";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // ExerciseInput let user set exercises in a workout
 function ExerciseInput(props) {
@@ -23,6 +24,12 @@ function ExerciseInput(props) {
   const [exercises, setExercises] = useState([]);
   const [showErrors, setShowErrors] = useState(false);
 
+  // Set the size of the modal content and scrollview
+  const insets = useSafeAreaInsets();
+  const BTN_HEIGHT = 56; //Height of the button
+  const EXTRA_BOTTOM = 43; 
+  const bottomGutter = BTN_HEIGHT + EXTRA_BOTTOM + insets.bottom + 8;
+
   const makeExercise = () => ({
     id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
     name: "",
@@ -31,7 +38,6 @@ function ExerciseInput(props) {
     weight: "",
     rest: "",
     duration: "",
-    
   });
 
   const fromModelToForm = (ex) => ({
@@ -45,7 +51,6 @@ function ExerciseInput(props) {
     imageUrl: ex?.imageUrl ?? "",
   });
 
- 
   useEffect(() => {
     if (!props.visible) return;
     const existing = props.workout?.exercises;
@@ -101,25 +106,31 @@ function ExerciseInput(props) {
     // Validation: require name, reps, sets, rest for each card
     for (let i = 0; i < exercises.length; i++) {
       const ex = exercises[i];
-      if (!ex.name.trim() || !ex.reps.trim() || !ex.sets.trim() || !ex.rest.trim()) {
-        return; // errors will show under fields
+      if (
+        !ex.name.trim() ||
+        !ex.reps.trim() ||
+        !ex.sets.trim() ||
+        !ex.rest.trim()
+      ) {
+        return; // Errors will show under fields
       }
     }
 
-    const payload = exercises.map((ex) =>
-      new Exercise(
-        ex.id,
-        ex.name.trim(),
-        toNumber(ex.sets),
-        toNumber(ex.reps),
-        toNumber(ex.duration),
-        toNumber(ex.weight),
-        toNumber(ex.rest),
-        ex.imageUrl
-      )
+    const payload = exercises.map(
+      (ex) =>
+        new Exercise(
+          ex.id,
+          ex.name.trim(),
+          toNumber(ex.sets),
+          toNumber(ex.reps),
+          toNumber(ex.duration),
+          toNumber(ex.weight),
+          toNumber(ex.rest),
+          ex.imageUrl
+        )
     );
 
-    props.onSave?.(payload);  // send Exercise[] to parent
+    props.onSave?.(payload); // Send Exercise[] to parent
     resetForm();
     props.onCancel?.();
   }
@@ -128,7 +139,7 @@ function ExerciseInput(props) {
     styles.input,
     {
       backgroundColor: theme.textPrimary,
-      color: "#0B2239",
+      color: theme.background,
       borderColor: theme.overlayLight,
       fontFamily: Font.regular,
     },
@@ -139,10 +150,16 @@ function ExerciseInput(props) {
   ];
 
   return (
-    <Modal visible={props.visible} animationType="slide" transparent>
+    
+    <Modal
+      visible={props.visible}
+      animationType="slide"
+      transparent
+      statusBarTranslucent
+    >
       <View style={styles.modalOverlay}>
         <View
-          style={[styles.modalContent, { backgroundColor: theme.textPrimary }]}
+          style={[styles.modalContent, { backgroundColor: theme.textPrimary, paddingBottom: bottomGutter }]}
         >
           <ModalCloseButton onPress={onCancel} />
 
@@ -165,7 +182,7 @@ function ExerciseInput(props) {
 
           <ScrollView
             style={{ flex: 1 }}
-            contentContainerStyle={{ paddingBottom: 140 }}
+            contentContainerStyle={{ paddingBottom: 40 }}
             showsVerticalScrollIndicator
           >
             {exercises.map((ex, idx) => {
@@ -182,7 +199,11 @@ function ExerciseInput(props) {
                   <Text
                     style={[
                       styles.cardTitle,
-                      { color: theme.background, fontFamily: Font.bold, fontSize: 16 },
+                      {
+                        color: theme.background,
+                        fontFamily: Font.bold,
+                        fontSize: 16,
+                      },
                     ]}
                   >
                     EXERCISE {idx + 1}
@@ -196,13 +217,21 @@ function ExerciseInput(props) {
                     fontFamily={Font.regular}
                     style={[
                       ...fieldInputStyle,
-                      nameError && { borderColor: theme.error, marginBottom: 6 },
+                      nameError && {
+                        borderColor: theme.error,
+                        marginBottom: 6,
+                      },
                     ]}
                     value={ex.name}
                     onChangeText={(t) => updateExercise(ex.id, "name", t)}
                   />
                   {nameError ? (
-                    <Text style={[styles.err, { color: theme.error, fontFamily: Font.regular }]}>
+                    <Text
+                      style={[
+                        styles.err,
+                        { color: theme.error, fontFamily: Font.regular },
+                      ]}
+                    >
                       Required
                     </Text>
                   ) : null}
@@ -217,7 +246,10 @@ function ExerciseInput(props) {
                         keyboardType="numeric"
                         style={[
                           ...fieldInputStyle,
-                          repsError && { borderColor: theme.error, marginBottom: 6 },
+                          repsError && {
+                            borderColor: theme.error,
+                            marginBottom: 6,
+                          },
                         ]}
                         value={ex.reps}
                         onChangeText={(t) => updateExercise(ex.id, "reps", t)}
@@ -237,7 +269,10 @@ function ExerciseInput(props) {
                         keyboardType="numeric"
                         style={[
                           ...fieldInputStyle,
-                          setsError && { borderColor: theme.error, marginBottom: 6 },
+                          setsError && {
+                            borderColor: theme.error,
+                            marginBottom: 6,
+                          },
                         ]}
                         value={ex.sets}
                         onChangeText={(t) => updateExercise(ex.id, "sets", t)}
@@ -272,7 +307,10 @@ function ExerciseInput(props) {
                         keyboardType="numeric"
                         style={[
                           ...fieldInputStyle,
-                          restError && { borderColor: theme.error, marginBottom: 6 },
+                          restError && {
+                            borderColor: theme.error,
+                            marginBottom: 6,
+                          },
                         ]}
                         value={ex.rest}
                         onChangeText={(t) => updateExercise(ex.id, "rest", t)}
@@ -306,13 +344,19 @@ function ExerciseInput(props) {
                       activeOpacity={0.7}
                       style={[
                         styles.deleteBtn,
-                        { borderColor: theme.error, backgroundColor: theme.error },
+                        {
+                          borderColor: theme.error,
+                          backgroundColor: theme.error,
+                        },
                       ]}
                       accessibilityRole="button"
                       accessibilityLabel={`Delete exercise ${idx + 1}`}
                     >
                       <Text
-                        style={{ color: theme.textPrimary, fontFamily: Font.bold }}
+                        style={{
+                          color: theme.textPrimary,
+                          fontFamily: Font.bold,
+                        }}
                       >
                         Delete
                       </Text>
@@ -339,7 +383,7 @@ function ExerciseInput(props) {
             title="Save Workout"
             onPress={onSave}
             floating
-            extraBottom={20}
+            extraBottom={40}
             insetLR={14}
             tabBarHeight={0}
             style={{ width: "100%" }}
@@ -355,7 +399,7 @@ export default ExerciseInput;
 const styles = StyleSheet.create({
   modalOverlay: { flex: 1, justifyContent: "flex-end" },
   modalContent: {
-    height: "93%",
+    height: "90%",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 14,

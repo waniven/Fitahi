@@ -6,6 +6,7 @@ import ModalCloseButton from "../ModalCloseButton";
 import PrimaryButton from "../PrimaryButton";
 import { useEffect } from "react";
 
+
 import ExerciseInput from "./ExerciseInput";
 
 import {
@@ -31,6 +32,7 @@ function WorkoutInput(props) {
   const [showErrors, setShowErrors] = useState(false);
   const [workout, setWorkout] = useState(null);
   const [modalIsVisible, setModalIsVisible] = useState(false);
+  
 
   useEffect(() => {
     if (props.visible) {
@@ -74,7 +76,7 @@ function WorkoutInput(props) {
   function workoutTypeInputHandler(enteredText) {
     setWorkoutType(enteredText);
   }
-  
+
   // toggleDay sets selected days
   function toggleDay(idx) {
     setSelectedDays((prev) =>
@@ -162,7 +164,13 @@ function WorkoutInput(props) {
   const isDayInvalid = showErrors && selectedDays.length === 0;
 
   return (
-    <Modal visible={props.visible} animationType="slide" transparent={true}>
+    
+    <Modal
+      visible={props.visible}
+      animationType="slide"
+      transparent
+      statusBarTranslucent
+    >
       <View style={styles.modalOverlay}>
         <View
           style={[styles.modalContent, { backgroundColor: theme.textPrimary }]}
@@ -357,7 +365,7 @@ function WorkoutInput(props) {
             title="Next"
             onPress={addWorkoutHandler}
             floating
-            extraBottom={20}
+            extraBottom={40}
             tabBarHeight={0}
             insetLR={14}
             // Full width
@@ -385,10 +393,10 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     justifyContent: "flex-end", // Push content to bottom
+    
   },
   modalContent: {
-    height: "93%",
-    backgroundColor: "#151824",
+    height: "90%",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 14,

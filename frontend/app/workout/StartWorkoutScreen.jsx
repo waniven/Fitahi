@@ -78,16 +78,10 @@ export default function StartWorkoutScreen({ route, navigation }) {
 
   // Return a new completed list as if we credited this phase
   const getCompletedAfterPhase = (phase, currentCompleted) => {
-    if (!phase) return currentCompleted;
-    if (!isLastWorkOfExercise(phase)) return currentCompleted;
-    const name = exercises[phase.exerciseIndex]?.name;
-    if (name && !currentCompleted.includes(name)) {
-      return [...currentCompleted, name];
-    }
-    return currentCompleted;
+    if (!phase || !isLastWorkOfExercise(phase)) return currentCompleted;
+    const name = exercises[phase.exerciseIndex]?.name?.trim();
+    return name ? [...currentCompleted, name] : currentCompleted;
   };
-
-  
 
   const onNext = () => {
     if (!currentPhase) return;
@@ -132,17 +126,10 @@ export default function StartWorkoutScreen({ route, navigation }) {
   // Up Next: names of exercises after current exercise index
   const nextExerciseNames = (() => {
     if (!currentPhase) return [];
-    const afterIdx = currentPhase.exerciseIndex + 1;
-    const names = [];
-    const seen = new Set();
-    for (let i = afterIdx; i < exercises.length; i++) {
-      const n = exercises[i]?.name ?? "";
-      if (n && !seen.has(n)) {
-        seen.add(n);
-        names.push(n);
-      }
-    }
-    return names;
+    const afterIdx = (currentPhase.exerciseIndex ?? -1) + 1;
+    return exercises
+      .slice(afterIdx)
+      .map((ex, i) => ex?.name || `Exercise ${afterIdx + i + 1}`);
   })();
 
   const runIcon = isRunning ? "pause" : "play-arrow";
@@ -366,8 +353,6 @@ function fmtHMS(seconds) {
   const sec = s % 60;
   return `${sign}${pad2(h)}:${pad2(m)}:${pad2(sec)}`;
 }
-
-
 
 const styles = StyleSheet.create({
   screen: { flex: 1, paddingHorizontal: 16, paddingTop: 16 },

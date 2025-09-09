@@ -32,7 +32,7 @@ export default function WorkoutResultScreen({ route, navigation }) {
   const bottomReserve = insets.bottom + EXTRA_BOTTOM + BUTTON_HEIGHT;
 
   return (
-    <View style={[styles.screen, { backgroundColor: theme.background }]}>
+    <View style={[styles.screen, { backgroundColor: theme.background, paddingBottom: 110 }]}>
       {/* Top (non-scroll) */}
       <View style={styles.topSection}>
         <Text
