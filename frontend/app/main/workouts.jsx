@@ -8,6 +8,7 @@ import CreateWorkout from "../workout/CreateWorkoutScreen";
 import StartWorkoutScreen from "../workout/StartWorkoutScreen";
 import WorkoutResultScreen from "../workout/WorkoutResultScreen";
 
+
 const Stack = createNativeStackNavigator();
 
 

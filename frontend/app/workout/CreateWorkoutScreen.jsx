@@ -13,59 +13,53 @@ import WorkoutInput from "../../components/workouts/WorkoutInput";
 import ListCardItem from "@/components/ListCardItem";
 import { Colors } from "../../constants/Colors";
 import { Font } from "@/constants/Font";
-import { useLayoutEffect } from "react";
+import { useContext, useLayoutEffect } from "react";
 import Fab from "@/components/FloatingActionButton";
 import BackButton from "@/components/BackButton";
 import { Ionicons } from "@expo/vector-icons";
 import globalStyles from "../../styles/globalStyles";
+import { AIContext } from "../ai/AIContext";
 import { useRouter } from "expo-router";
-import AIassistant from "../ai/AIassistant";
-import AIChatbox from "../ai/AIChatbox";
-import { Modal } from "react-native";
 
 // CreateWorkout creates a workout which pops up a workout input and display the created workout
 function CreateWorkout({ navigation }) {
   const scheme = useColorScheme();
   const theme = Colors[scheme ?? "light"];
+  const { toggleChat } = useContext(AIContext);
   const router = useRouter();
-  const [aiOpen, setAiOpen] = useState(false);
 
   //Back button to go back to Homepage
   useLayoutEffect(() => {
-  navigation.setOptions({
-    headerLeft: () => <BackButton to="/main" />,
-    headerRight: () => (
-      <TouchableOpacity
-        onPress={() => setAiOpen(true)}
-        accessibilityRole="button"
-        accessibilityLabel="Open AI assistant"
-        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        activeOpacity={0.8}
-        style={{ paddingRight: 8 }}
-      >
-        {/* Circular button with tint background and AI icon in theme.background */}
-        <View
-          style={{
-            width: 36,
-            height: 36,
-            borderRadius: 18,
-            backgroundColor: theme.tint,
-            alignItems: "center",
-            justifyContent: "center",
-            // Subtle shadow like your floating one
-            shadowColor: "#000",
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.25,
-            shadowRadius: 4,
-            elevation: 5,
-          }}
+    navigation.setOptions({
+      headerLeft: () => <BackButton to="/main" />,
+      headerRight: () => (
+        <TouchableOpacity
+          onPress={toggleChat}
+          activeOpacity={0.85}
+          style={{ paddingRight: 8 }}
         >
-          <AIassistant size={26} color={theme.background} />
-        </View>
-      </TouchableOpacity>
-    ),
-  });
-}, [navigation, theme]);
+          <View
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 18,
+              backgroundColor: "#6761d7ff",
+              alignItems: "center",
+              justifyContent: "center",
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.25,
+              shadowRadius: 4,
+              elevation: 5,
+            }}
+          >
+            {/* C) Emoji fallback */}
+            <Text style={{ color: theme.background, fontSize: 18 }}>💬</Text>
+          </View>
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation, theme, toggleChat]);
 
   const [modalIsVisible, setModalIsVisible] = useState(false);
   const [workout, setWorkout] = useState([]);
@@ -235,16 +229,6 @@ function CreateWorkout({ navigation }) {
           </Text>
         </TouchableOpacity>
       </View>
-
-      {/* floating ai button */}
-      <Modal
-        visible={aiOpen}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setAiOpen(false)}
-      >
-        <AIChatbox onClose={() => setAiOpen(false)} />
-      </Modal>
     </View>
   );
 }
