@@ -58,7 +58,7 @@ function WorkoutInput(props) {
     setModalIsVisible(false);
   }
 
-  //Reset form
+  // Reset form
   function resetForm() {
     setEnteredWorkoutText("");
     setWorkoutType("");
@@ -66,29 +66,29 @@ function WorkoutInput(props) {
     setShowErrors(false);
   }
 
-  //workoutInputHandler sets workout name
+  // workoutInputHandler sets workout name
   function workoutInputHandler(enteredText) {
     setEnteredWorkoutText(enteredText);
   }
-  //workoutTypeInputHandler sets selected workout type
+  // workoutTypeInputHandler sets selected workout type
   function workoutTypeInputHandler(enteredText) {
     setWorkoutType(enteredText);
   }
   
-  //toggleDay sets selected days
+  // toggleDay sets selected days
   function toggleDay(idx) {
     setSelectedDays((prev) =>
       prev.includes(idx) ? prev.filter((i) => i !== idx) : [...prev, idx]
     );
   }
 
-  //addWorkoutHandler checks all fields are filled and saved a temporary workout
+  // addWorkoutHandler checks all fields are filled and saved a temporary workout
   function addWorkoutHandler() {
     const isNameValid = enteredWorkoutText.trim().length > 0;
     const isTypeValid = !!selectedWorkoutType;
     const isDaysValid = selectedDays.length > 0;
 
-    //show highlights after 1st attempt
+    // show highlights after 1st attempt
     setShowErrors(true);
     if (!isNameValid || !isTypeValid || !isDaysValid) {
       const missing = [];
@@ -122,7 +122,7 @@ function WorkoutInput(props) {
     startAddExercise();
   }
 
-  //cancelAddWorkout let user cancel workout and go back to Workout Log
+  // cancelAddWorkout let user cancel workout and go back to Workout Log
   function cancelAddWorkout() {
     setEnteredWorkoutText("");
     setWorkoutType("");
@@ -133,7 +133,7 @@ function WorkoutInput(props) {
     props.onCancel?.();
   }
 
-  //onSaveExercises saves all exercises on the draft workout
+  // onSaveExercises saves all exercises on the draft workout
   function onSaveExercises(payload) {
     // Merge exercises into the current draft (add or edit)
     const base = workout ?? {};
@@ -147,10 +147,10 @@ function WorkoutInput(props) {
 
     setWorkout(updatedWorkout);
     setShowErrors(false);
-    props.onAddWorkout(updatedWorkout); // <-- use the updated object, not stale state
-    setModalIsVisible(false); // close ExerciseInput
-    resetForm(); // clear WorkoutInput fields
-    props.onCancel?.(); // close WorkoutInput modal
+    props.onAddWorkout(updatedWorkout); // <-- Use the updated object
+    setModalIsVisible(false); // Close ExerciseInput
+    resetForm(); // Clear WorkoutInput fields
+    props.onCancel?.(); // Close WorkoutInput modal
   }
 
   const TextFont = {
@@ -347,7 +347,7 @@ function WorkoutInput(props) {
 
           <ExerciseInput
             visible={modalIsVisible}
-            workout={workout} // when editing, contains existing exercises
+            workout={workout} // When editing, contains existing exercises
             onCancel={endAddExercise}
             onSave={onSaveExercises}
           />
@@ -360,7 +360,7 @@ function WorkoutInput(props) {
             extraBottom={20}
             tabBarHeight={0}
             insetLR={14}
-            // full width
+            // Full width
             style={{ width: "100%" }}
           />
         </View>
@@ -384,7 +384,7 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    justifyContent: "flex-end", // push content to bottom
+    justifyContent: "flex-end", // Push content to bottom
   },
   modalContent: {
     height: "93%",

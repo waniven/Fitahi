@@ -23,7 +23,7 @@ export default function PrimaryButton({
   rightIcon,
   activeOpacity = 0.7,
 
-  //floating behaviour
+  // Floating behaviour
   floating = false,      // set true to anchor above nav
   extraBottom = 16,      // space above bottom
   tabBarHeight = 0,      // pass tab bar height if visible

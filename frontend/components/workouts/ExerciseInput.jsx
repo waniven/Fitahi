@@ -15,7 +15,7 @@ import ModalCloseButton from "../ModalCloseButton";
 import PrimaryButton from "../PrimaryButton";
 import Exercise from "./models/Exercise"; 
 
-//ExerciseInput let user set exercises in a workout
+// ExerciseInput let user set exercises in a workout
 function ExerciseInput(props) {
   const scheme = useColorScheme();
   const theme = Colors[scheme ?? "light"];
@@ -60,42 +60,42 @@ function ExerciseInput(props) {
     }
   }, [props.visible, props.workout]);
 
-  //resetForm allows to reset form to original state
+  // resetForm allows to reset form to original state
   function resetForm() {
     setExercises([makeExercise()]);
     setShowErrors(false);
   }
 
-  //updateExercise updates the current exercises with new values
+  // updateExercise updates the current exercises with new values
   function updateExercise(id, field, value) {
     setExercises((curr) =>
       curr.map((ex) => (ex.id === id ? { ...ex, [field]: value } : ex))
     );
   }
 
-  //addExerciseCard adds each exercise input into an array
+  // addExerciseCard adds each exercise input into an array
   function addExerciseCard() {
     setExercises((curr) => [...curr, makeExercise()]);
   }
 
-  //removeExerciseCard removes a selected exercise card
+  // removeExerciseCard removes a selected exercise card
   function removeExerciseCard(id) {
     setExercises((curr) => curr.filter((ex) => ex.id !== id));
   }
 
-  //onCancel allows to click X to go back to Workout Input
+  // onCancel allows to click X to go back to Workout Input
   function onCancel() {
     resetForm();
     props.onCancel?.();
   }
 
-  //toNumber converts value to a number
+  // toNumber converts value to a number
   function toNumber(v) {
     const n = Number(v);
     return Number.isFinite(n) ? n : 0;
   }
 
-  //onSave checks each exercise form is valid and save them into an array and send back to the parent
+  // onSave checks each exercise form is valid and save them into an array and send back to the parent
   function onSave() {
     setShowErrors(true);
     // Validation: require name, reps, sets, rest for each card
@@ -288,7 +288,7 @@ function ExerciseInput(props) {
                   {/* Duration + Delete */}
                   <View style={[styles.row, { alignItems: "flex-end" }]}>
                     <View style={[styles.col, { flex: 1 }]}>
-                      <Text style={labelStyle}>DURATION</Text>
+                      <Text style={labelStyle}>DURATION/SET</Text>
                       <TextInput
                         placeholder="Seconds"
                         placeholderTextColor="#4C5A6A"

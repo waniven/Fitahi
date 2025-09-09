@@ -8,7 +8,7 @@ export default function ModalCloseButton({
   size = 26,
   top = 10,
   right = 10,
-  showBg = false,  // subtle bg for contrast if needed
+  showBg = false,  // Subtle bg for contrast if needed
   hitSlop = { top: 8, right: 8, bottom: 8, left: 8 },
 }) {
   const scheme = useColorScheme();

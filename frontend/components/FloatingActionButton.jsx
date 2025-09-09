@@ -68,7 +68,7 @@ export default function Fab({
 }
 
 const styles = StyleSheet.create({
-  // full-width bar to center the FAB horizontally when floating
+  // Full-width bar to center the FAB horizontally when floating
   container: {
     position: "absolute",
     left: 0,

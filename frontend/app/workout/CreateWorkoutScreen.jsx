@@ -7,38 +7,50 @@ import {
   useColorScheme,
   Dimensions,
   Platform,
+  TouchableOpacity,
 } from "react-native";
-import WorkoutInput from "../../../components/workouts/WorkoutInput";
+import WorkoutInput from "../../components/workouts/WorkoutInput";
 import ListCardItem from "@/components/ListCardItem";
-import { Colors } from "../../../constants/Colors";
+import { Colors } from "../../constants/Colors";
 import { Font } from "@/constants/Font";
+import { useLayoutEffect } from "react";
 import Fab from "@/components/FloatingActionButton";
+import BackButton from "@/components/BackButton";
 
-// Create a workout which pops up a workout input and display the created workout
+// CreateWorkout creates a workout which pops up a workout input and display the created workout
 function CreateWorkout({ navigation }) {
   const scheme = useColorScheme();
   const theme = Colors[scheme ?? "light"];
+
+  // Back button to go back to Home
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerLeft: () => <BackButton to="/main" />,
+    });
+  }, [navigation]);
+
   const [modalIsVisible, setModalIsVisible] = useState(false);
   const [workout, setWorkout] = useState([]);
   const [selectedWorkout, setSelectedWorkout] = useState('');
+ 
   
 
-  const NAV_BAR_HEIGHT = 64; // adjust to the actual nav height
-  const BOX_MAX_HEIGHT = Math.round(Dimensions.get("window").height * 0.7); // box height cap
+  const NAV_BAR_HEIGHT = 64; // Adjust to the actual nav height
+  const BOX_MAX_HEIGHT = Math.round(Dimensions.get("window").height * 0.7); // Box height cap
 
   const isEmpty = workout.length === 0;
 
-  // Controls whether workout input box pops up
+  // startaddWorkoutName controls whether workout input box pops up
   function startaddWorkoutName() {
     setModalIsVisible(true);
   }
 
-  //Turns off workout input box after creating a workout
+  // endaddWorkoutName turns off workout input box after creating a workout
   function endaddWorkoutName() {
     setModalIsVisible(false);
   }
 
-  //saveWorkout saves the created workout to the defined list
+  // saveWorkout saves the created workout to the defined list
   function saveWorkout(workout) {
     if (selectedWorkout) {
       // Edit mode → replace existing workout
@@ -50,24 +62,24 @@ function CreateWorkout({ navigation }) {
       setWorkout((current) => [...current, workout]);
     }
 
-    setSelectedWorkout(null); // reset after save
+    setSelectedWorkout(null); // Reset after save
     endaddWorkoutName();
   }
 
-  //deleteWorkoutHandler deletes a workout based on a supplied workout's id
+  // deleteWorkoutHandler deletes a workout based on a supplied workout's id
   function deleteWorkoutHandler(id) {
     setWorkout((currentworkout) => {
       return currentworkout.filter((workout) => workout.id !== id);
     });
   }
 
-  //startEditWorkout sets the current selected workout and open workout input to edit
+  // startEditWorkout sets the current selected workout and open workout input to edit
   function startEditWorkout(item) {
     setSelectedWorkout(item);
     setModalIsVisible(true);
   }
 
-  //Render item: list all created workouts and allow to click on
+  // Render item: list all created workouts and allow to click on
   function renderItemData({ item }) {
     function startWorkoutSreen(item) {
       navigation.navigate("StartWorkoutScreen", { workoutDetail: item });
@@ -96,7 +108,7 @@ function CreateWorkout({ navigation }) {
         workoutToEdit={selectedWorkout}
         onAddWorkout={saveWorkout}
         onCancel={() => {
-          setSelectedWorkout(null);      // reset if cancelled
+          setSelectedWorkout(null);      // Reset if cancelled
           endaddWorkoutName();
         }}
       />
@@ -110,7 +122,7 @@ function CreateWorkout({ navigation }) {
             renderItem={renderItemData}
             contentContainerStyle={[
               styles.listContent,
-              { paddingBottom: NAV_BAR_HEIGHT + 100 }, // room for FAB + nav
+              { paddingBottom: NAV_BAR_HEIGHT + 100 }, // Room for FAB + nav
             ]}
             showsVerticalScrollIndicator
           />
@@ -163,9 +175,9 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     top: 0,
-    bottom: 0, // fill screen
+    bottom: 0, // Fill screen
     alignItems: "center",
-    justifyContent: "center", // centers both text and button
+    justifyContent: "center", // Centers both text and button
     zIndex: 9999,
     ...(Platform.OS === "android" ? { elevation: 10 } : {}),
   },
