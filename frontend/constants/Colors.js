@@ -2,7 +2,7 @@
 
 export const Colors = {
   light: {
-    primary: '#00CFFF',       // Electric Blue - main CTA color
+    primary: '#4F9AFF',       // Electric Blue - main CTA color
     primaryDark: '#0099CC',
     primaryLight: '#66E0FF',
 
@@ -23,7 +23,7 @@ export const Colors = {
     tint: '#00CFFF',          // for buttons/dots in your code
   },
   dark: {
-    primary: '#00CFFF',
+    primary: '#4F9AFF',
     primaryDark: '#0099CC',
     primaryLight: '#66E0FF',
 
