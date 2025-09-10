@@ -1,13 +1,16 @@
-import { Ionicons } from '@expo/vector-icons';
-import { ScrollView, StyleSheet, Text, useColorScheme, View } from 'react-native';
+import { Ionicons } from "@expo/vector-icons";
+import { ScrollView, StyleSheet, Text, TouchableOpacity, useColorScheme, View } from "react-native";
 import { Colors } from "../../constants/Colors";
 import globalStyles from "../../styles/globalStyles";
+import { SafeAreaView } from "react-native";
+import { useRouter } from "expo-router";
 
 export default function AnalyticsScreen() {
   const scheme = useColorScheme();
-  const theme = Colors[scheme ?? 'light'];
+  const theme = Colors[scheme ?? "dark"];
+  const router = useRouter();
 
-  // Simplified stats (just titles/icons, values are placeholders)
+  // Stats icons
   const stats = [
     { id: 1, icon: 'walk', title: 'Steps' },
     { id: 2, icon: 'flame', title: 'Calories Burned' },
@@ -16,86 +19,76 @@ export default function AnalyticsScreen() {
   ];
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: theme.background }]}>
-      {/* Page header */}
-      <Text style={[globalStyles.textBold, styles.header, { color: theme.tint }]}>
-       Analytics Dashboard
-      </Text>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
+      {/* Back Button */}
+      <TouchableOpacity
+        onPress={() => router.push('/home/index')}
+        style={{ position: 'absolute', top: 10, left: 10, zIndex: 10 }}
+      >
+        <Ionicons name="arrow-back" size={28} color={theme.tint} />
+      </TouchableOpacity>
 
-      {/* Stats Cards */}
-      <View style={styles.statsRow}>
-        {stats.map((stat) => (
-          <View
-            key={stat.id}
-            style={[styles.statCard, { backgroundColor: theme.backgroundAlt }]}
-          >
-            <Ionicons name={stat.icon} size={28} color={theme.tint} />
-            <Text
-              style={[
-                globalStyles.textBold,
-                styles.statTitle,
-                { color: theme.textPrimary },
-              ]}
+      <ScrollView style={{ paddingHorizontal: 20, paddingTop: 60 }}>
+        {/* Page Header */}
+        <Text style={[globalStyles.textBold, styles.header, { color: theme.tint }]}>
+          Analytics
+        </Text>
+
+        {/* Stats Cards */}
+        <View style={styles.statsRow}>
+          {stats.map((stat) => (
+            <View
+              key={stat.id}
+              style={[styles.statCard, { backgroundColor: theme.backgroundAlt }]}
             >
-              {stat.title}
-            </Text>
-            {/* Placeholder instead of numbers */}
-            <Text
-              style={[
-                globalStyles.textRegular,
-                styles.statPlaceholder,
-                { color: theme.textSecondary },
-              ]}
-            >
-              ---
-            </Text>
-          </View>
-        ))}
-      </View>
+              <Ionicons name={stat.icon} size={28} color={theme.tint} />
+              <Text
+                style={[globalStyles.textBold, styles.statTitle, { color: theme.textPrimary }]}
+              >
+                {stat.title}
+              </Text>
+              <Text
+                style={[globalStyles.textRegular, styles.statPlaceholder, { color: theme.textSecondary }]}
+              >
+                ---
+              </Text>
+            </View>
+          ))}
+        </View>
 
-      {/* Progress Chart Placeholder */}
-      <View style={[styles.chartPlaceholder, { backgroundColor: theme.backgroundAlt }]}>
-        <Text
-          style={[
-            globalStyles.textRegular,
-            styles.chartText,
-            { color: theme.textSecondary },
-          ]}
+        {/* Clickable Chart Placeholders */}
+        <TouchableOpacity
+          onPress={() => router.push('/main/WeeklyProgress')}
+          style={[styles.chartPlaceholder, { backgroundColor: theme.backgroundAlt }]}
         >
-          [Weekly Progress Chart Placeholder]
-        </Text>
-      </View>
+          <Text style={[globalStyles.textRegular, styles.chartText, { color: theme.textSecondary }]}>
+            [Weekly Progress Chart Placeholder]
+          </Text>
+        </TouchableOpacity>
 
-      {/* Additional Charts */}
-      <View style={[styles.chartPlaceholder, { backgroundColor: theme.backgroundAlt }]}>
-        <Text
-          style={[
-            globalStyles.textRegular,
-            styles.chartText,
-            { color: theme.textSecondary },
-          ]}
+        <TouchableOpacity
+          onPress={() => router.push('/main/CaloriesBurned')}
+          style={[styles.chartPlaceholder, { backgroundColor: theme.backgroundAlt }]}
         >
-          [Calories Burned Chart Placeholder]
-        </Text>
-      </View>
+          <Text style={[globalStyles.textRegular, styles.chartText, { color: theme.textSecondary }]}>
+            [Calories Burned Chart Placeholder]
+          </Text>
+        </TouchableOpacity>
 
-      <View style={[styles.chartPlaceholder, { backgroundColor: theme.backgroundAlt }]}>
-        <Text
-          style={[
-            globalStyles.textRegular,
-            styles.chartText,
-            { color: theme.textSecondary },
-          ]}
+        <TouchableOpacity
+          onPress={() => router.push('/main/WorkoutDuration')}
+          style={[styles.chartPlaceholder, { backgroundColor: theme.backgroundAlt }]}
         >
-          [Workout Duration Chart Placeholder]
-        </Text>
-      </View>
-    </ScrollView>
+          <Text style={[globalStyles.textRegular, styles.chartText, { color: theme.textSecondary }]}>
+            [Workout Duration Chart Placeholder]
+          </Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, paddingHorizontal: 20, paddingTop: 40 },
   header: { fontSize: 28, marginBottom: 24, textAlign: 'center' },
 
   // Stats Row
