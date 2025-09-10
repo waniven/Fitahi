@@ -1,6 +1,6 @@
 // components/biometrics/BiometricsDashboard.jsx
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Modal } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
 import { Colors } from '../../constants/Colors';
 import CustomButton from '../common/CustomButton';
@@ -12,6 +12,8 @@ import BiometricDataCard from '../biometrics/BiometricDataCard';
  */
 const BiometricsDashboard = ({ entries, onDeleteEntry, onAddEntry }) => {
   const [activeView, setActiveView] = useState('entries'); // 'entries' or 'chart'
+  const [showPopup, setShowPopup] = useState(false);
+  const [selectedDataPoint, setSelectedDataPoint] = useState(null);
 
   // Get latest and previous entries for comparison
   const latestEntry = entries[0];
@@ -48,8 +50,73 @@ const BiometricsDashboard = ({ entries, onDeleteEntry, onAddEntry }) => {
         data: weights,
         color: (opacity = 1) => Colors.light.primary, // Line color
         strokeWidth: 3
-      }]
+      }],
+      chartEntries: chartEntries // Store entries for popup data
     };
+  };
+
+  /**
+   * Format timestamp for popup display
+   */
+  const formatPopupTimestamp = (timestamp) => {
+    const date = new Date(timestamp);
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = date.toLocaleDateString('en-US', { month: 'long' });
+    let hours = date.getHours();
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    const ampm = hours >= 12 ? 'pm' : 'am';
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    
+    return `${day} ${month}, ${hours}:${minutes}${ampm}`;
+  };
+
+  /**
+   * Handle data point click
+   */
+  const handleDataPointClick = (data) => {
+    const chartData = prepareChartData();
+    const selectedEntry = chartData.chartEntries[data.index];
+    
+    setSelectedDataPoint({
+      entry: selectedEntry,
+      screenX: data.x,
+      screenY: data.y
+    });
+    setShowPopup(true);
+  };
+
+  /**
+   * Data Point Popup Component
+   */
+  const DataPointPopup = () => {
+    if (!selectedDataPoint) return null;
+
+    const { entry } = selectedDataPoint;
+
+    return (
+      <Modal
+        transparent
+        visible={showPopup}
+        onRequestClose={() => setShowPopup(false)}
+        animationType="fade"
+      >
+        <TouchableOpacity 
+          style={styles.popupOverlay} 
+          activeOpacity={1}
+          onPress={() => setShowPopup(false)}
+        >
+          <View style={styles.popupContainer}>
+            <Text style={styles.popupTitle}>DATE & TIME LOGGED</Text>
+            <Text style={styles.popupDate}>
+              {formatPopupTimestamp(entry.timestamp)}
+            </Text>
+            <Text style={styles.popupData}>Height = {entry.height}</Text>
+            <Text style={styles.popupData}>Weight = {entry.weight}</Text>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+    );
   };
 
   /**
@@ -120,6 +187,7 @@ const BiometricsDashboard = ({ entries, onDeleteEntry, onAddEntry }) => {
             withVerticalLabels={true}
             fromZero={false}
             segments={4}
+            onDataPointClick={handleDataPointClick}
           />
         </View>
         
@@ -127,7 +195,7 @@ const BiometricsDashboard = ({ entries, onDeleteEntry, onAddEntry }) => {
         <View style={styles.chartLegend}>
           <View style={styles.legendItem}>
             <View style={styles.legendDot} />
-            <Text style={styles.legendText}>Weight progression over time</Text>
+            <Text style={styles.legendText}>Weight progression over time (tap dots for details)</Text>
           </View>
         </View>
         
@@ -290,6 +358,9 @@ const BiometricsDashboard = ({ entries, onDeleteEntry, onAddEntry }) => {
           style={styles.floatingButton}
         />
       </View>
+
+      {/* Data Point Popup */}
+      <DataPointPopup />
     </View>
   );
 };
@@ -572,6 +643,56 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 12,
     elevation: 16,
+  },
+
+  // Popup Styles
+  popupOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  popupContainer: {
+    backgroundColor: Colors.light.primary,
+    borderRadius: 20,
+    padding: 24,
+    width: 300,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 10,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 20,
+  },
+
+  popupTitle: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 16,
+    textAlign: 'center',
+    fontFamily: 'Montserrat_700Bold',
+  },
+
+  popupDate: {
+    color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 24,
+    textAlign: 'center',
+    fontFamily: 'Montserrat_700Bold',
+  },
+
+  popupData: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    marginBottom: 8,
+    textAlign: 'center',
+    fontFamily: 'Montserrat_400Regular',
   },
 });
 
