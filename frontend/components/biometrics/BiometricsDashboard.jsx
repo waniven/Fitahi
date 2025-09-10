@@ -2,9 +2,13 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Modal } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { Colors } from '../../constants/Colors';
 import CustomButton from '../common/CustomButton';
 import BiometricDataCard from '../biometrics/BiometricDataCard';
+import FloatingAIButton from '../../app/ai/FloatingAIButton';
+import globalStyles from '../../styles/globalStyles';
 
 /**
  * BiometricsDashboard - Main dashboard view for biometrics data
@@ -14,6 +18,9 @@ const BiometricsDashboard = ({ entries, onDeleteEntry, onAddEntry }) => {
   const [activeView, setActiveView] = useState('entries'); // 'entries' or 'chart'
   const [showPopup, setShowPopup] = useState(false);
   const [selectedDataPoint, setSelectedDataPoint] = useState(null);
+
+  const router = useRouter();
+  const theme = Colors["dark"];
 
   // Get latest and previous entries for comparison
   const latestEntry = entries[0];
@@ -239,129 +246,157 @@ const BiometricsDashboard = ({ entries, onDeleteEntry, onAddEntry }) => {
   };
 
   return (
-    <View style={styles.container}>
-      <ScrollView 
-        style={styles.scrollContainer} 
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
-        {/* BMI Card */}
-        <View style={styles.bmiCard}>
-          <Text style={styles.bmiLabel}>BMI</Text>
-          <Text style={styles.bmiValue}>
-            {currentBMI} kg/m²
-          </Text>
-        </View>
+    <>
+      <View style={styles.container}>
+        <ScrollView 
+          style={styles.scrollContainer} 
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+        >
+          {/* BMI Card */}
+          <View style={styles.bmiCard}>
+            <Text style={styles.bmiLabel}>BMI</Text>
+            <Text style={styles.bmiValue}>
+              {currentBMI} kg/m²
+            </Text>
+          </View>
 
-        {/* Weight and Height Comparison Cards */}
-        <View style={styles.comparisonContainer}>
-          {/* Weight Card */}
-          <View style={styles.comparisonCard}>
-            <Text style={styles.cardTitle}>Weight (kg)</Text>
-            <View style={styles.comparisonRow}>
-              <View style={styles.comparisonCol}>
-                <Text style={styles.comparisonLabel}>Current</Text>
-                <Text style={styles.comparisonValue}>{latestEntry.weight}</Text>
+          {/* Weight and Height Comparison Cards */}
+          <View style={styles.comparisonContainer}>
+            {/* Weight Card */}
+            <View style={styles.comparisonCard}>
+              <Text style={styles.cardTitle}>Weight (kg)</Text>
+              <View style={styles.comparisonRow}>
+                <View style={styles.comparisonCol}>
+                  <Text style={styles.comparisonLabel}>Current</Text>
+                  <Text style={styles.comparisonValue}>{latestEntry.weight}</Text>
+                </View>
+                <View style={styles.comparisonCol}>
+                  <Text style={styles.comparisonLabel}>Previous</Text>
+                  <Text style={styles.comparisonValue}>
+                    {previousEntry ? previousEntry.weight : '--'}
+                  </Text>
+                </View>
               </View>
-              <View style={styles.comparisonCol}>
-                <Text style={styles.comparisonLabel}>Previous</Text>
-                <Text style={styles.comparisonValue}>
-                  {previousEntry ? previousEntry.weight : '--'}
-                </Text>
+            </View>
+
+            {/* Height Card */}
+            <View style={styles.comparisonCard}>
+              <Text style={styles.cardTitle}>Height (cm)</Text>
+              <View style={styles.comparisonRow}>
+                <View style={styles.comparisonCol}>
+                  <Text style={styles.comparisonLabel}>Current</Text>
+                  <Text style={styles.comparisonValue}>{latestEntry.height}</Text>
+                </View>
+                <View style={styles.comparisonCol}>
+                  <Text style={styles.comparisonLabel}>Previous</Text>
+                  <Text style={styles.comparisonValue}>
+                    {previousEntry ? previousEntry.height : '--'}
+                  </Text>
+                </View>
               </View>
             </View>
           </View>
 
-          {/* Height Card */}
-          <View style={styles.comparisonCard}>
-            <Text style={styles.cardTitle}>Height (cm)</Text>
-            <View style={styles.comparisonRow}>
-              <View style={styles.comparisonCol}>
-                <Text style={styles.comparisonLabel}>Current</Text>
-                <Text style={styles.comparisonValue}>{latestEntry.height}</Text>
-              </View>
-              <View style={styles.comparisonCol}>
-                <Text style={styles.comparisonLabel}>Previous</Text>
-                <Text style={styles.comparisonValue}>
-                  {previousEntry ? previousEntry.height : '--'}
-                </Text>
-              </View>
-            </View>
+          {/* Toggle Buttons */}
+          <View style={styles.toggleContainer}>
+            <TouchableOpacity
+              style={[
+                styles.toggleButton,
+                styles.toggleButtonLeft,
+                activeView === 'chart' && styles.toggleButtonActive
+              ]}
+              onPress={() => setActiveView('chart')}
+            >
+              <Text style={[
+                styles.toggleButtonText,
+                activeView === 'chart' && styles.toggleButtonTextActive
+              ]}>
+                Chart
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.toggleButton,
+                styles.toggleButtonRight,
+                activeView === 'entries' && styles.toggleButtonActive
+              ]}
+              onPress={() => setActiveView('entries')}
+            >
+              <Text style={[
+                styles.toggleButtonText,
+                activeView === 'entries' && styles.toggleButtonTextActive
+              ]}>
+                Previous Entries
+              </Text>
+            </TouchableOpacity>
           </View>
+
+          {/* Content Area */}
+          <View style={styles.contentArea}>
+            {activeView === 'entries' ? (
+              // Previous Entries View
+              <View style={styles.entriesContainer}>
+                {entries.map((entry) => (
+                  <BiometricDataCard
+                    key={entry.id}
+                    entry={entry}
+                    age={25}
+                    onDelete={onDeleteEntry}
+                    showDeleteButton={true}
+                    style={styles.entryCard}
+                  />
+                ))}
+              </View>
+            ) : (
+              // Chart View
+              renderChart()
+            )}
+          </View>
+        </ScrollView>
+
+        {/* Floating Add New Entry Button */}
+        <View style={styles.floatingButtonContainer}>
+          <CustomButton
+            title="Add New Entry"
+            onPress={onAddEntry}
+            variant="primary"
+            size="large"
+            style={styles.floatingButton}
+          />
         </View>
 
-        {/* Toggle Buttons */}
-        <View style={styles.toggleContainer}>
-          <TouchableOpacity
-            style={[
-              styles.toggleButton,
-              styles.toggleButtonLeft,
-              activeView === 'chart' && styles.toggleButtonActive
-            ]}
-            onPress={() => setActiveView('chart')}
-          >
-            <Text style={[
-              styles.toggleButtonText,
-              activeView === 'chart' && styles.toggleButtonTextActive
-            ]}>
-              Chart
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              styles.toggleButton,
-              styles.toggleButtonRight,
-              activeView === 'entries' && styles.toggleButtonActive
-            ]}
-            onPress={() => setActiveView('entries')}
-          >
-            <Text style={[
-              styles.toggleButtonText,
-              activeView === 'entries' && styles.toggleButtonTextActive
-            ]}>
-              Previous Entries
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Content Area */}
-        <View style={styles.contentArea}>
-          {activeView === 'entries' ? (
-            // Previous Entries View
-            <View style={styles.entriesContainer}>
-              {entries.map((entry) => (
-                <BiometricDataCard
-                  key={entry.id}
-                  entry={entry}
-                  age={25}
-                  onDelete={onDeleteEntry}
-                  showDeleteButton={true}
-                  style={styles.entryCard}
-                />
-              ))}
-            </View>
-          ) : (
-            // Chart View
-            renderChart()
-          )}
-        </View>
-      </ScrollView>
-
-      {/* Floating Add New Entry Button */}
-      <View style={styles.floatingButtonContainer}>
-        <CustomButton
-          title="Add New Entry"
-          onPress={onAddEntry}
-          variant="primary"
-          size="large"
-          style={styles.floatingButton}
-        />
+        {/* Data Point Popup */}
+        <DataPointPopup />
       </View>
 
-      {/* Data Point Popup */}
-      <DataPointPopup />
-    </View>
+      {/* Bottom Navigation */}
+      <View style={[globalStyles.bottomNav, { backgroundColor: "#fff" }]}>
+        <TouchableOpacity style={globalStyles.navItem} onPress={() => router.push("/home/index")}>
+          <Ionicons name="home-outline" size={26} color={theme.tint} />
+          <Text style={[globalStyles.navText, { color: theme.tint }]}>Home</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={globalStyles.navItem} onPress={() => router.push("/main/analytics")}>
+          <Ionicons name="stats-chart-outline" size={26} color={theme.tint} />
+          <Text style={[globalStyles.navText, { color: theme.tint }]}>Analytics</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={globalStyles.navItem} onPress={() => router.push("/main/supplements")}>
+          <Ionicons name="medkit-outline" size={26} color={theme.tint} />
+          <Text style={[globalStyles.navText, { color: theme.tint }]}>Supplements</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={globalStyles.navItem} onPress={() => router.push("/profile/AccountSettings")}>
+          <Ionicons name="settings-outline" size={26} color={theme.tint} />
+          <Text style={[globalStyles.navText, { color: theme.tint }]}>Settings</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Floating AI Button */}
+      <FloatingAIButton />
+    </>
   );
 };
 
