@@ -192,7 +192,7 @@ export default function Home() {
 
           <TouchableOpacity
             style={[styles.card, { width: cardWidth, backgroundColor: "#fff" }]}
-            onPress={() => router.push("/main/waterlog")}
+            onPress={() => router.push("/main/water")}
           >
             <Text style={[globalStyles.cardText, { color: theme.tint }]}>💧 Water Log</Text>
           </TouchableOpacity>
