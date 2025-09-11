@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import {SafeAreaView, ScrollView, StyleSheet, Text, View, KeyboardAvoidingView, Platform,} from "react-native";
+import {ScrollView, StyleSheet, Text, View, KeyboardAvoidingView, Platform,} from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from "expo-router";
 import { Colors } from "../../constants/Colors";
 import FitahiLogo from "../../constants/FitahiLogo";

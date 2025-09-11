@@ -67,14 +67,6 @@
     "postinstall-postinstall": "^2.1.0",
     "react-native-svg-transformer": "^1.5.1"
   },
-  "expo":{
-    "doctor":{
-      "ignoreWarnings":[
-        "react-native-safe-area-context"
-      ]
-    }
-  },
-  "private": true,
   "expo": {
     "doctor": {
       "reactNativeDirectoryCheck": {
@@ -84,5 +76,6 @@
         ]
       }
     }
-  }
+  },
+  "private": true
 }

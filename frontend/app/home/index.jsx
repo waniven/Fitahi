@@ -2,7 +2,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { Dimensions, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View, Modal, TextInput, } from "react-native";
+import { Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View, Modal, TextInput, } from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from "../../constants/Colors";
 import FloatingAIButton from "../ai/FloatingAIButton";
 import FitahiLogo from "../../constants/FitahiLogo";
@@ -77,7 +78,7 @@ export default function Home() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 140 }}>
+      <ScrollView contentContainerStyle={{ flexGrow: 1, paddingBottom: 140 }}>
         {/* logo */}
         <View style={styles.logoContainer}>
           <FitahiLogo width={320} height={140} fill="#FFFFFF" />
@@ -365,7 +366,8 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 20,
     position: "absolute",
     bottom: 0,
-    width: "100%"
+    width: "100%",
+    pointerEvents: "box-none",
   },
   navItem: {
     alignItems: "center"

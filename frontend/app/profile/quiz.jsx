@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
-import { SafeAreaView, Dimensions, FlatList, Platform, StyleSheet, Text, TouchableOpacity, View, Picker,} from 'react-native';
+import {Dimensions, FlatList, Platform, StyleSheet, Text, TouchableOpacity, View, Picker,} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import WheelPickerExpo from 'react-native-wheel-picker-expo';
 import { Colors } from '../../constants/Colors';

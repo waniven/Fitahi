@@ -1,6 +1,7 @@
 // app/main/biometrics.jsx
 import React, { useState } from 'react';
-import { View, StyleSheet, SafeAreaView, StatusBar, TouchableOpacity, Text } from 'react-native';
+import { View, StyleSheet, StatusBar, TouchableOpacity, Text } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import LogScreen from '../../components/common/LogScreen';
