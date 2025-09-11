@@ -9,7 +9,7 @@ function requireUser(req, res, next) {
     next();
 }
 
-// create new workout
+// POST: create new workout
 router.post('/', requireUser, async (req, res, next) => {
     try {
         // add workout with logged-in user id
@@ -24,7 +24,7 @@ router.post('/', requireUser, async (req, res, next) => {
     }
 });
 
-// update workout by id
+// PATCH: update workout by id
 router.patch('/:id', requireUser, async (req, res, next) => {
     try {
         const { id } = req.params;
@@ -50,7 +50,7 @@ router.patch('/:id', requireUser, async (req, res, next) => {
     }
 });
 
-// delete workout by id
+// DELETE: delete workout by id
 router.delete('/:id', requireUser, async (req, res, next) => {
     try {
         const { id } = req.params;
@@ -76,7 +76,7 @@ router.delete('/:id', requireUser, async (req, res, next) => {
     }
 });
 
-// get workout by id
+// GET: get workout by id
 router.get('/:id', requireUser, async (req, res, next) => {
     try {
         const { id } = req.params;
@@ -98,7 +98,7 @@ router.get('/:id', requireUser, async (req, res, next) => {
     }
 });
 
-// get all workouts for user
+// GET: get all workouts for user
 router.get('/', requireUser, async (req, res, next) => {
     try {
         // find workouts for logged-in user, newest first
