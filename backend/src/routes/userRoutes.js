@@ -2,11 +2,9 @@ const express = require('express');
 const mongoose = require('mongoose');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
+const validateId = require('../helpers/validateId');
 
 const router = express.Router();
-
-//helper to validate MongoDB objectId
-const isValidId= (id) => mongoose.Types.ObjectId.isValid(id);
 
 /*
  * POST /api/users
@@ -101,9 +99,7 @@ router.delete('/:id', auth, async (req, res, next) => {
         const id = req.user.id; 
 
         //check if id is valid
-        if(!isValidId(id)) {
-            return res.status(400).json({ error: 'Invalid user id' });
-        }
+        validateId(id);
 
         //finds and deltes user document
         const deleted = await User.findByIdAndDelete(id);
@@ -152,9 +148,7 @@ router.get('/:id', async (req, res, next) => {
         const { id } = req.params;
 
         //check if id is valid
-        if(!isValidId(id)) {
-            return res.status(400).json({ error: 'Invalid user id' });
-        }
+        validateId(id);
 
         //find user document
         const user = await User.findById(id);
