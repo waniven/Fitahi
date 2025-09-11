@@ -2,21 +2,21 @@ const express = require('express');
 const Workout = require('../models/Workout');
 const validateId = require('../helpers/validateId');
 const router = express.Router();
+const auth = require('../middleware/auth');
 
-// check if user is logged in
-function requireUser(req, res, next) {
-    if (!req.user) return res.status(401).json({ error: 'Unauthorised' });
-    next();
-}
-
-// POST: create new workout
-router.post('/', requireUser, async (req, res, next) => {
+/*
+ * POST /api/workouts
+ * create new workout
+*/
+router.post('/', auth, async (req, res, next) => {
     try {
         // add workout with logged-in user id
         const workout = await Workout.create({
             ...req.body,
             userId: req.user.id,
         });
+
+        // return created workout
         return res.status(201).json(workout);
     } catch (err) {
         // pass to global error handler in server.js
@@ -24,8 +24,11 @@ router.post('/', requireUser, async (req, res, next) => {
     }
 });
 
-// PATCH: update workout by id
-router.patch('/:id', requireUser, async (req, res, next) => {
+/**
+ * PATCH /api/workouts/:id
+ * update workout by id
+ */
+router.patch('/:id', auth, async (req, res, next) => {
     try {
         const { id } = req.params;
 
@@ -50,8 +53,11 @@ router.patch('/:id', requireUser, async (req, res, next) => {
     }
 });
 
-// DELETE: delete workout by id
-router.delete('/:id', requireUser, async (req, res, next) => {
+/**
+ * DELETE /api/workouts/:id
+ * delete workout by id
+ */
+router.delete('/:id', auth, async (req, res, next) => {
     try {
         const { id } = req.params;
 
@@ -76,8 +82,11 @@ router.delete('/:id', requireUser, async (req, res, next) => {
     }
 });
 
-// GET: get workout by id
-router.get('/:id', requireUser, async (req, res, next) => {
+/**
+ * GET /api/workouts/:id
+ * get workout by id
+ */
+router.get('/:id', auth, async (req, res, next) => {
     try {
         const { id } = req.params;
 
@@ -98,8 +107,11 @@ router.get('/:id', requireUser, async (req, res, next) => {
     }
 });
 
-// GET: get all workouts for user
-router.get('/', requireUser, async (req, res, next) => {
+/**
+ * GET /api/workouts
+ * get all workouts for user
+ */
+router.get('/', auth, async (req, res, next) => {
     try {
         // find workouts for logged-in user, newest first
         const workouts = await Workout.find({ userId: req.user.id }).sort({ createdAt: -1 });

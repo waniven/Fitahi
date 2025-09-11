@@ -2,15 +2,13 @@ const express = require('express');
 const WorkoutResult = require('../models/WorkoutResult');
 const validateId = require('../helpers/validateId');
 const router = express.Router();
+const auth = require('../middleware/auth');
 
-// check if user is logged in
-function requireUser(req, res, next) {
-    if (!req.user) return res.status(401).json({ error: 'Unauthorised' });
-    next();
-}
-
-// POST: create new workout result
-router.post('/', requireUser, async (req, res, next) => {
+/*
+ * POST /api/workout-results
+ * create new workout result
+*/
+router.post('/', auth, async (req, res, next) => {
     try {
         const { workout_id, totalTimeSpent, completedExercises } = req.body;
 
@@ -28,36 +26,48 @@ router.post('/', requireUser, async (req, res, next) => {
             dateCompleted: new Date(),
         });
 
-        return res.status(201).json(result); // return created result
+        // return created result
+        return res.status(201).json(result);
     } catch (err) {
-        next(err); // pass errors to global handler
+        // pass to global error handler in server.js
+        next(err);
     }
 });
 
-// GET: all workout results for logged-in user
-router.get('/', requireUser, async (req, res, next) => {
+/*
+ * GET /api/workout-results
+ * all workout results for logged-in user
+*/
+router.get('/', auth, async (req, res, next) => {
     try {
         // fetch results sorted by newest first, optionally populate workout info
         const results = await WorkoutResult.find({ userId: req.user.id })
             .sort({ dateCompleted: -1 })
             .populate('workout_id', 'workoutName workoutType');
 
-        return res.json(results); // return array
+        // return array
+        return res.json(results);
     } catch (err) {
         next(err);
     }
 });
 
-// GET: single workout result by ID
-router.get('/:id', requireUser, async (req, res, next) => {
+/*
+ * GET /api/workout-results/:id
+ * single workout result by ID
+*/
+router.get('/:id', auth, async (req, res, next) => {
     try {
         const { id } = req.params;
+
+        // check if id is valid
         validateId(id);
 
         // find result for logged-in user only
         const result = await WorkoutResult.findOne({ _id: id, userId: req.user.id })
             .populate('workout_id', 'workoutName workoutType');
 
+        // if result not found, return 404
         if (!result) return res.status(404).json({ error: 'WorkoutResult not found' });
 
         return res.json(result); // return single result
@@ -66,4 +76,4 @@ router.get('/:id', requireUser, async (req, res, next) => {
     }
 });
 
-module.exports = router; // export router
+module.exports = router;
