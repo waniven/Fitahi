@@ -67,7 +67,7 @@ const workoutSchema = new Schema(
             type: String,
             required: true,
             trim: true,
-            enum: ['cardio', 'strength', 'hypertrophy', 'custom']
+            enum: ['cardio', 'strength', 'hypertrophy']
         },
 
         // days of week workout is performed (valid array, 0–6 integer check, no duplicate days)
