@@ -203,7 +203,7 @@ export default function Home() {
         <View style={styles.row}>
           <TouchableOpacity
             style={[styles.card, { width: cardWidth, backgroundColor: "#fff" }]}
-            onPress={() => router.push("/main/gymfinder")}
+            onPress={() => router.push("/main/gymsFinder")}
           >
             <Text style={[globalStyles.cardText, { color: theme.tint }]}>🗺️ Gym Finder</Text>
           </TouchableOpacity>
