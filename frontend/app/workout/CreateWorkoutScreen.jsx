@@ -15,7 +15,7 @@ import { Colors } from "../../constants/Colors";
 import { Font } from "@/constants/Font";
 import { useContext, useLayoutEffect } from "react";
 import Fab from "@/components/FloatingActionButton";
-import BackButton from "@/components/BackButton";
+import CustomButtonThree from "../../components/common/CustomButtonThree";
 import { Ionicons } from "@expo/vector-icons";
 import globalStyles from "../../styles/globalStyles";
 import { AIContext } from "../ai/AIContext";
@@ -31,7 +31,12 @@ function CreateWorkout({ navigation }) {
   //Back button to go back to Homepage
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerLeft: () => <BackButton to="/main" />,
+      headerLeft: () => (
+        <CustomButtonThree
+          onPress={() => navigation.goBack()}
+
+        />
+      ),
       headerRight: () => (
         <TouchableOpacity
           onPress={toggleChat}
