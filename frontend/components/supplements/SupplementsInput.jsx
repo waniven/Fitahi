@@ -21,7 +21,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { Ionicons } from "@expo/vector-icons";
 
 // Labels only; index still maps 0=Mon ... 6=Sun
-const DAYS = ["M", "T", "W", "T", "F", "S", "S"];
+const DAYS = ["M", "T", "W", "Th", "F", "Sa", "Su"];
 
 export default function SupplementsInput({
   visible,
@@ -36,7 +36,7 @@ export default function SupplementsInput({
   // Form state
   const [name, setName] = useState("");
   const [dosage, setDosage] = useState(""); // "5g", "2 capsules"
-  const [timeOfDay, setTimeOfDay] = useState(""); // "08:00 AM", "After workout"
+  const [timeOfDay, setTimeOfDay] = useState(""); // "08:00 AM"
   const [selectedDays, setSelectedDays] = useState([]);
   const [showErrors, setShowErrors] = useState(false);
 
@@ -111,14 +111,14 @@ export default function SupplementsInput({
       return;
     }
 
-    const plan = new SupplementsPlan({
-      id: entryToEdit?.id, // keep same id when editing
-      name: name.trim(),
-      dosage: dosage.trim(),
-      timeOfDay: timeOfDay.trim(),
-      selectedDays: [...selectedDays],
-      logs: entryToEdit?.logs || [], // preserve logs if editing
-    });
+    const plan = new SupplementsPlan(
+      entryToEdit?.id ?? `supp_${Date.now()}_${Math.random().toString(36).slice(2,8)}`,
+      name.trim(),
+      dosage.trim(),
+      timeOfDay.trim(),
+      [...selectedDays],
+      entryToEdit?.logs || [], // preserve logs if editing
+    );
 
     onSaveSupplement?.(plan);
     resetForm();
