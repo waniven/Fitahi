@@ -138,7 +138,7 @@ export default function Quiz() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: '#121212' }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: '#151924' }]}>
       {/* Progress Bar */}
       <View style={styles.progressBarBackground}>
         <View
@@ -236,6 +236,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 20,
     justifyContent: 'center',
+    backgroundColor: "#151924",
   },
   question: {
     fontSize: 22,
