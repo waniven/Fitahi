@@ -14,4 +14,9 @@ class SupplementsLog {
     }
 }
 
+// The difference between SupplementsPlan and SupplementsLog: 
+// SupplementsPlan: for example: plan to drink Vitamin C on Monday, Tuesday, Wednesday
+// SupplementsLog: the action on the real-time: Monday: drink, example: id 1, this belongs to SupplementsPlan (example: id a)
+// Continue drink on Tusday, example: id 2, this belongs to SupplementsPlan (example: id a)
+
 export default SupplementsLog;

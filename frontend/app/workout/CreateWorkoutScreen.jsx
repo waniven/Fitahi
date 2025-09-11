@@ -196,7 +196,7 @@ function CreateWorkout({ navigation }) {
       <View style={[styles.bottomNav, { backgroundColor: "#fff" }]}>
         <TouchableOpacity
           style={styles.navItem}
-          onPress={() => router.push("/home/index")}
+          onPress={() => router.push("/home")}
         >
           <Ionicons name="home-outline" size={26} color={theme.tint} />
           <Text style={[globalStyles.navText, { color: theme.tint }]}>

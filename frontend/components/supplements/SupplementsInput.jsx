@@ -23,6 +23,7 @@ import { Ionicons } from "@expo/vector-icons";
 // Labels only; index still maps 0=Mon ... 6=Sun
 const DAYS = ["M", "T", "W", "Th", "F", "Sa", "Su"];
 
+// SupplementsInput show the filling form to plan supplement
 export default function SupplementsInput({
   visible,
   onCancel,
@@ -35,7 +36,7 @@ export default function SupplementsInput({
 
   // Form state
   const [name, setName] = useState("");
-  const [dosage, setDosage] = useState(""); // "5g", "2 capsules"
+  const [dosage, setDosage] = useState(""); // "5g"
   const [timeOfDay, setTimeOfDay] = useState(""); // "08:00 AM"
   const [selectedDays, setSelectedDays] = useState([]);
   const [showErrors, setShowErrors] = useState(false);
@@ -72,6 +73,7 @@ export default function SupplementsInput({
     }
   }, [visible, entryToEdit]);
 
+  // resetForm is used to reset form to blank
   function resetForm() {
     setName("");
     setDosage("");
@@ -80,17 +82,20 @@ export default function SupplementsInput({
     setShowErrors(false);
   }
 
+  // toggleDay is used to choose days
   function toggleDay(idx) {
     setSelectedDays((prev) =>
       prev.includes(idx) ? prev.filter((i) => i !== idx) : [...prev, idx]
     );
   }
 
+  // handleCancel: cancel inpur form and go back to main screen
   function handleCancel() {
     resetForm();
     onCancel?.();
   }
 
+  // handleSave to save the input
   function handleSave() {
     const isNameValid = name.trim().length > 0;
     const isDosageValid = dosage.trim().length > 0;
@@ -163,7 +168,7 @@ export default function SupplementsInput({
     }
 
     return null;
-    // If nothing matched, return null and we’ll keep defaults
+    // If nothing matched, return null and keep defaults
   }
 
   const TextOnDark = { color: theme.background };
@@ -306,7 +311,7 @@ export default function SupplementsInput({
                   is24Hour={false}
                   display={Platform.OS === "ios" ? "spinner" : "default"}
                   onChange={(event, selected) => {
-                    // Android fires once with 'dismissed', and once with a date
+                    
                     if (Platform.OS === "android") {
                       setShowTimePicker(false);
                     }

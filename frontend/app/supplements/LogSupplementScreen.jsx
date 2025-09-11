@@ -21,12 +21,14 @@ import { useRouter } from "expo-router";
 import ListCardItemGeneral from "@/components/ListCardItemGeneral";
 import SupplementsLog from "@/components/supplements/models/SupplementsLog";
 
+// LogSupplements allows user create supplement plans and log them
 function LogSupplements({ navigation }) {
   const scheme = useColorScheme();
   const theme = Colors[scheme ?? "light"];
   const { toggleChat } = useContext(AIContext);
   const router = useRouter();
 
+  // useLayoutEffect sets go back Home button and set styles of AI button
   useLayoutEffect(() => {
     const goBackOrHome = () => {
       if (navigation.canGoBack()) navigation.goBack();
@@ -62,7 +64,7 @@ function LogSupplements({ navigation }) {
     });
   }, [navigation, theme, toggleChat]);
 
-  // ---------------- state ----------------
+  // Default configuration for this screen
   const [showInput, setShowInput] = useState(false);
   const [plans, setPlans] = useState([]); // SupplementsPlan[]
   const [planToEdit, setPlanToEdit] = useState(null);
@@ -72,16 +74,19 @@ function LogSupplements({ navigation }) {
   const BOX_MAX_HEIGHT = Math.round(Dimensions.get("window").height * 0.7);
   const isEmpty = plans.length === 0;
 
-  // ---------------- modal handlers ----------------
+  // openAdd to pop up the filling form
   function openAdd() {
     setPlanToEdit(null);
     setShowInput(true);
   }
+
+  // closeInput to close the filling form
   function closeInput() {
     setPlanToEdit(null);
     setShowInput(false);
   }
 
+  // saveSupplement is used to save supplement plan
   function saveSupplement(plan) {
     setPlans((curr) => {
       const idx = curr.findIndex((p) => String(p.id) === String(plan.id));
@@ -95,15 +100,18 @@ function LogSupplements({ navigation }) {
     closeInput();
   }
 
+  // deletePlan is used to delete supplement plan
   function deletePlan(id) {
     setPlans((curr) => curr.filter((p) => p.id !== id));
   }
+
+  // startEditPlan is used to edit plan
   function startEditPlan(item) {
     setPlanToEdit(item);
     setShowInput(true);
   }
 
-  // ---------------- today's intake ----------------
+  // Check today intake
   const todayStr = localISODate(new Date());
   const todayIdx = getMon0Sun6Index(new Date());
 
@@ -133,6 +141,7 @@ function LogSupplements({ navigation }) {
   const hasPlans = plans?.length > 0;
   const hasToday = (todaysItems?.length ?? 0) > 0;
 
+  // markStatus checks the status of today's supplement intaken
   function markStatus(planId, status) {
     setPlans((prev) =>
       prev.map((plan) => {
@@ -155,7 +164,7 @@ function LogSupplements({ navigation }) {
     );
   }
 
-  // ---------------- render rows ----------------
+  // renderTodayCard: render to screen today card
   const renderTodayCard = ({ item }) => {
     const { plan, log } = item;
     const isTaken = log.status === "taken";
@@ -166,7 +175,7 @@ function LogSupplements({ navigation }) {
         style={[
           styles.todayCard,
           {
-            backgroundColor: theme.textPrimary /* match ListCardItemGeneral */,
+            backgroundColor: theme.textPrimary /* ListCardItemGeneral */,
           },
         ]}
       >
@@ -175,7 +184,7 @@ function LogSupplements({ navigation }) {
           <Text
             style={[
               styles.smallLabel,
-              { color: theme.background, fontFamily: Font.semibold }, // text = theme.background
+              { color: theme.background, fontFamily: Font.semibold },
             ]}
           >
             Supplement Name
@@ -289,6 +298,7 @@ function LogSupplements({ navigation }) {
     );
   };
 
+  // renderPlanRow renders to screen plan in row
   const renderPlanRow = ({ item }) => {
     const dosageTime = [item.dosage || "", item.timeOfDay || ""]
       .filter(Boolean)
@@ -458,7 +468,7 @@ function LogSupplements({ navigation }) {
       <View style={[styles.bottomNav, { backgroundColor: "#fff" }]}>
         <TouchableOpacity
           style={styles.navItem}
-          onPress={() => router.push("/home/index")}
+          onPress={() => router.push("/home")}
         >
           <Ionicons name="home-outline" size={26} color={theme.tint} />
           <Text style={[globalStyles.navText, { color: theme.tint }]}>
@@ -500,15 +510,20 @@ function LogSupplements({ navigation }) {
 export default LogSupplements;
 
 /* ---------- helpers ---------- */
+// getMon0Sun6Index returns day of the week in index
 function getMon0Sun6Index(d) {
   return (d.getDay() + 6) % 7;
 }
+
+// localISODate returns date format
 function localISODate(d) {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
 }
+
+// timeToMinutes return minutes total
 function timeToMinutes(str) {
   if (!str) return 10 ** 6;
   const ampm = str.match(/^(\d{1,2}):(\d{2})\s?(AM|PM)$/i);
@@ -550,7 +565,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1, paddingTop: 12 },
   content: { flex: 1, paddingHorizontal: 16 },
 
-  // segmented
+  
   segmentBar: {
     flexDirection: "row",
     borderWidth: 1,
@@ -601,7 +616,7 @@ const styles = StyleSheet.create({
   },
   navItem: { alignItems: "center" },
 
-  // TODAY card (now matches ListCardItemGeneral background)
+  // TODAY card 
   todayCard: {
     flexDirection: "row",
     alignItems: "flex-start",
