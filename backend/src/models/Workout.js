@@ -1,69 +1,98 @@
 const { Schema, model } = require('mongoose');
 
-// defining what each workout document will look like + validation included
+// exercise subdocument schema
+const exerciseSchema = new Schema({
+    // exercise name (required)
+    exerciseName: {
+        type: String,
+        required: true,
+        trim: true
+    },
+
+    // number of sets (required)
+    numOfSets: {
+        type: Number,
+        required: true,
+        min: 1
+    },
+
+    // number of reps per set (required)
+    numOfReps: {
+        type: Number,
+        required: true,
+        min: 1
+    },
+
+    // duration per exercise in seconds (optional)
+    exerciseDuration: {
+        type: Number,
+        min: 0,   // allow 0 (counts up)
+        default: 0,  // optional, will default to 0 if frontend sends empty string
+    },
+
+    // weight used (optional)
+    exerciseWeight: {
+        type: Number,
+        min: 0,
+        default: 0,
+    },
+
+    // rest time between sets in seconds (required)
+    restTime: {
+        type: Number,
+        required: true,
+        min: 0
+    },
+}, { _id: false }); // no _id for subdocuments
+
+// workout schema
 const workoutSchema = new Schema(
     {
-        // name of workout = serves as 'unique identifier' of the workout
+        // user who owns this workout
+        userId: {
+            type: Schema.Types.ObjectId,
+            ref: 'Users',
+            required: true
+        },
+
+        // name of workout (required, not globally unique)
         workoutName: {
             type: String,
             required: true,
             trim: true,
-            unique: true,
         },
 
-        // type of workout = selected from pre-determined list or . . .
+        // workout type
         workoutType: {
             type: String,
             required: true,
             trim: true,
-            enum: ['cardio', 'strength', 'stretch', 'custom'],
+            enum: ['cardio', 'strength', 'hypertrophy', 'custom']
         },
 
-        // a custom entry
-        customWorkoutType: {
-            type: String,
-            trim: true,
+        // days of week workout is performed (valid array, 0–6 integer check, no duplicate days)
+        selectedDays: {
+            type: [Number],
+            required: true,
             validate: {
-                validator: function (input) {
-                    // if workoutType is "custom", this field must be filled out
-                    if (this.workoutType === 'custom') {
-                        return input && input.trim().length > 0; // entry valid only if input is not null/undefined/empty string
-                    }
-
-                    // if workoutType is not "custom", skip validation
-                    return true;
-                },
-                message: `The customWorkoutType field is required when workoutType is set to "custom".`,
+                validator: (arr) =>
+                    Array.isArray(arr) &&
+                    new Set(arr).size === arr.length && // no duplicate days
+                    arr.every((day) => Number.isInteger(day) && day >= 0 && day <= 6), // valid day numbers
+                message: 'selectedDays must be an array of unique integers between 0–6.',
             },
         },
 
-        // sets
-        workoutSets: {
-            type: Number,
-            required: true,
-            min: [1, `Sets must be set to at least 1.`],
-        },
-
-        // reps
-        workoutReps: {
-            type: Number,
-            required: true,
-            min: [1, `Reps must be set to at least 1.`],
-        },
-
-        // duration of the workout = time unit decided by the user
-        workoutDuration: {
-            type: Number,
-            validate: {
-                validator: function (input) {
-                    // allow undefined/null input, but if user types in a number it should be positive
-                    return input == null || input > 0;
-                },
-                message: `Duration must be a positive number.`,
-            },
+        // array of exercises in this workout
+        exercises: {
+            type: [exerciseSchema],
+            validate: [
+                arr => arr.length > 0,
+                'A workout must contain at least one exercise.',
+            ],
         },
     },
-    { timestamps: true } // automatically track creation and update times
+    { timestamps: true } // auto track createdAt and updatedAt
 );
 
 module.exports = model('Workout', workoutSchema);

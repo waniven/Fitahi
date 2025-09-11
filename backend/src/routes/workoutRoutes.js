@@ -3,114 +3,106 @@ const Workout = require('../models/Workout');
 const validateId = require('../helpers/validateId');
 const router = express.Router();
 
-/**
- * POST /api/workouts
- * Create a new workout
- * body: { workoutName, workoutType, customWorkoutType?, workoutSets, workoutReps, workoutDuration? }
- */
-router.post('/', async (req, res, next) => {
+// check if user is logged in
+function requireUser(req, res, next) {
+    if (!req.user) return res.status(401).json({ error: 'Unauthorised' });
+    next();
+}
+
+// create new workout
+router.post('/', requireUser, async (req, res, next) => {
     try {
-        const workout = await Workout.create(req.body); // mongoose handles validation
+        // add workout with logged-in user id
+        const workout = await Workout.create({
+            ...req.body,
+            userId: req.user.id,
+        });
         return res.status(201).json(workout);
     } catch (err) {
-        // handle duplicate workoutName 
-        if (err.code === 11000) {
-            return res.status(409).json({ error: `Workout already exists.` });
-        }
-
         // pass to global error handler in server.js
         return next(err);
     }
 });
 
-/**
- * PATCH /api/workouts/:id
- * Update workout
- */
-router.patch('/:id', async (req, res, next) => {
+// update workout by id
+router.patch('/:id', requireUser, async (req, res, next) => {
     try {
-        // firstly, use helper ID validator; return if ID is invalid
         const { id } = req.params;
+
+        // check if id is valid
         validateId(id);
 
-        // if it's valid, update the corresponding workout
-        const updatedWorkout = await Workout.findByIdAndUpdate(id, req.body, {
-            new: true, // return updated doc
-            runValidators: true, // apply schema validators on update
-        });
+        // find and update workout for logged-in user
+        const updatedWorkout = await Workout.findOneAndUpdate(
+            { _id: id, userId: req.user.id },
+            req.body,
+            { new: true, runValidators: true }
+        );
 
-        // throw status 404 if workout isn't found
+        // workout not found
         if (!updatedWorkout) {
-            return res.status(404).json({ error: `Workout not found` });
+            return res.status(404).json({ error: 'Workout not found' });
         }
 
-        // otherwise, return the updated document
         return res.json(updatedWorkout);
     } catch (err) {
         return next(err);
     }
 });
 
-/**
- * DELETE /api/workouts/:id
- * Delete workout by id
- */
-router.delete('/:id', async (req, res, next) => {
+// delete workout by id
+router.delete('/:id', requireUser, async (req, res, next) => {
     try {
-        // firstly, use helper ID validator; return if ID is invalid
         const { id } = req.params;
+
+        // check if id is valid
         validateId(id);
 
-        // if valid, delete the workout
-        const deletedWorkout = await Workout.findByIdAndDelete(id);
+        // find and delete workout for logged-in user
+        const deletedWorkout = await Workout.findOneAndDelete({
+            _id: id,
+            userId: req.user.id,
+        });
 
-        // throw status 404 if workout isn't found
+        // workout not found
         if (!deletedWorkout) {
-            return res.status(404).json({ error: `Workout not found` });
+            return res.status(404).json({ error: 'Workout not found' });
         }
 
-        // successful deletion, nothing to return
+        // no content on success
         return res.status(204).send();
     } catch (err) {
         return next(err);
     }
 });
 
-/**
- * GET /api/workouts/:id
- * Get a single workout
- */
-router.get('/:id', async (req, res, next) => {
+// get workout by id
+router.get('/:id', requireUser, async (req, res, next) => {
     try {
-        // firstly, use helper ID validator; return if ID is invalid
         const { id } = req.params;
+
+        // check if id is valid
         validateId(id);
 
-        // if valid, find the workout by ID
-        const workout = await Workout.findById(id);
+        // find workout for logged-in user
+        const workout = await Workout.findOne({ _id: id, userId: req.user.id });
 
-        // throw status 404 if workout isn't found
+        // workout not found
         if (!workout) {
-            return res.status(404).json({ error: `Workout not found` });
+            return res.status(404).json({ error: 'Workout not found' });
         }
 
-        // return the workout in JSON format
         return res.json(workout);
     } catch (err) {
         return next(err);
     }
 });
 
-/**
- * GET /api/workouts
- * Get all workouts
- */
-router.get('/', async (_req, res, next) => {
+// get all workouts for user
+router.get('/', requireUser, async (req, res, next) => {
     try {
-        // retrieve all workouts within collection, sorting them by creation date - newest first (descending)
-        const workouts = await Workout.find().sort({ createdAt: -1 });
-
-        // return the workouts in JSON format
+        // find workouts for logged-in user, newest first
+        const workouts = await Workout.find({ userId: req.user.id }).sort({ createdAt: -1 });
         return res.json(workouts);
     } catch (err) {
         return next(err);
