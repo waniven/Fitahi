@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const User = require('../models/User');
+const auth = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -15,29 +16,21 @@ const isValidId= (id) => mongoose.Types.ObjectId.isValid(id);
 router.post('/', async (req, res, next) => {
     try {
         //get variables from document
-        const { fisrtname, lastname, email, dateofbirth, password } = req.body;
+        const { firstname, lastname, email, dateofbirth, password } = req.body;
 
-        //check manditory fields are present 
-        switch(true) {
-            case !fisrtname || !lastname:
-                return res.status(400).json({ error: 'Full name is required' });
-            case !email:
-                return res.status(400).json({ error: 'Email is required' });
-            case !dateofbirth:
-                return res.status(400).json({ error: 'Date of birth is required' });
-            case !password:
-                return res.status(400).json({ error: 'Password is required' });
-            default:
-                break;
+        //cehck of manditory fields exsist
+        if (!firstname || !lastname || !email || !dateofbirth || !password) {
+            return res.status(400).json({ error: 'Missing required fields' });
         }
 
         //create a new user 
-        const user = await User.create({ name, email, dateofbirth, password });
+        const user = await User.create({ firstname, lastname, email, dateofbirth, password });
         
         //return new user
         return res.status(201).json(user);
 
     } catch (err) {
+
         //duplicate email 
         if(err.code === 11000) {
             return res.status(409).json({ error: 'Email already exists' });
@@ -52,30 +45,22 @@ router.post('/', async (req, res, next) => {
  * PATCH /api/users/:id
  * Update a user (partial)
  * body: { name, email, dateofbirth, password }
+ * auth needed
  */
-router.patch('/:id', async (req, res, next) => {
+router.patch('/:id', auth, async (req, res, next) => {
     try{
-        //id obj 
-        const { id } = req.params;
-
-        //check if id is valid
-        if(!isValidId(id)) {
-            return res.status(400).json({ error: 'Invalid user id' });
-        }
+        //id from users session
+        const id = req.user.id;
 
         //whitelist object, will add allowed fields
         const updates = {}; 
 
         //check data type and add to updates whitelist object
-        if (typeof req.body.fisrtname === 'string') updates.fisrtname = req.body.fisrtname;
+        if (typeof req.body.firstname === 'string') updates.firstname = req.body.firstname;
         if (typeof req.body.lastname === 'string') updates.lastname = req.body.lastname;
         if (typeof req.body.email === 'string') updates.email = req.body.email;
+        if (typeof req.body.dateofbirth === 'string') updates.dateofbirth = req.body.dateofbirth;
         if (typeof req.body.password === 'string') updates.password = req.body.password;
-        // date comes as a string; cast and validate
-        if (typeof req.body.dateofbirth === 'string' || req.body.dateofbirth instanceof Date) {
-            const d = new Date(req.body.dateofbirth);
-            if (!Number.isNaN(d.getTime())) updates.dateofbirth = d;
-        }
 
         //check if whitelist object is empty, if so dont update anything
         if(Object.keys(updates).length === 0) {
@@ -110,10 +95,10 @@ router.patch('/:id', async (req, res, next) => {
  * DELETE /api/users/:id
  * Delete a user
  */
-router.delete('/:id', async (req, res, next) => {
+router.delete('/:id', auth, async (req, res, next) => {
     try{
-        //id obj 
-        const { id } = req.params;
+        //id from users session
+        const id = req.user.id; 
 
         //check if id is valid
         if(!isValidId(id)) {
@@ -136,9 +121,31 @@ router.delete('/:id', async (req, res, next) => {
 });
 
 /**
+ * GET /api/me
+ * users own profile
+ * need to auth their token
+**/
+router.get('/me', auth , async (req, res, next) => {
+    try {
+        //get users own profile
+        const me = await User.findById(req.user.id);
+        
+        //return error if user profile not found
+        if (!me) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        //return users own profile
+        return res.json(me);
+    } catch (err) {
+        return next(err);
+    }
+});
+
+/**
  * GET /api/users/:id
  * Get a single user
- */
+ * For testing only
 router.get('/:id', async (req, res, next) => {
     try{
         //id obj 
@@ -164,5 +171,6 @@ router.get('/:id', async (req, res, next) => {
         return next(err);
     }
 });
+*/
 
 module.exports = router;

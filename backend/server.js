@@ -5,7 +5,9 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const userRoutes = require('./src/routes/userRoutes');
+const authRoutes = require('./src/routes/authRoutes');
 const workoutRoutes = require('./src/routes/workoutRoutes');
+const workoutResultRoutes = require('./src/routes/workoutResultRoutes');
 
 const app = express();
 
@@ -14,7 +16,9 @@ app.use(express.json());
 
 //mount routes
 app.use('/api/users', userRoutes);
+app.use('/api/auth', authRoutes);
 app.use('/api/workouts', workoutRoutes);
+app.use('/api/workout-results', workoutResultRoutes);
 
 //global error handing
 app.use((err, _req, res, _next) => {
