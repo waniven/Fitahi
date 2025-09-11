@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
-import { SafeAreaView, Dimensions, FlatList, Platform, StyleSheet, Text, TouchableOpacity, View, Picker,} from 'react-native';
+import {Dimensions, FlatList, Platform, StyleSheet, Text, TouchableOpacity, View, Picker,} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import WheelPickerExpo from 'react-native-wheel-picker-expo';
 import { Colors } from '../../constants/Colors';
@@ -138,7 +139,7 @@ export default function Quiz() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: '#121212' }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: '#151924' }]}>
       {/* Progress Bar */}
       <View style={styles.progressBarBackground}>
         <View
@@ -236,6 +237,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 20,
     justifyContent: 'center',
+    backgroundColor: "#151924",
   },
   question: {
     fontSize: 22,

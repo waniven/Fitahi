@@ -11,11 +11,11 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/Colors';
-import CustomButton from './CustomButton';
+import CustomButton from '../common/CustomButton';
 
 /**
  * BiometricEntryModal - Modal for entering height and weight data
- * Simplified version without animations to avoid render loops
+ * Fixed to not block navigation and UI interactions
  */
 export default function BiometricEntryModal({ visible, onClose, onSave }) {
   const [heightValue, setHeightValue] = useState('');
@@ -100,9 +100,6 @@ export default function BiometricEntryModal({ visible, onClose, onSave }) {
       if (onSave) {
         onSave(newBiometricEntry);
       }
-      
-      Alert.alert('Success', 'Biometric entry added successfully!');
-      closeModal();
     }
   };
 
@@ -110,70 +107,80 @@ export default function BiometricEntryModal({ visible, onClose, onSave }) {
     <Modal
       visible={visible}
       animationType="slide"
-      presentationStyle="pageSheet"
+      transparent={true} // Make modal transparent so background is visible
       onRequestClose={requestCloseConfirmation}
     >
-      <View style={styles.modalContainer}>
-        <View style={styles.modalContent}>
-          {/* Modal header with title and close button */}
-          <View style={styles.modalHeaderSection}>
-            <Text style={styles.modalTitleText}>Add Entry</Text>
-            <TouchableOpacity onPress={requestCloseConfirmation} style={styles.closeButton}>
-              <Ionicons name="close" size={28} color="#666" />
-            </TouchableOpacity>
-          </View>
+      {/* Background overlay */}
+      <View style={styles.modalOverlay}>
+        <TouchableOpacity 
+          style={styles.backgroundTouchable} 
+          activeOpacity={1}
+          onPress={requestCloseConfirmation}
+        />
+        
+        {/* Modal content */}
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            {/* Modal header with title and close button */}
+            <View style={styles.modalHeaderSection}>
+              <Text style={styles.modalTitleText}>Add Entry</Text>
+              <TouchableOpacity onPress={requestCloseConfirmation} style={styles.closeButton}>
+                <Ionicons name="close" size={28} color="#666" />
+              </TouchableOpacity>
+            </View>
 
-          <Text style={styles.modalSubtitleText}>
-            How is your progress today?
-          </Text>
+            <Text style={styles.modalSubtitleText}>
+              How is your progress today?
+            </Text>
 
-          {/* Height input section */}
-          <View style={styles.inputSection}>
-            <Text style={styles.inputLabel}>HEIGHT (cm) *</Text>
-            <View style={[styles.inputContainer, validationErrors.height && styles.inputError]}>
-              <TextInput
-                style={styles.textInput}
-                placeholder="Height"
-                placeholderTextColor="#999"
-                value={heightValue}
-                onChangeText={setHeightValue}
-                keyboardType="default"
-                returnKeyType="done"
+            {/* Height input section */}
+            <View style={styles.inputSection}>
+              <Text style={styles.inputLabel}>HEIGHT (cm) *</Text>
+              <View style={[styles.inputContainer, validationErrors.height && styles.inputError]}>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="Height"
+                  placeholderTextColor="#999"
+                  value={heightValue}
+                  onChangeText={setHeightValue}
+                  keyboardType="numeric"
+                  returnKeyType="next"
+                />
+              </View>
+              {validationErrors.height && (
+                <Text style={styles.errorText}>{validationErrors.height}</Text>
+              )}
+            </View>
+
+            {/* Weight input section */}
+            <View style={styles.inputSection}>
+              <Text style={styles.inputLabel}>WEIGHT (kg) *</Text>
+              <View style={[styles.inputContainer, validationErrors.weight && styles.inputError]}>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="Weight"
+                  placeholderTextColor="#999"
+                  value={weightValue}
+                  onChangeText={setWeightValue}
+                  keyboardType="numeric"
+                  returnKeyType="done"
+                />
+              </View>
+              {validationErrors.weight && (
+                <Text style={styles.errorText}>{validationErrors.weight}</Text>
+              )}
+            </View>
+
+            {/* Submit button at bottom */}
+            <View style={styles.submitButtonSection}>
+              <CustomButton
+                title="Add Entry"
+                onPress={submitBiometricEntry}
+                variant="primary"
+                size="large"
+                style={styles.addEntryButton}
               />
             </View>
-            {validationErrors.height && (
-              <Text style={styles.errorText}>{validationErrors.height}</Text>
-            )}
-          </View>
-
-          {/* Weight input section */}
-          <View style={styles.inputSection}>
-            <Text style={styles.inputLabel}>WEIGHT (kg) *</Text>
-            <View style={[styles.inputContainer, validationErrors.weight && styles.inputError]}>
-              <TextInput
-                style={styles.textInput}
-                placeholder="Weight"
-                placeholderTextColor="#999"
-                value={weightValue}
-                onChangeText={setWeightValue}
-                keyboardType="default"
-                returnKeyType="done"
-              />
-            </View>
-            {validationErrors.weight && (
-              <Text style={styles.errorText}>{validationErrors.weight}</Text>
-            )}
-          </View>
-
-          {/* Submit button at bottom */}
-          <View style={styles.submitButtonSection}>
-            <CustomButton
-              title="Add Entry"
-              onPress={submitBiometricEntry}
-              variant="primary"
-              size="large"
-              style={styles.addEntryButton}
-            />
           </View>
         </View>
       </View>
@@ -182,20 +189,29 @@ export default function BiometricEntryModal({ visible, onClose, onSave }) {
 }
 
 const styles = StyleSheet.create({
-  modalContainer: {
+  modalOverlay: {
     flex: 1,
-    backgroundColor: Colors.dark.background,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent background
+    justifyContent: 'flex-end', // Position at bottom for slide up effect
   },
-  
-  modalContent: {
+
+  backgroundTouchable: {
     flex: 1,
+  },
+
+  modalContainer: {
     backgroundColor: '#fff',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingHorizontal: 24,
     paddingTop: 24,
     paddingBottom: 40,
-    marginTop: 50,
+    height: '85%', // Cover most of the screen including navigation
+    // Remove maxHeight to allow full coverage
+  },
+  
+  modalContent: {
+    // Remove flex: 1 to prevent full screen coverage
   },
   
   modalHeaderSection: {
@@ -219,12 +235,12 @@ const styles = StyleSheet.create({
   modalSubtitleText: {
     fontSize: 16,
     color: '#666',
-    marginBottom: 40,
+    marginBottom: 32,
     fontFamily: 'Montserrat_400Regular',
   },
 
   inputSection: {
-    marginBottom: 32,
+    marginBottom: 24,
   },
 
   inputLabel: {
@@ -265,7 +281,7 @@ const styles = StyleSheet.create({
   },
 
   submitButtonSection: {
-    marginTop: 40,
+    marginTop: 32,
     paddingBottom: 20,
   },
 

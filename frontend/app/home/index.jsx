@@ -2,13 +2,15 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { Dimensions, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View, Modal, TextInput, } from "react-native";
+import { Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View, Modal, TextInput, } from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from "../../constants/Colors";
 import FloatingAIButton from "../ai/FloatingAIButton";
 import FitahiLogo from "../../constants/FitahiLogo";
 import { Calendar } from "react-native-calendars";
 import Toast from "react-native-toast-message";
 import globalStyles from "../../styles/globalStyles";
+import BottomNav from "@/components/navbar/bottomnav";
 
 const { width } = Dimensions.get("window");
 
@@ -77,7 +79,7 @@ export default function Home() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 140 }}>
+      <ScrollView contentContainerStyle={{ flexGrow: 1, paddingBottom: 140 }}>
         {/* logo */}
         <View style={styles.logoContainer}>
           <FitahiLogo width={320} height={140} fill="#FFFFFF" />
@@ -192,7 +194,7 @@ export default function Home() {
 
           <TouchableOpacity
             style={[styles.card, { width: cardWidth, backgroundColor: "#fff" }]}
-            onPress={() => router.push("/main/waterlog")}
+            onPress={() => router.push("/main/water")}
           >
             <Text style={[globalStyles.cardText, { color: theme.tint }]}>💧 Water Log</Text>
           </TouchableOpacity>
@@ -216,27 +218,7 @@ export default function Home() {
       </ScrollView>
 
       {/* bottom navigation */}
-      <View style={[styles.bottomNav, { backgroundColor: "#fff" }]}>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push("/home/index")}>
-          <Ionicons name="home-outline" size={26} color={theme.tint} />
-          <Text style={[globalStyles.navText, { color: theme.tint }]}>Home</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push("/main/analytics")}>
-          <Ionicons name="stats-chart-outline" size={26} color={theme.tint} />
-          <Text style={[globalStyles.navText, { color: theme.tint }]}>Analytics</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push("/main/supplements")}>
-          <Ionicons name="medkit-outline" size={26} color={theme.tint} />
-          <Text style={[globalStyles.navText, { color: theme.tint }]}>Supplements</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push("/profile/AccountSettings")}>
-          <Ionicons name="settings-outline" size={26} color={theme.tint} />
-          <Text style={[globalStyles.navText, { color: theme.tint }]}>Settings</Text>
-        </TouchableOpacity>
-      </View>
+      <BottomNav/>
 
       {/* floating ai button */}
       <FloatingAIButton />
@@ -354,21 +336,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 6,
     elevation: 3
-  },
-
-  // Bottom navigation
-  bottomNav: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    paddingVertical: 12,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    position: "absolute",
-    bottom: 0,
-    width: "100%"
-  },
-  navItem: {
-    alignItems: "center"
   },
 
   // Modal

@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { ScrollView, StyleSheet, Text, TouchableOpacity, useColorScheme, View } from "react-native";
 import { Colors } from "../../constants/Colors";
 import globalStyles from "../../styles/globalStyles";
-import { SafeAreaView } from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from "expo-router";
 
 export default function AnalyticsScreen() {
