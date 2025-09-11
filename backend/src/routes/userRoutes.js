@@ -1,5 +1,4 @@
 const express = require('express');
-const mongoose = require('mongoose');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
 const validateId = require('../helpers/validateId');
@@ -45,7 +44,7 @@ router.post('/', async (req, res, next) => {
  * body: { name, email, dateofbirth, password }
  * auth needed
  */
-router.patch('/:id', auth, async (req, res, next) => {
+router.patch('/me', auth, async (req, res, next) => {
     try{
         //id from users session
         const id = req.user.id;
@@ -93,7 +92,7 @@ router.patch('/:id', auth, async (req, res, next) => {
  * DELETE /api/users/:id
  * Delete a user
  */
-router.delete('/:id', auth, async (req, res, next) => {
+router.delete('/me', auth, async (req, res, next) => {
     try{
         //id from users session
         const id = req.user.id; 
