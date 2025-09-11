@@ -1,12 +1,14 @@
 {
   "expo": {
+    "jsEngine": "jsc",
     "name": "frontend",
     "slug": "frontend",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
     "newArchEnabled": true,
+    "scheme": "fitahi",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
