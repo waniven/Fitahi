@@ -13,7 +13,6 @@ import { Colors } from "@/constants/Colors";
 import { Font } from "@/constants/Font";
 import ModalCloseButton from "../ModalCloseButton";
 import PrimaryButton from "../PrimaryButton";
-import Exercise from "./models/Exercise";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // ExerciseInput let user set exercises in a workout
@@ -27,7 +26,7 @@ function ExerciseInput(props) {
   // Set the size of the modal content and scrollview
   const insets = useSafeAreaInsets();
   const BTN_HEIGHT = 56; //Height of the button
-  const EXTRA_BOTTOM = 43; 
+  const EXTRA_BOTTOM = 43;
   const bottomGutter = BTN_HEIGHT + EXTRA_BOTTOM + insets.bottom + 8;
 
   const makeExercise = () => ({
@@ -103,6 +102,7 @@ function ExerciseInput(props) {
   // onSave checks each exercise form is valid and save them into an array and send back to the parent
   function onSave() {
     setShowErrors(true);
+
     // Validation: require name, reps, sets, rest for each card
     for (let i = 0; i < exercises.length; i++) {
       const ex = exercises[i];
@@ -116,21 +116,21 @@ function ExerciseInput(props) {
       }
     }
 
-    const payload = exercises.map(
-      (ex) =>
-        new Exercise(
-          ex.id,
-          ex.name.trim(),
-          toNumber(ex.sets),
-          toNumber(ex.reps),
-          toNumber(ex.duration),
-          toNumber(ex.weight),
-          toNumber(ex.rest),
-          ex.imageUrl
-        )
-    );
+    // Map frontend form fields to backend schema
+    const payload = exercises.map((ex) => ({
+      exerciseName: ex.name.trim(),
+      numOfSets: Number(ex.sets) || 1,
+      numOfReps: Number(ex.reps) || 1,
+      exerciseWeight: Number(ex.weight) || 0,
+      exerciseDuration: Number(ex.duration) || 0,
+      restTime: Number(ex.rest) || 0,
+      imageUrl: ex.imageUrl || "",
+    }));
 
-    props.onSave?.(payload); // Send Exercise[] to parent
+    // Send backend-compatible exercises array to parent (WorkoutInput)
+    props.onSave?.(payload);
+
+    // Reset form and close modal
     resetForm();
     props.onCancel?.();
   }
@@ -150,7 +150,6 @@ function ExerciseInput(props) {
   ];
 
   return (
-    
     <Modal
       visible={props.visible}
       animationType="slide"
@@ -159,7 +158,10 @@ function ExerciseInput(props) {
     >
       <View style={styles.modalOverlay}>
         <View
-          style={[styles.modalContent, { backgroundColor: theme.textPrimary, paddingBottom: bottomGutter }]}
+          style={[
+            styles.modalContent,
+            { backgroundColor: theme.textPrimary, paddingBottom: bottomGutter },
+          ]}
         >
           <ModalCloseButton onPress={onCancel} />
 

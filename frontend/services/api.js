@@ -10,7 +10,7 @@ const api = axios.create({
 
 let token = null;
 
-// TEMP: login function to get a token for testing
+// login function to get a token for testing (temporary)
 export async function loginTemp() {
     try {
         const res = await axios.post(`${BASE_URL}/api/auth/login`, {
