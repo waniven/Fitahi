@@ -38,8 +38,8 @@ router.post('/login', async (req, res, next) => {
         const token = jwt.sign(payload, jwt_secret, { expiresIn: jwt_expires || '1h'}); //create token with signed payload, secrtet, and expire time
 
         //return token and some profile info
-        const {_id, firstname, lastname } = user.toJSON();
-        return res.json({ token, user: { _id, firstname, lastname, email: user.email }});
+        const {_id, firstname, lastname, dateofbirth } = user.toJSON();
+        return res.json({ token, user: { _id, firstname, lastname, dateofbirth ,email: user.email }});
     } catch (err) {
         return next(err);
     }
