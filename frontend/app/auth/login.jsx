@@ -7,13 +7,15 @@ import FitahiLogo from "../../constants/FitahiLogo";
 import CustomInput from "../../components/common/CustomInput";
 import CustomButton from "../../components/common/CustomButton";
 import globalStyles from "../../styles/globalStyles"; 
+import { login } from "../../services/authService";
 
 export default function Login() {
   const router = useRouter(); //navigation handler
   const theme = Colors["dark"];
- //for state
+  //for state
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState(""); //error message for validation
+  const [busy, setBusy] = useState(false);
 
   //update form field/clears error if present
   const updateField = (field, value) => {
@@ -22,7 +24,9 @@ export default function Login() {
   };
 
   //validation and navigation
-  const handleLogin = () => {
+  const handleLogin = async () => {
+    const email = formData.email.trim();
+    const password = formData.password;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!formData.email || !emailRegex.test(formData.email)) {
@@ -34,7 +38,25 @@ export default function Login() {
       return;
     }
 
-    router.push("/home"); //navigate to home
+    try {
+      setBusy(true);
+      await login(email, password);
+      router.replace("/home");
+    } catch (err) {
+      const status = err?.response?.status;
+      const serverMsg = err?.response?.data?.error;
+      const msg = serverMsg || `Request failed${status ? ` (${status})` : ""}`;
+
+      console.log("LOGIN ERROR:", {
+        status,
+        data: err?.response?.data,
+        message: err?.message,
+        code: err?.code,
+      });
+      setError(serverMsg);
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (

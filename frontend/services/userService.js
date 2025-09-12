@@ -8,17 +8,17 @@ import api from "./api";
 
 //get information about the users own profile
 export async function getMe() {
-    const res = await api.get('/users/me');
+    const res = await api.get('users/me');
     return res.data;
 }
 
 //update user profile 
 export async function updateMe(patch) {
-    const res = await api.patch('/users/me', patch);
+    const res = await api.patch('users/me', patch);
     return res.data;
 }
 
 //delete user
 export async function deleteMe() {
-    await api.delete("/users/me");
+    await api.delete("users/me");
 }

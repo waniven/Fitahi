@@ -9,11 +9,11 @@ const router = express.Router();
 const isValidId= (id) => mongoose.Types.ObjectId.isValid(id);
 
 /*
- * POST /api/users/me
+ * POST /api/users/
  * Create a user
  * body: { name, email, dateofbirth, password }
 */
-router.post('/users/me', async (req, res, next) => {
+router.post('/', async (req, res, next) => {
     try {
         //get variables from document
         const { firstname, lastname, email, dateofbirth, password } = req.body;
@@ -47,7 +47,7 @@ router.post('/users/me', async (req, res, next) => {
  * body: { name, email, dateofbirth, password }
  * auth needed
  */
-router.patch('/users/me', auth, async (req, res, next) => {
+router.patch('/me', auth, async (req, res, next) => {
     try{
         //id from users session
         const id = req.user.id;
@@ -95,7 +95,7 @@ router.patch('/users/me', auth, async (req, res, next) => {
  * DELETE /api/users/me
  * Delete a user
  */
-router.delete('/users/me', auth, async (req, res, next) => {
+router.delete('/me', auth, async (req, res, next) => {
     try{
         //id from users session
         const id = req.user.id; 

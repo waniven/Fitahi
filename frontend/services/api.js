@@ -12,7 +12,7 @@ export function setAuthToken(token) {
     accessToken = token || null;
     
     if (accessToken) {
-        api.defaults.headers.Authorization = `Bearer ${accessToken}`;
+        api.defaults.headers.Authorization = `Bearer ${token}`;
     } else {
         delete api.defaults.headers.Authorization;
     }
