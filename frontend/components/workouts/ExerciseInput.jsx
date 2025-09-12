@@ -41,12 +41,13 @@ function ExerciseInput(props) {
 
   const fromModelToForm = (ex) => ({
     id: ex?.id ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`,
-    name: ex?.name ?? "",
+    name: ex?.exerciseName ?? "", // ✅ map exerciseName → name
     reps: ex?.numOfReps !== undefined ? String(ex.numOfReps) : "",
     sets: ex?.numOfSets !== undefined ? String(ex.numOfSets) : "",
-    weight: ex?.weight !== undefined ? String(ex.weight) : "",
-    rest: ex?.rest !== undefined ? String(ex.rest) : "",
-    duration: ex?.duration !== undefined ? String(ex.duration) : "",
+    weight: ex?.exerciseWeight !== undefined ? String(ex.exerciseWeight) : "",
+    rest: ex?.restTime !== undefined ? String(ex.restTime) : "", // ✅ map restTime → rest
+    duration:
+      ex?.exerciseDuration !== undefined ? String(ex.exerciseDuration) : "",
     imageUrl: ex?.imageUrl ?? "",
   });
 
@@ -84,7 +85,13 @@ function ExerciseInput(props) {
 
   // removeExerciseCard removes a selected exercise card
   function removeExerciseCard(id) {
-    setExercises((curr) => curr.filter((ex) => ex.id !== id));
+    setExercises((curr) => {
+      if (curr.length <= 1) {
+        alert("You must have at least one exercise in a workout.");
+        return curr; // don’t delete anything
+      }
+      return curr.filter((ex) => ex.id !== id);
+    });
   }
 
   // onCancel allows to click X to go back to Workout Input
