@@ -1,6 +1,5 @@
+import { BASE_URL } from "@env";
 import axios from "axios";
-
-const { BASE_URL, BEARER } = process.env;
 
 const api = axios.create({
     baseURL: `${BASE_URL}/api`,
@@ -9,11 +8,26 @@ const api = axios.create({
     },
 });
 
-// attach token on each request
-api.interceptors.request.use((config) => {
-    // temporary token for testing
-    config.headers.Authorization = `Bearer ${BEARER}`;
-    return config;
-});
+let token = null;
+
+// TEMP: login function to get a token for testing
+export async function loginTemp() {
+    try {
+        const res = await axios.post(`${BASE_URL}/api/auth/login`, {
+            email: "mikey@example.com",
+            password: "pass123",
+        });
+
+        token = res.data.token;
+        console.log("✅ Got token:", token);
+
+        api.defaults.headers.Authorization = `Bearer ${token}`;
+        return true;
+    } catch (err) {
+        console.error("❌ Login failed:", err.response?.data || err.message);
+        return false;
+    }
+}
+
 
 export default api;
