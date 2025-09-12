@@ -10,7 +10,8 @@ import FitahiLogo from "../../constants/FitahiLogo";
 import { Calendar } from "react-native-calendars";
 import Toast from "react-native-toast-message";
 import globalStyles from "../../styles/globalStyles";
-import BottomNav from "@/components/navbar/BottomNav";
+// import BottomNav from "@/components/navbar/BottomNav";
+import BottomNav from "@/components/navbar/Bottomnav";
 
 const { width } = Dimensions.get("window");
 
@@ -203,7 +204,7 @@ export default function Home() {
         <View style={styles.row}>
           <TouchableOpacity
             style={[styles.card, { width: cardWidth, backgroundColor: "#fff" }]}
-            onPress={() => router.push("/main/gymfinder")}
+            onPress={() => router.push("/main/gymsFinder")}
           >
             <Text style={[globalStyles.cardText, { color: theme.tint }]}>🗺️ Gym Finder</Text>
           </TouchableOpacity>
