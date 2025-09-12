@@ -6,11 +6,11 @@ const validateId = require('../helpers/validateId');
 const router = express.Router();
 
 /*
- * POST /api/users
+ * POST /api/createUser
  * Create a user
  * body: { name, email, dateofbirth, password }
 */
-router.post('/', async (req, res, next) => {
+router.post('/createUser', async (req, res, next) => {
     try {
         //get variables from document
         const { firstname, lastname, email, dateofbirth, password } = req.body;
@@ -39,12 +39,12 @@ router.post('/', async (req, res, next) => {
 
 
 /**
- * PATCH /api/users/:id
+ * PATCH /api/updateUser
  * Update a user (partial)
  * body: { name, email, dateofbirth, password }
  * auth needed
  */
-router.patch('/me', auth, async (req, res, next) => {
+router.patch('/updateUser', auth, async (req, res, next) => {
     try{
         //id from users session
         const id = req.user.id;
@@ -89,10 +89,10 @@ router.patch('/me', auth, async (req, res, next) => {
 });
 
 /**
- * DELETE /api/users/:id
+ * DELETE /api/deleteUser
  * Delete a user
  */
-router.delete('/me', auth, async (req, res, next) => {
+router.delete('/deleteUser', auth, async (req, res, next) => {
     try{
         //id from users session
         const id = req.user.id; 
@@ -116,11 +116,11 @@ router.delete('/me', auth, async (req, res, next) => {
 });
 
 /**
- * GET /api/me
+ * GET /api/myinfo
  * users own profile
  * need to auth their token
 **/
-router.get('/me', auth , async (req, res, next) => {
+router.get('/myinfo', auth , async (req, res, next) => {
     try {
         //get users own profile
         const me = await User.findById(req.user.id);
@@ -136,34 +136,5 @@ router.get('/me', auth , async (req, res, next) => {
         return next(err);
     }
 });
-
-/**
- * GET /api/users/:id
- * Get a single user
- * For testing only
-router.get('/:id', async (req, res, next) => {
-    try{
-        //id obj 
-        const { id } = req.params;
-
-        //check if id is valid
-        validateId(id);
-
-        //find user document
-        const user = await User.findById(id);
-
-        //return error if user not found
-        if (!user) {
-            return res.status(404).json({ error: 'User not found'})
-        }
-
-        //return user document
-        return res.json(user);
-
-    } catch (err) {
-        return next(err);
-    }
-});
-*/
 
 module.exports = router;
