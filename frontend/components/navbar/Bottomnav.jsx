@@ -12,7 +12,7 @@ export default function BottomNav() {
 
   return (
     <View style={[styles.bottomNav, { backgroundColor: "#fff" }]}>
-      <TouchableOpacity style={styles.navItem} onPress={() => router.push("/home/index")}>
+      <TouchableOpacity style={styles.navItem} onPress={() => router.push("/home")}>
         <Ionicons name="home-outline" size={26} color={theme.tint} />
         <Text style={[globalStyles.navText, { color: theme.tint }]}>Home</Text>
       </TouchableOpacity>

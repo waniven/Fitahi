@@ -13,13 +13,12 @@ import SupplementsInput from "@/components/supplements/SupplementsInput";
 import { Colors } from "@/constants/Colors";
 import { Font } from "@/constants/Font";
 import Fab from "@/components/FloatingActionButton";
-import BackButton from "@/components/BackButton";
-import { Ionicons } from "@expo/vector-icons";
-import globalStyles from "@/styles/globalStyles";
+import CustomButtonThree from "../../components/common/CustomButtonThree";
 import { AIContext } from "../ai/AIContext";
 import { useRouter } from "expo-router";
 import ListCardItemGeneral from "@/components/ListCardItemGeneral";
 import SupplementsLog from "@/components/supplements/models/SupplementsLog";
+import BottomNav from "@/components/navbar/Bottomnav";
 
 // LogSupplements allows user create supplement plans and log them
 function LogSupplements({ navigation }) {
@@ -35,7 +34,10 @@ function LogSupplements({ navigation }) {
       else router.replace("/home/index");
     };
     navigation.setOptions({
-      headerLeft: () => <BackButton onPress={goBackOrHome} />,
+      
+      headerLeft: () => (
+        <CustomButtonThree onPress={() => navigation.goBack()} />
+      ),
       headerRight: () => (
         <TouchableOpacity
           onPress={toggleChat}
@@ -464,45 +466,8 @@ function LogSupplements({ navigation }) {
         )}
       </View>
 
-      {/* Bottom nav */}
-      <View style={[styles.bottomNav, { backgroundColor: "#fff" }]}>
-        <TouchableOpacity
-          style={styles.navItem}
-          onPress={() => router.push("/home")}
-        >
-          <Ionicons name="home-outline" size={26} color={theme.tint} />
-          <Text style={[globalStyles.navText, { color: theme.tint }]}>
-            Home
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.navItem}
-          onPress={() => router.push("/main/analytics")}
-        >
-          <Ionicons name="stats-chart-outline" size={26} color={theme.tint} />
-          <Text style={[globalStyles.navText, { color: theme.tint }]}>
-            Analytics
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.navItem}
-          onPress={() => router.replace("/main/supplements")}
-        >
-          <Ionicons name="medkit-outline" size={26} color={theme.tint} />
-          <Text style={[globalStyles.navText, { color: theme.tint }]}>
-            Supplements
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.navItem}
-          onPress={() => router.push("/profile/AccountSettings")}
-        >
-          <Ionicons name="settings-outline" size={26} color={theme.tint} />
-          <Text style={[globalStyles.navText, { color: theme.tint }]}>
-            Settings
-          </Text>
-        </TouchableOpacity>
-      </View>
+      {/* bottom navigation */}
+      <BottomNav />
     </View>
   );
 }
@@ -565,7 +530,6 @@ const styles = StyleSheet.create({
   screen: { flex: 1, paddingTop: 12 },
   content: { flex: 1, paddingHorizontal: 16 },
 
-  
   segmentBar: {
     flexDirection: "row",
     borderWidth: 1,
@@ -616,7 +580,7 @@ const styles = StyleSheet.create({
   },
   navItem: { alignItems: "center" },
 
-  // TODAY card 
+  // TODAY card
   todayCard: {
     flexDirection: "row",
     alignItems: "flex-start",

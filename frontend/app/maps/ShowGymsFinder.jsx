@@ -20,8 +20,7 @@ import {
 import MapView, { Marker } from "react-native-maps";
 import * as Location from "expo-location";
 import { useRouter } from "expo-router";
-import BackButton from "@/components/BackButton";
-import { Ionicons } from "@expo/vector-icons";
+import CustomButtonThree from "../../components/common/CustomButtonThree";
 import { Colors } from "@/constants/Colors";
 import { Font } from "@/constants/Font";
 import { AIContext } from "../ai/AIContext";
@@ -58,7 +57,9 @@ export default function ShowGymsFinder({ navigation }) {
       else router.replace("/home/index");
     };
     navigation.setOptions({
-      headerLeft: () => <BackButton onPress={goBackOrHome} />,
+      headerLeft: () => (
+        <CustomButtonThree onPress={() => navigation.goBack()} />
+      ),
       headerRight: () => (
         <TouchableOpacity
           onPress={toggleChat}
@@ -160,11 +161,13 @@ export default function ShowGymsFinder({ navigation }) {
     }
   }
 
+  // onNearestPress is used to find nearest gyms
   const onNearestPress = () => {
     if (!coords) return;
     fetchGyms(nearbyUrl({ lat: coords.latitude, lng: coords.longitude }));
   };
 
+  // onSearchPress is used to search for gyms
   const onSearchPress = () => {
     if (!coords || !search.trim()) return;
     fetchGyms(

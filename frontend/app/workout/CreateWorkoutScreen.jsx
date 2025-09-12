@@ -16,10 +16,9 @@ import { Font } from "@/constants/Font";
 import { useContext, useLayoutEffect } from "react";
 import Fab from "@/components/FloatingActionButton";
 import CustomButtonThree from "../../components/common/CustomButtonThree";
-import { Ionicons } from "@expo/vector-icons";
-import globalStyles from "../../styles/globalStyles";
 import { AIContext } from "../ai/AIContext";
 import { useRouter } from "expo-router";
+import BottomNav from "@/components/navbar/Bottomnav";
 
 // CreateWorkout creates a workout which pops up a workout input and display the created workout
 function CreateWorkout({ navigation }) {
@@ -32,10 +31,7 @@ function CreateWorkout({ navigation }) {
   useLayoutEffect(() => {
     navigation.setOptions({
       headerLeft: () => (
-        <CustomButtonThree
-          onPress={() => navigation.goBack()}
-
-        />
+        <CustomButtonThree onPress={() => navigation.goBack()} />
       ),
       headerRight: () => (
         <TouchableOpacity
@@ -193,47 +189,7 @@ function CreateWorkout({ navigation }) {
       </View>
 
       {/* bottom navigation */}
-      <View style={[styles.bottomNav, { backgroundColor: "#fff" }]}>
-        <TouchableOpacity
-          style={styles.navItem}
-          onPress={() => router.push("/home")}
-        >
-          <Ionicons name="home-outline" size={26} color={theme.tint} />
-          <Text style={[globalStyles.navText, { color: theme.tint }]}>
-            Home
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.navItem}
-          onPress={() => router.push("/main/analytics")}
-        >
-          <Ionicons name="stats-chart-outline" size={26} color={theme.tint} />
-          <Text style={[globalStyles.navText, { color: theme.tint }]}>
-            Analytics
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.navItem}
-          onPress={() => router.push("/main/supplements")}
-        >
-          <Ionicons name="medkit-outline" size={26} color={theme.tint} />
-          <Text style={[globalStyles.navText, { color: theme.tint }]}>
-            Supplements
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.navItem}
-          onPress={() => router.push("/profile/AccountSettings")}
-        >
-          <Ionicons name="settings-outline" size={26} color={theme.tint} />
-          <Text style={[globalStyles.navText, { color: theme.tint }]}>
-            Settings
-          </Text>
-        </TouchableOpacity>
-      </View>
+      <BottomNav />
     </View>
   );
 }
