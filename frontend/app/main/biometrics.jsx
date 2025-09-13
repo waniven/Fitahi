@@ -67,69 +67,20 @@ export default function BiometricsScreen() {
     );
   }
 
-  // Render dashboard when entries exist
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={Colors.dark.background} />
-      
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.title}>Biometrics Log</Text>
-        <View style={styles.headerSpacer} />
-      </View>
-
-      {/* Dashboard */}
+    <>
       <BiometricsDashboard
         entries={biometricEntries}
         onDeleteEntry={handleDeleteEntry}
         onAddEntry={handleAddBiometric}
+        onBackPress={handleBackPress}
       />
 
-      {/* Modal */}
       <BiometricEntryModal 
         visible={isModalVisible}
         onClose={handleCloseModal}
         onSave={handleSaveEntry}
       />
-    </SafeAreaView>
+    </>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.dark.background,
-  },
-
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: Colors.dark.background,
-  },
-
-  backButton: {
-    padding: 8,
-    borderRadius: 20,
-    backgroundColor: '#333',
-  },
-
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff',
-    fontFamily: 'Montserrat_700Bold',
-    flex: 1,
-    textAlign: 'center',
-    marginHorizontal: 16,
-  },
-
-  headerSpacer: {
-    width: 40, // Same width as back button to center title
-  },
-});

@@ -1,26 +1,22 @@
 // components/nutrition/NutritionDashboard.jsx
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, StatusBar } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { View, Text, StyleSheet, ScrollView, SafeAreaView, StatusBar } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 import { Colors } from '../../constants/Colors';
 import CustomButton from '../common/CustomButton';
 import CustomButtonThree from '../common/CustomButtonThree';
 import NutritionDataCard from './NutritionDataCard';
 import FloatingAIButton from '../../app/ai/FloatingAIButton';
+import BottomNav from '../navbar/BottomNav';
 import globalStyles from '../../styles/globalStyles';
 
 /**
- * NutritionDashboard - Main dashboard view for nutrition data
- * Shows header with back button, donut chart, macronutrient progress bars, calories summary, and today's entries
+ * NutritionDashboard - Comprehensive nutrition tracking dashboard
+ * Features donut chart visualization, macronutrient progress, and meal logging
  */
 const NutritionDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress, dailyGoals = { calories: 3000, protein: 200, carbs: 200, fat: 200 } }) => {
-  const router = useRouter();
-  const theme = Colors["dark"];
-
   /**
-   * Calculate total nutrition consumed today
+   * Aggregates nutritional values for current day
    */
   const calculateTotalNutrition = () => {
     const today = new Date().toDateString();
@@ -35,7 +31,7 @@ const NutritionDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress, d
   };
 
   /**
-   * Get today's entries only
+   * Filters entries to show only today's meals
    */
   const getTodaysEntries = () => {
     const today = new Date().toDateString();
@@ -43,7 +39,8 @@ const NutritionDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress, d
   };
 
   /**
-   * Donut Chart Component with outer ring for macros and inner circle for total
+   * DonutChart - Renders interactive macronutrient distribution visualization
+   * Shows protein, carbs, and fat as colored segments with center total
    */
   const DonutChart = ({ nutrition, size = 140 }) => {
     const total = nutrition.protein + nutrition.carbs + nutrition.fat;
@@ -55,19 +52,21 @@ const NutritionDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress, d
       return (
         <View style={[styles.pieChartContainer, { width: size, height: size }]}>
           <View style={styles.emptyPieChart}>
-            <Text style={styles.pieChartCenterText}>0</Text>
-            <Text style={styles.pieChartCenterSubtext}>kcal</Text>
+            <Text style={[globalStyles.heading3, styles.emptyChartText]}>0</Text>
+            <Text style={[globalStyles.bodySmall, styles.emptyChartSubtext]}>kcal</Text>
           </View>
         </View>
       );
     }
 
-    // Calculate angles for each segment
+    // Calculate proportional angles for each macronutrient
     const proteinAngle = (nutrition.protein / total) * 360;
     const carbsAngle = (nutrition.carbs / total) * 360;
     const fatAngle = (nutrition.fat / total) * 360;
 
-    // Helper function to create SVG path for donut segments
+    /**
+     * Generates SVG path data for donut chart segments
+     */
     const createDonutPath = (startAngle, endAngle, outerR, innerR) => {
       const startAngleRad = (startAngle - 90) * (Math.PI / 180);
       const endAngleRad = (endAngle - 90) * (Math.PI / 180);
@@ -87,7 +86,9 @@ const NutritionDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress, d
       return `M ${x1} ${y1} A ${outerR} ${outerR} 0 ${largeArcFlag} 1 ${x2} ${y2} L ${x3} ${y3} A ${innerR} ${innerR} 0 ${largeArcFlag} 0 ${x4} ${y4} Z`;
     };
 
-    // Calculate label positions
+    /**
+     * Calculates optimal label positioning around donut chart
+     */
     const getLabelPosition = (startAngle, endAngle, radius) => {
       const midAngle = (startAngle + endAngle) / 2;
       const midAngleRad = (midAngle - 90) * (Math.PI / 180);
@@ -129,7 +130,6 @@ const NutritionDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress, d
             );
           })}
           
-          {/* Inner circle background */}
           <Circle
             cx={center}
             cy={center}
@@ -140,7 +140,7 @@ const NutritionDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress, d
           />
         </Svg>
         
-        {/* Labels positioned around the donut */}
+        {/* Positioned labels for each macronutrient */}
         <View style={styles.donutLabelsContainer}>
           {segments.map((segment, index) => {
             let currentAngleForLabel = 0;
@@ -162,17 +162,17 @@ const NutritionDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress, d
                   }
                 ]}
               >
-                <Text style={styles.donutLabelText}>{segment.value} kcal</Text>
-                <Text style={styles.donutLabelSubtext}>{segment.label}</Text>
+                <Text style={[globalStyles.captionBold, styles.donutLabelText]}>{segment.value} kcal</Text>
+                <Text style={[globalStyles.captionSmall, styles.donutLabelSubtext]}>{segment.label}</Text>
               </View>
             );
           })}
         </View>
         
-        {/* Center text showing total */}
+        {/* Center display showing total calories */}
         <View style={styles.donutCenter}>
-          <Text style={styles.donutCenterText}>{total}</Text>
-          <Text style={styles.donutCenterSubtext}>kcal total</Text>
+          <Text style={[globalStyles.bodyMedium, styles.donutCenterText]}>{total}</Text>
+          <Text style={[globalStyles.captionSmall, styles.donutCenterSubtext]}>kcal total</Text>
         </View>
       </View>
     );
@@ -186,36 +186,33 @@ const NutritionDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress, d
       <StatusBar barStyle="light-content" backgroundColor={Colors.dark.background} />
       
       <View style={[globalStyles.container, { backgroundColor: Colors.dark.background }]}>
-        {/* Header Section */}
+        {/* Header navigation with title */}
         <View style={styles.header}>
           <View style={styles.backButtonContainer}>
             <CustomButtonThree onPress={onBackPress} />
           </View>
-          <Text style={[styles.title, globalStyles.welcomeText, { color: Colors.dark.textPrimary }]}>
+          <Text style={[globalStyles.welcomeText, styles.title, { color: Colors.dark.textPrimary }]}>
             Nutrition Log
           </Text>
         </View>
 
-        {/* Your Totals Title */}
-        <Text style={styles.totalsSectionTitle}>YOUR TOTALS FOR TODAY</Text>
+        <Text style={[globalStyles.heading4, styles.totalsSectionTitle]}>YOUR TOTALS FOR TODAY</Text>
 
         <ScrollView 
           style={styles.scrollContainer} 
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
         >
-          {/* Donut Chart and Macronutrient Progress Section */}
+          {/* Nutrition overview with chart and progress bars */}
           <View style={styles.nutritionOverviewContainer}>
-            {/* Donut Chart */}
             <View style={styles.pieChartSection}>
               <DonutChart nutrition={totalNutrition} size={140} />
             </View>
 
-            {/* Macronutrient Progress Bars */}
+            {/* Individual macronutrient progress indicators */}
             <View style={styles.macroProgressSection}>
-              {/* Protein */}
               <View style={styles.macroProgressItem}>
-                <Text style={styles.macroLabel}>Protein</Text>
+                <Text style={[globalStyles.bodyMedium, styles.macroLabel]}>Protein</Text>
                 <View style={styles.progressBarContainer}>
                   <View 
                     style={[
@@ -225,14 +222,13 @@ const NutritionDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress, d
                     ]} 
                   />
                 </View>
-                <Text style={styles.macroText}>
+                <Text style={[globalStyles.bodySmall, styles.macroText]}>
                   {totalNutrition.protein} kcal / {dailyGoals.protein} kcal
                 </Text>
               </View>
 
-              {/* Fat */}
               <View style={styles.macroProgressItem}>
-                <Text style={styles.macroLabel}>Fat</Text>
+                <Text style={[globalStyles.bodyMedium, styles.macroLabel]}>Fat</Text>
                 <View style={styles.progressBarContainer}>
                   <View 
                     style={[
@@ -242,14 +238,13 @@ const NutritionDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress, d
                     ]} 
                   />
                 </View>
-                <Text style={styles.macroText}>
+                <Text style={[globalStyles.bodySmall, styles.macroText]}>
                   {totalNutrition.fat} kcal / {dailyGoals.fat} kcal
                 </Text>
               </View>
 
-              {/* Carbs */}
               <View style={styles.macroProgressItem}>
-                <Text style={styles.macroLabel}>Carbs</Text>
+                <Text style={[globalStyles.bodyMedium, styles.macroLabel]}>Carbs</Text>
                 <View style={styles.progressBarContainer}>
                   <View 
                     style={[
@@ -259,24 +254,23 @@ const NutritionDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress, d
                     ]} 
                   />
                 </View>
-                <Text style={styles.macroText}>
+                <Text style={[globalStyles.bodySmall, styles.macroText]}>
                   {totalNutrition.carbs} kcal / {dailyGoals.carbs} kcal
                 </Text>
               </View>
             </View>
           </View>
 
-          {/* Calories Summary Card - Matching Water Dashboard */}
+          {/* Total calories summary card */}
           <View style={styles.caloriesCard}>
             <View style={styles.caloriesContent}>
               <View style={styles.caloriesAmountRow}>
-                <Text style={styles.caloriesLabel}>Calories</Text>
-                <Text style={styles.caloriesAmount}>
-                  {totalNutrition.calories} kcal <Text style={styles.caloriesGoal}>/ {dailyGoals.calories}</Text>
+                <Text style={[globalStyles.bodyMedium, styles.caloriesLabel]}>Calories</Text>
+                <Text style={[globalStyles.heading2, styles.caloriesAmount]}>
+                  {totalNutrition.calories} kcal <Text style={[globalStyles.bodyMedium, styles.caloriesGoal]}>/ {dailyGoals.calories}</Text>
                 </Text>
               </View>
               
-              {/* Calories Progress Bar */}
               <View style={styles.caloriesProgressContainer}>
                 <View 
                   style={[
@@ -289,9 +283,9 @@ const NutritionDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress, d
             </View>
           </View>
 
-          {/* Today's Entries Section */}
+          {/* List of today's food entries */}
           <View style={styles.entriesSection}>
-            <Text style={styles.entriesSectionTitle}>TODAY'S ENTRIES</Text>
+            <Text style={[globalStyles.heading4, styles.entriesSectionTitle]}>TODAY'S ENTRIES</Text>
             
             <View style={styles.entriesContainer}>
               {todaysEntries.length > 0 ? (
@@ -306,10 +300,10 @@ const NutritionDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress, d
                 ))
               ) : (
                 <View style={styles.noEntriesContainer}>
-                  <Text style={styles.noEntriesText}>
+                  <Text style={[globalStyles.heading3, styles.noEntriesText]}>
                     No food entries for today
                   </Text>
-                  <Text style={styles.noEntriesSubtext}>
+                  <Text style={[globalStyles.bodyMedium, styles.noEntriesSubtext]}>
                     Tap the button below to log your first meal!
                   </Text>
                 </View>
@@ -318,7 +312,7 @@ const NutritionDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress, d
           </View>
         </ScrollView>
 
-        {/* Floating Add New Entry Button */}
+        {/* Fixed position add meal button */}
         <View style={styles.floatingButtonContainer}>
           <CustomButton
             title="Log New Food Entry"
@@ -330,30 +324,7 @@ const NutritionDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress, d
         </View>
       </View>
 
-      {/* Bottom Navigation */}
-      <View style={[globalStyles.bottomNav, { backgroundColor: "#fff" }]}>
-        <TouchableOpacity style={globalStyles.navItem} onPress={() => router.push("/home/index")}>
-          <Ionicons name="home-outline" size={26} color={theme.tint} />
-          <Text style={[globalStyles.navText, { color: theme.tint }]}>Home</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={globalStyles.navItem} onPress={() => router.push("/main/analytics")}>
-          <Ionicons name="stats-chart-outline" size={26} color={theme.tint} />
-          <Text style={[globalStyles.navText, { color: theme.tint }]}>Analytics</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={globalStyles.navItem} onPress={() => router.push("/main/supplements")}>
-          <Ionicons name="medkit-outline" size={26} color={theme.tint} />
-          <Text style={[globalStyles.navText, { color: theme.tint }]}>Supplements</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={globalStyles.navItem} onPress={() => router.push("/profile/AccountSettings")}>
-          <Ionicons name="settings-outline" size={26} color={theme.tint} />
-          <Text style={[globalStyles.navText, { color: theme.tint }]}>Settings</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Floating AI Button */}
+      <BottomNav />
       <FloatingAIButton />
     </SafeAreaView>
   );
@@ -363,7 +334,6 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
-
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -372,57 +342,43 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
     position: 'relative',
   },
-
   backButtonContainer: {
     position: 'absolute',
     left: 0,
     top: 20,
   },
-
   title: {
-    fontSize: 20,
     textAlign: 'center',
   },
-
   totalsSectionTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
     color: '#FFFFFF',
     marginBottom: 20,
     textAlign: 'center',
-    fontFamily: 'Montserrat_700Bold',
     letterSpacing: 1,
     paddingHorizontal: 20,
   },
-
   scrollContainer: {
     flex: 1,
     paddingHorizontal: 20,
   },
-
   scrollContent: {
     paddingBottom: 140,
   },
-
-  // Nutrition Overview Section
   nutritionOverviewContainer: {
     flexDirection: 'row',
     marginBottom: 20,
     gap: 20,
   },
-
   pieChartSection: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
-
   pieChartContainer: {
     position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
   },
-
   emptyPieChart: {
     width: 140,
     height: 140,
@@ -431,13 +387,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-
+  emptyChartText: {
+    color: '#FFFFFF',
+  },
+  emptyChartSubtext: {
+    color: '#FFFFFF',
+  },
   donutLabelsContainer: {
     position: 'absolute',
     width: '100%',
     height: '100%',
   },
-
   donutLabel: {
     position: 'absolute',
     alignItems: 'center',
@@ -445,108 +405,64 @@ const styles = StyleSheet.create({
     width: 55,
     height: 20,
   },
-
   donutLabelText: {
-    fontSize: 10,
-    fontWeight: 'bold',
     color: '#FFFFFF',
-    fontFamily: 'Montserrat_700Bold',
     textAlign: 'center',
     textShadowColor: 'rgba(0, 0, 0, 0.5)',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
   },
-
   donutLabelSubtext: {
-    fontSize: 8,
     color: '#FFFFFF',
-    fontFamily: 'Montserrat_400Regular',
     textAlign: 'center',
     textShadowColor: 'rgba(0, 0, 0, 0.5)',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
   },
-
   donutCenter: {
     position: 'absolute',
     alignItems: 'center',
     justifyContent: 'center',
   },
-
   donutCenterText: {
-    fontSize: 16,
-    fontWeight: 'bold',
     color: '#333',
-    fontFamily: 'Montserrat_700Bold',
   },
-
   donutCenterSubtext: {
-    fontSize: 10,
     color: '#666',
-    fontFamily: 'Montserrat_400Regular',
   },
-
-  pieChartCenterText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    fontFamily: 'Montserrat_700Bold',
-  },
-
-  pieChartCenterSubtext: {
-    fontSize: 12,
-    color: '#FFFFFF',
-    fontFamily: 'Montserrat_400Regular',
-  },
-
   macroProgressSection: {
     flex: 1,
     justifyContent: 'space-around',
   },
-
   macroProgressItem: {
     marginBottom: 15,
   },
-
   macroLabel: {
-    fontSize: 16,
-    fontWeight: 'bold',
     color: '#FFFFFF',
     marginBottom: 5,
-    fontFamily: 'Montserrat_700Bold',
   },
-
   progressBarContainer: {
     height: 8,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     borderRadius: 4,
     marginBottom: 5,
   },
-
   progressBar: {
     height: '100%',
     borderRadius: 4,
   },
-
   proteinProgress: {
     backgroundColor: '#4ECDC4',
   },
-
   fatProgress: {
     backgroundColor: '#45B7D1',
   },
-
   carbsProgress: {
     backgroundColor: '#FFA726',
   },
-
   macroText: {
-    fontSize: 12,
     color: '#FFFFFF',
-    fontFamily: 'Montserrat_400Regular',
   },
-
-  // Calories Card Styles - Matching Water Dashboard
   caloriesCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
@@ -561,38 +477,25 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
-
   caloriesContent: {
     alignItems: 'stretch',
   },
-
   caloriesAmountRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'baseline',
     marginBottom: 16,
   },
-
   caloriesLabel: {
-    fontSize: 14,
     color: '#666',
-    fontFamily: 'Montserrat_400Regular',
   },
-
   caloriesAmount: {
-    fontSize: 24,
-    fontWeight: 'bold',
     color: Colors.light.primary,
-    fontFamily: 'Montserrat_700Bold',
   },
-
   caloriesGoal: {
-    fontSize: 16,
     color: '#666',
     fontWeight: 'normal',
-    fontFamily: 'Montserrat_400Regular',
   },
-
   caloriesProgressContainer: {
     height: 12,
     backgroundColor: '#E5E5E5',
@@ -600,7 +503,6 @@ const styles = StyleSheet.create({
     position: 'relative',
     overflow: 'hidden',
   },
-
   caloriesProgressBar: {
     height: '100%',
     backgroundColor: '#FF5A5A',
@@ -610,39 +512,28 @@ const styles = StyleSheet.create({
     top: 0,
     zIndex: 1,
   },
-
   caloriesProgressBackground: {
     height: '100%',
     width: '100%',
     backgroundColor: '#E5E5E5',
     borderRadius: 6,
   },
-
-  // Entries Section Styles
   entriesSection: {
     flex: 1,
   },
-
   entriesSectionTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
     color: '#FFFFFF',
     marginBottom: 20,
     textAlign: 'center',
-    fontFamily: 'Montserrat_700Bold',
     letterSpacing: 1,
   },
-
   entriesContainer: {
     gap: 0,
   },
-
   entryCard: {
     marginHorizontal: 0,
     marginVertical: 8,
   },
-
-  // No Entries Styles
   noEntriesContainer: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
@@ -654,25 +545,16 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
-
   noEntriesText: {
-    fontSize: 18,
-    fontWeight: 'bold',
     color: '#333',
     marginBottom: 8,
     textAlign: 'center',
-    fontFamily: 'Montserrat_700Bold',
   },
-
   noEntriesSubtext: {
-    fontSize: 14,
     color: '#666',
     textAlign: 'center',
-    fontFamily: 'Montserrat_400Regular',
     lineHeight: 20,
   },
-
-  // Floating Button Styles
   floatingButtonContainer: {
     position: 'absolute',
     bottom: 80,
@@ -680,7 +562,6 @@ const styles = StyleSheet.create({
     right: 20,
     zIndex: 1000,
   },
-
   floatingButton: {
     width: '100%',
     borderRadius: 25,

@@ -1,9 +1,10 @@
 // app/index.jsx
 import React, { useRef, useEffect } from "react";
 import { useRouter } from "expo-router";
-import {StyleSheet, Text, TouchableOpacity, View, Animated, Easing,} from "react-native";
+import {StyleSheet, Text, View, Animated, Easing,} from "react-native";
 import { Colors } from "../constants/Colors";
 import FitahiLogo from "../constants/FitahiLogo";
+import CustomButton from "../components/common/CustomButton";
 import globalStyles from "../styles/globalStyles";
 
 export default function Index() {
@@ -90,23 +91,21 @@ export default function Index() {
       <Animated.View
         style={{ opacity: buttonFade, width: "100%", alignItems: "center" }}
       >
-        <TouchableOpacity
-          style={[styles.button, { backgroundColor: theme.tint }]}
+        <CustomButton
+          title="Sign Up"
           onPress={() => router.push("/auth/signup")}
-        >
-          <Text style={[globalStyles.cardText, { color: theme.textPrimary }]}>
-            Sign Up
-          </Text>
-        </TouchableOpacity>
+          variant="primary"
+          size="large"
+          style={styles.button}
+        />
 
-        <TouchableOpacity
-          style={[styles.button, { backgroundColor: theme.tint }]}
+        <CustomButton
+          title="Log In"
           onPress={() => router.push("/auth/login")}
-        >
-          <Text style={[globalStyles.cardText, { color: theme.textPrimary }]}>
-            Log In
-          </Text>
-        </TouchableOpacity>
+          variant="primary"
+          size="large"
+          style={styles.button}
+        />
       </Animated.View>
     </View>
   );
@@ -123,9 +122,7 @@ const styles = StyleSheet.create({
   },
   button: {
     width: "90%",
-    padding: 20,
-    borderRadius: 50,
-    alignItems: "center",
     marginBottom: 20,
+    borderRadius: 30,
   },
 });

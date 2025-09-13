@@ -1,8 +1,9 @@
 // components/nutrition/NutritionDataCard.jsx
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import CustomToast from '../common/CustomToast';
+
 // Displays nutrition entry with meal/time on left, nutrition badges on right in 2x2 grid
 // Positioned to match calories bar alignment
 const NutritionDataCard = ({ 
@@ -29,23 +30,10 @@ const NutritionDataCard = ({
     return mealType.charAt(0).toUpperCase() + mealType.slice(1);
   };
 
-  // Handles delete confirmation and execution with toast notification
+  // Handles delete with toast notification
   const handleDelete = () => {
-    Alert.alert(
-      'Delete Entry',
-      `Are you sure you want to delete this ${mealType} entry?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Delete', 
-          style: 'destructive',
-          onPress: () => {
-            CustomToast.nutritionDeleted(foodName);
-            onDelete && onDelete(entry.id);
-          }
-        }
-      ]
-    );
+    CustomToast.nutritionDeleted(foodName);
+    onDelete && onDelete(entry.id);
   };
 
   return (

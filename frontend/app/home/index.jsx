@@ -10,8 +10,7 @@ import FitahiLogo from "../../constants/FitahiLogo";
 import { Calendar } from "react-native-calendars";
 import Toast from "react-native-toast-message";
 import globalStyles from "../../styles/globalStyles";
-// import BottomNav from "@/components/navbar/BottomNav";
-import BottomNav from "@/components/navbar/Bottomnav";
+import BottomNav from "@/components/navbar/BottomNav";
 
 const { width } = Dimensions.get("window");
 

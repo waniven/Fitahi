@@ -4,6 +4,8 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/Colors';
 import CustomToast from '../common/CustomToast';
+import globalStyles from '../../styles/globalStyles';
+
 // Component for displaying water intake entries with instant delete functionality
 const WaterDataCard = ({ 
   entry, 
@@ -47,10 +49,10 @@ const WaterDataCard = ({
     <View style={[styles.cardContainer, style]}>
       <View style={styles.contentContainer}>
         <View style={styles.textContent}>
-          <Text style={styles.timeText}>
+          <Text style={[globalStyles.heading3, styles.timeText]}>
             {formatTime(entry.time)}
           </Text>
-          <Text style={styles.amountText}>
+          <Text style={[globalStyles.bodyMedium, styles.amountText]}>
             Amount: {entry.amount}mL
           </Text>
         </View>
@@ -87,7 +89,6 @@ const styles = StyleSheet.create({
     elevation: 4,
     alignSelf: 'center',
   },
-
   contentContainer: {
     flex: 1,
     flexDirection: 'row',
@@ -96,12 +97,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
   },
-
   textContent: {
     flex: 1,
     justifyContent: 'center',
   },
-
   deleteButton: {
     width: 44,
     height: 44,
@@ -111,19 +110,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginLeft: 16,
   },
-
   timeText: {
-    fontSize: 18,
-    fontWeight: 'bold',
     color: Colors.light.primary,
-    fontFamily: 'Montserrat_700Bold',
     marginBottom: 2,
   },
-
   amountText: {
-    fontSize: 14,
     color: '#666',
-    fontFamily: 'Montserrat_400Regular',
   },
 });
 
