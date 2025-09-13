@@ -59,7 +59,7 @@ export default function WorkoutResultScreen({ route, navigation }) {
           {fmtHMS(total)}
         </Text>
 
-        <Text style={[styles.star, { color: theme.tint }]}>★</Text>
+        <Text style={styles.star}>✨</Text>
         <Text
           style={[
             styles.keepItUp,
