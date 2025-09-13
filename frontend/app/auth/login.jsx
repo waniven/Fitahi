@@ -43,17 +43,12 @@ export default function Login() {
       await login(email, password);
       router.replace("/home");
     } catch (err) {
-      const status = err?.response?.status;
-      const serverMsg = err?.response?.data?.error;
-      const msg = serverMsg || `Request failed${status ? ` (${status})` : ""}`;
-
-      console.log("LOGIN ERROR:", {
-        status,
-        data: err?.response?.data,
-        message: err?.message,
-        code: err?.code,
-      });
-      setError(serverMsg);
+        const status = err?.response?.status;
+        const serverMsg = err?.response?.data?.error;
+        const msg = serverMsg || `Login failed${status ? ` (${status})` : ""}`;
+        setError(msg);
+        console.log(msg);
+        if (!serverMsg) console.log("LOGIN ERROR:", { status, data: err?.response?.data, message: err?.message, code: err?.code });
     } finally {
       setBusy(false);
     }

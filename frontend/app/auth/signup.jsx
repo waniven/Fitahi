@@ -52,7 +52,7 @@ export default function SignUp() {
   const router = useRouter();
   const theme = Colors["dark"];
   
-  const [busy, setBusy] = useState(false); 
+  
 
   // Form state
   const [formData, setFormData] = useState({
@@ -63,8 +63,10 @@ export default function SignUp() {
     password: '',
   });
 
+  const [busy, setBusy] = useState(false); 
   const [selectedDate, setSelectedDate] = useState(null);
   const [errors, setErrors] = useState({});
+  const [formError, setFormError] = useState("");
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 
   /**
@@ -194,7 +196,8 @@ export default function SignUp() {
         const status = err?.response?.status;
         const serverMsg = err?.response?.data?.error;
         const msg = serverMsg || `Sign up failed${status ? ` (${status})` : ""}`;
-        setErrors(msg);
+        setFormError(msg);
+        console.log(msg);
         if (!serverMsg) console.log("SIGNUP ERROR:", { status, data: err?.response?.data, message: err?.message, code: err?.code });
       } finally {
         setBusy(false);
@@ -274,6 +277,8 @@ export default function SignUp() {
             errorMessage={errors.password}
             required
           />
+          
+          {formError ? <Text style={styles.errorText}>{formError}</Text> : null}
         </View>
 
         {/* Continue Button */}
@@ -335,5 +340,11 @@ const styles = StyleSheet.create({
 
   continueButton: {
     width: 370,
+  },
+
+  errorText: { 
+    color: "#FF4D4D", 
+    fontSize: 14, 
+    marginTop: 10 
   },
 });
