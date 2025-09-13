@@ -135,6 +135,21 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
     setHistoryVisible(false);
   };
 
+  const deleteConversation = async (convoId) => {
+    try {
+      await messageService.deleteConversation(convoId);
+      setConversations((prev) => prev.filter((c) => c._id !== convoId));
+
+      if (activeConvo?._id === convoId) {
+        setActiveConvo(null);
+        setChatMessages([]);
+        setMessages([]);
+      }
+    } catch (err) {
+      console.error("Failed to delete conversation:", err);
+    }
+  };
+
   const renderItem = ({ item }) => (
     <View
       style={[
@@ -161,7 +176,6 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
           ]}
           {...panResponder.panHandlers}
         >
-          {/* Header */}
           <View style={styles.header}>
             <Text
               style={[
@@ -181,11 +195,10 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
             </TouchableOpacity>
           </View>
 
-          {/* Chat Messages */}
           <FlatList
             ref={flatListRef}
             data={chatMessages}
-            keyExtractor={(item, index) => item.id ?? index.toString()}
+            keyExtractor={(item, index) => item.id ?? `msg-${index}`}
             renderItem={renderItem}
             contentContainerStyle={{
               padding: 12,
@@ -280,7 +293,6 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
         </Animated.View>
       </View>
 
-      {/* Past Conversations */}
       <Modal visible={historyVisible} animationType="fade" transparent>
         <View style={styles.modalOverlay}>
           <View
@@ -307,16 +319,29 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
               </Text>
             </TouchableOpacity>
 
-            {conversations.map((c, index) => (
-              <TouchableOpacity
-                key={c._id ?? c.id ?? index.toString()}
-                onPress={() => selectConversation(c)}
-                style={{ paddingVertical: 8 }}
+            {conversations.map((c, i) => (
+              <View
+                key={c._id ?? `convo-${i}`}
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  paddingVertical: 8,
+                }}
               >
-                <Text style={{ color: theme.textPrimary }}>
-                  {c.title} - {new Date(c.updatedAt).toLocaleString()}
-                </Text>
-              </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => selectConversation(c)}
+                  style={{ flex: 1 }}
+                >
+                  <Text style={{ color: theme.textPrimary }}>
+                    {c.title || "Untitled"} -{" "}
+                    {new Date(c.updatedAt).toLocaleString()}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => deleteConversation(c._id)}>
+                  <Text style={{ color: "red", fontSize: 16 }}>🗑️</Text>
+                </TouchableOpacity>
+              </View>
             ))}
 
             <TouchableOpacity

@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Conversation = require("../models/Conversation");
+const Message = require("../models/Message");
 const auth = require("../middleware/auth");
 
 /*
@@ -34,6 +35,27 @@ router.get("/", auth, async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: "Failed to fetch conversations" });
+    }
+});
+
+/*
+ * DELETE /api/conversations/:id
+ * Delete a conversation and its messages
+*/
+router.delete("/:id", auth, async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // delete all messages for this conversation
+        await Message.deleteMany({ conversationId: id, userId: req.user.id });
+
+        // delete the conversation itself
+        await Conversation.findOneAndDelete({ _id: id, userId: req.user.id });
+
+        res.json({ success: true });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Failed to delete conversation" });
     }
 });
 

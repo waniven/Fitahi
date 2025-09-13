@@ -39,3 +39,9 @@ export async function getMessagesByConversation(conversationId) {
     return res.data;
 }
 
+// DELETE a conversation and its messages
+export async function deleteConversation(conversationId) {
+    if (!api.defaults.headers.Authorization) await loginTemp();
+    const res = await api.delete(`/conversations/${conversationId}`);
+    return res.data;
+}
