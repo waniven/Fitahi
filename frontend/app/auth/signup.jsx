@@ -4,6 +4,8 @@ import { ScrollView, StyleSheet, Text, View, KeyboardAvoidingView, Platform } fr
 import globalStyles from '../../styles/globalStyles';
 import CustomInput from '../../components/common/CustomInput';
 import CustomButton from '../../components/common/CustomButton';
+import { signup } from '@/services/userService';
+import { login } from '@/services/authService';
 
 /**
  * Validation functions
@@ -49,6 +51,8 @@ const dateValidation = (date) => {
 export default function SignUp() {
   const router = useRouter();
   const theme = Colors["dark"];
+  
+  const [busy, setBusy] = useState(false); 
 
   // Form state
   const [formData, setFormData] = useState({
@@ -162,16 +166,39 @@ export default function SignUp() {
   /**
    * Handles form submission
    */
-  const handleContinue = () => {
+  const handleContinue = async () => {
     // Mark that user has attempted to submit
     setHasAttemptedSubmit(true);
-
+    
     if (validateForm()) {
       console.log('Form data:', {
         ...formData,
         dateOfBirth: selectedDate
       });
-      router.push('/profile/quiz');
+
+    const firstname = formData.firstName.trim();
+    const lastname = formData.lastName.trim();
+    const email = formData.email.trim().toLowerCase();
+    const password = formData.password; 
+    const dateofbirth = selectedDate;
+
+    console.log('Payload:', { firstname, lastname, email, dateofbirth });
+
+      try {
+        setBusy(true);
+        await signup ({ firstname, lastname, email, dateofbirth, password });
+        //login after creating user
+        await login(email, password);
+        router.push('/profile/quiz');
+      } catch (err) {
+        const status = err?.response?.status;
+        const serverMsg = err?.response?.data?.error;
+        const msg = serverMsg || `Sign up failed${status ? ` (${status})` : ""}`;
+        setErrors(msg);
+        if (!serverMsg) console.log("SIGNUP ERROR:", { status, data: err?.response?.data, message: err?.message, code: err?.code });
+      } finally {
+        setBusy(false);
+      }
     } else {
       // Optionally scroll to first error or show a general error message
       console.log('Form has validation errors');
