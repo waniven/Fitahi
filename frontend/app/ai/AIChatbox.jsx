@@ -15,50 +15,44 @@ import {
 } from "react-native";
 import { Colors } from "../../constants/Colors";
 import globalStyles from "../../styles/globalStyles";
-//import { AILocal } from "../../constants/AILocal";
 import * as messageService from "../../services/messageService";
 
-//screen height for dragging to close
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
-//constants for spacing
-const CHAT_TOP = 80; //distance from top screen
-const CHAT_SIDE = 20; //horizontal margin
-const CHAT_BOTTOM = 40; // bottom margin/ so it stays above the navigation bar
+const CHAT_TOP = 80;
+const CHAT_SIDE = 20;
+const CHAT_BOTTOM = 40;
 const INPUT_ROW_HEIGHT = 56;
 
 export default function AIChatbox({ onClose, messages, setMessages }) {
   const scheme = "dark";
   const theme = Colors[scheme ?? "dark"];
 
-  // Live chat starts empty on open
   const [chatMessages, setChatMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [historyVisible, setHistoryVisible] = useState(false);
-  const [historyMessages, setHistoryMessages] = useState([]);
+  const [conversations, setConversations] = useState([]);
+  const [activeConvo, setActiveConvo] = useState(null);
   const [showScrollDown, setShowScrollDown] = useState(false);
 
   const flatListRef = useRef(null);
 
-  // Drag-to-close using PanResponder
   const translateY = useRef(new Animated.Value(0)).current;
   const panResponder = useRef(
     PanResponder.create({
-      onMoveShouldSetPanResponder: (_, g) => g.dy > 0, //repond to downward drags
+      onMoveShouldSetPanResponder: (_, g) => g.dy > 0,
       onPanResponderMove: (_, g) => {
-        if (g.dy > 0) translateY.setValue(g.dy); //move chatbox down
+        if (g.dy > 0) translateY.setValue(g.dy);
       },
       onPanResponderRelease: (_, g) => {
         if (g.dy > 150) {
-          //animate off screen and close
           Animated.timing(translateY, {
             toValue: SCREEN_HEIGHT,
             duration: 200,
             useNativeDriver: true,
           }).start(() => onClose?.());
         } else {
-          //else go to back to original position
           Animated.spring(translateY, {
             toValue: 0,
             useNativeDriver: true,
@@ -68,7 +62,6 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
     })
   ).current;
 
-  //autoscroll down when new message gets sent
   useEffect(() => {
     if (chatMessages.length > 0) {
       setTimeout(() => {
@@ -77,7 +70,6 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
     }
   }, [chatMessages]);
 
-  //send message and simulate response from ai
   const sendMessage = async (text) => {
     const clean = text?.trim();
     if (!clean) return;
@@ -86,11 +78,10 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
     setLoading(true);
 
     try {
-      const { userMessage, aiMessage } = await messageService.sendMessage(
-        clean
-      );
+      const { userMessage, aiMessage, conversationId } =
+        await messageService.sendMessage(clean, activeConvo?._id);
+      setActiveConvo({ ...activeConvo, _id: conversationId });
 
-      // if backend didn't provide id, generate one
       const safeUserMsg = {
         ...userMessage,
         id: userMessage.id || Date.now().toString(),
@@ -115,34 +106,42 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
     }
   };
 
-  const loadHistory = async () => {
+  const loadConversations = async () => {
     try {
-      const msgs = await messageService.getMessages();
-      const safeMsgs = msgs.map((m) => ({
-        ...m,
-        id: m._id || Date.now().toString(),
-      }));
-      setHistoryMessages(safeMsgs);
+      const convos = await messageService.getConversations();
+      setConversations(convos);
     } catch (err) {
-      console.error("Failed to load history:", err);
+      console.error("Failed to load conversations:", err);
     }
   };
 
-  // trigger load when history modal opens
   useEffect(() => {
-    if (historyVisible) {
-      loadHistory();
-    }
+    if (historyVisible) loadConversations();
   }, [historyVisible]);
 
-  //render message bubble
+  const selectConversation = async (convo) => {
+    setActiveConvo(convo);
+    const msgs = await messageService.getMessagesByConversation(convo._id);
+    setChatMessages(msgs);
+    setMessages(msgs);
+    setHistoryVisible(false);
+  };
+
+  const newConversation = async () => {
+    const convo = await messageService.createConversation();
+    setActiveConvo(convo);
+    setChatMessages([]);
+    setMessages([]);
+    setHistoryVisible(false);
+  };
+
   const renderItem = ({ item }) => (
     <View
       style={[
         styles.messageBubble,
         {
-          alignSelf: item.fromAI ? "flex-start" : "flex-end", //align left-right
-          backgroundColor: item.fromAI ? theme.tint : "#007AFF", //ai colour and user colour
+          alignSelf: item.fromAI ? "flex-start" : "flex-end",
+          backgroundColor: item.fromAI ? theme.tint : "#007AFF",
         },
       ]}
     >
@@ -186,7 +185,7 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
           <FlatList
             ref={flatListRef}
             data={chatMessages}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item, index) => item.id ?? index.toString()}
             renderItem={renderItem}
             contentContainerStyle={{
               padding: 12,
@@ -206,7 +205,6 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
             scrollEventThrottle={100}
           />
 
-          {/* Scroll-to-bottom button */}
           {showScrollDown && (
             <TouchableOpacity
               style={[styles.scrollButton, { backgroundColor: theme.tint }]}
@@ -225,7 +223,6 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
             </TouchableOpacity>
           )}
 
-          {/* Typing indicator */}
           {loading && (
             <Text
               style={[
@@ -237,7 +234,6 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
             </Text>
           )}
 
-          {/* Input Row */}
           <KeyboardAvoidingView
             behavior={Platform.OS === "ios" ? "padding" : undefined}
             keyboardVerticalOffset={CHAT_TOP}
@@ -296,36 +292,36 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
             <Text
               style={[
                 globalStyles.textBold,
-                { color: theme.textPrimary, fontSize: 20, marginBottom: 12 },
+                { fontSize: 20, marginBottom: 12, color: "#FFF" },
               ]}
             >
               History
             </Text>
 
-            <FlatList
-              data={historyMessages}
-              keyExtractor={(item) => item.id}
-              renderItem={({ item }) => (
-                <View
-                  style={[
-                    styles.messageBubble,
-                    {
-                      alignSelf: item.fromAI ? "flex-start" : "flex-end",
-                      backgroundColor: item.fromAI ? theme.tint : "#007AFF",
-                    },
-                  ]}
-                >
-                  <Text style={[{ color: "#FFF" }, globalStyles.textRegular]}>
-                    {item.text}
-                  </Text>
-                </View>
-              )}
-              contentContainerStyle={{ paddingBottom: 20 }}
-            />
+            <TouchableOpacity
+              onPress={newConversation}
+              style={{ paddingVertical: 8 }}
+            >
+              <Text style={[globalStyles.textBold, { color: theme.tint }]}>
+                + New Conversation
+              </Text>
+            </TouchableOpacity>
+
+            {conversations.map((c, index) => (
+              <TouchableOpacity
+                key={c._id ?? c.id ?? index.toString()}
+                onPress={() => selectConversation(c)}
+                style={{ paddingVertical: 8 }}
+              >
+                <Text style={{ color: theme.textPrimary }}>
+                  {c.title} - {new Date(c.updatedAt).toLocaleString()}
+                </Text>
+              </TouchableOpacity>
+            ))}
 
             <TouchableOpacity
               onPress={() => setHistoryVisible(false)}
-              style={{ paddingVertical: 12, alignItems: "center" }}
+              style={{ paddingVertical: 12 }}
             >
               <Text style={[globalStyles.textBold, { color: "red" }]}>
                 Close
@@ -365,9 +361,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#333",
   },
-  headerText: {
-    fontSize: 18,
-  },
+  headerText: { fontSize: 18 },
   messageBubble: {
     padding: 12,
     borderRadius: 12,
@@ -382,12 +376,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: "#333",
   },
-  input: {
-    flex: 1,
-    height: 40,
-    borderRadius: 20,
-    paddingHorizontal: 12,
-  },
+  input: { flex: 1, height: 40, borderRadius: 20, paddingHorizontal: 12 },
   iconBtn: {
     justifyContent: "center",
     alignItems: "center",
@@ -418,8 +407,5 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: 20,
   },
-  modalContent: {
-    borderRadius: 16,
-    padding: 16,
-  },
+  modalContent: { borderRadius: 16, padding: 16 },
 });
