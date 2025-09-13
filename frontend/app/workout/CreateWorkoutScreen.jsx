@@ -18,7 +18,7 @@ import Fab from "@/components/FloatingActionButton";
 import CustomButtonThree from "../../components/common/CustomButtonThree";
 import { AIContext } from "../ai/AIContext";
 import { useRouter } from "expo-router";
-import BottomNav from "@/components/navbar/Bottomnav";
+import BottomNav from "@/components/navbar/BottomNav";
 
 // CreateWorkout creates a workout which pops up a workout input and display the created workout
 function CreateWorkout({ navigation }) {

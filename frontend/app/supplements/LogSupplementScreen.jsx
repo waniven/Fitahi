@@ -18,7 +18,7 @@ import { AIContext } from "../ai/AIContext";
 import { useRouter } from "expo-router";
 import ListCardItemGeneral from "@/components/ListCardItemGeneral";
 import SupplementsLog from "@/components/supplements/models/SupplementsLog";
-import BottomNav from "@/components/navbar/Bottomnav";
+import BottomNav from "@/components/navbar/BottomNav";
 
 // LogSupplements allows user create supplement plans and log them
 function LogSupplements({ navigation }) {
