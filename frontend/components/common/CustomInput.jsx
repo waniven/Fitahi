@@ -198,7 +198,7 @@ const CustomInput = ({
         <DateTimePicker
           value={selectedDate || new Date()}
           mode="date"
-          display="default"
+          display="spinner"
           onChange={(event, date) => {
             setShowDatePicker(false);
             if (event.type === 'set' && date && onDateChange) {

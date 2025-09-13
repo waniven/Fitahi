@@ -1,7 +1,7 @@
 // components/biometrics/BiometricsDashboard.jsx
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Modal } from 'react-native';
-import { LineChart } from 'react-native-chart-kit';
+import Svg, { Path, Circle, Line, Text as SvgText, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Colors } from '../../constants/Colors';
@@ -11,8 +11,7 @@ import FloatingAIButton from '../../app/ai/FloatingAIButton';
 import globalStyles from '../../styles/globalStyles';
 
 /**
- * BiometricsDashboard - Main dashboard view for biometrics data
- * Shows BMI, current vs previous stats, and previous entries with Chart Kit
+ * BiometricsDashboard 
  */
 const BiometricsDashboard = ({ entries, onDeleteEntry, onAddEntry }) => {
   const [activeView, setActiveView] = useState('entries'); // 'entries' or 'chart'
@@ -39,30 +38,6 @@ const BiometricsDashboard = ({ entries, onDeleteEntry, onAddEntry }) => {
   const currentBMI = calculateBMI(latestEntry.weight, latestEntry.height);
 
   /**
-   * Prepare chart data for Chart Kit
-   */
-  const prepareChartData = () => {
-    // Take last 8 entries and reverse for chronological order
-    const chartEntries = entries.slice(0, 8).reverse();
-    
-    const weights = chartEntries.map(entry => entry.weight);
-    const labels = chartEntries.map(entry => {
-      const date = new Date(entry.timestamp);
-      return `${date.getDate()}/${date.getMonth() + 1}`;
-    });
-
-    return {
-      labels: labels,
-      datasets: [{
-        data: weights,
-        color: (opacity = 1) => Colors.light.primary, // Line color
-        strokeWidth: 3
-      }],
-      chartEntries: chartEntries // Store entries for popup data
-    };
-  };
-
-  /**
    * Format timestamp for popup display
    */
   const formatPopupTimestamp = (timestamp) => {
@@ -81,15 +56,9 @@ const BiometricsDashboard = ({ entries, onDeleteEntry, onAddEntry }) => {
   /**
    * Handle data point click
    */
-  const handleDataPointClick = (data) => {
-    const chartData = prepareChartData();
-    const selectedEntry = chartData.chartEntries[data.index];
-    
-    setSelectedDataPoint({
-      entry: selectedEntry,
-      screenX: data.x,
-      screenY: data.y
-    });
+  const handleDataPointClick = (entry, index) => {
+    console.log('Data point clicked:', entry, 'at index:', index);
+    setSelectedDataPoint({ entry });
     setShowPopup(true);
   };
 
@@ -107,60 +76,285 @@ const BiometricsDashboard = ({ entries, onDeleteEntry, onAddEntry }) => {
         visible={showPopup}
         onRequestClose={() => setShowPopup(false)}
         animationType="fade"
+        statusBarTranslucent={true}
+        hardwareAccelerated={true}
       >
         <TouchableOpacity 
           style={styles.popupOverlay} 
           activeOpacity={1}
           onPress={() => setShowPopup(false)}
+          accessible={false}
         >
-          <View style={styles.popupContainer}>
+          <TouchableOpacity 
+            style={styles.popupContainer}
+            activeOpacity={1}
+            onPress={(e) => e.stopPropagation()}
+          >
             <Text style={styles.popupTitle}>DATE & TIME LOGGED</Text>
             <Text style={styles.popupDate}>
               {formatPopupTimestamp(entry.timestamp)}
             </Text>
-            <Text style={styles.popupData}>Height = {entry.height}</Text>
-            <Text style={styles.popupData}>Weight = {entry.weight}</Text>
-          </View>
+            <Text style={styles.popupData}>Height = {entry.height} cm</Text>
+            <Text style={styles.popupData}>Weight = {entry.weight} kg</Text>
+          </TouchableOpacity>
         </TouchableOpacity>
       </Modal>
     );
   };
 
   /**
-   * Chart configuration
+   * Perfect Chart Component with fixed centering and layout
    */
-  const chartConfig = {
-    backgroundColor: '#ffffff',
-    backgroundGradientFrom: '#ffffff',
-    backgroundGradientTo: '#ffffff',
-    decimalPlaces: 1,
-    color: (opacity = 1) => `rgba(134, 65, 244, ${opacity})`,
-    labelColor: (opacity = 1) => `rgba(102, 102, 102, ${opacity})`,
-    style: {
-      borderRadius: 16
-    },
-    propsForDots: {
-      r: "6",
-      strokeWidth: "2",
-      stroke: Colors.light.primary,
-      fill: "#ffffff"
-    },
-    propsForLabels: {
-      fontSize: 10
-    }
+  const PerfectChart = ({ chartData, chartWidth, chartHeight }) => {
+    const padding = { top: 25, right: 30, bottom: 50, left: 65 }; // Increased bottom for X-axis labels
+    const innerWidth = chartWidth - padding.left - padding.right;
+    const innerHeight = chartHeight - padding.top - padding.bottom;
+
+    // Calculate scales
+    const weights = chartData.map(d => d.weight);
+    const minWeight = Math.min(...weights);
+    const maxWeight = Math.max(...weights);
+    const weightRange = maxWeight - minWeight;
+    const yPadding = Math.max(weightRange * 0.15, 3);
+    const yMin = Math.max(Math.floor(minWeight - yPadding), 0);
+    const yMax = Math.ceil(maxWeight + yPadding);
+    const yRange = yMax - yMin;
+
+    // Scale functions
+    const xScale = (index) => padding.left + (index / (chartData.length - 1)) * innerWidth;
+    const yScale = (weight) => padding.top + ((yMax - weight) / yRange) * innerHeight;
+
+    // Generate path data
+    const pathData = chartData.map((point, index) => {
+      const x = xScale(index);
+      const y = yScale(point.weight);
+      return index === 0 ? `M ${x} ${y}` : `L ${x} ${y}`;
+    }).join(' ');
+
+    // Generate perfect Y-axis ticks
+    const generatePerfectYTicks = () => {
+      const range = yMax - yMin;
+      let step;
+      if (range <= 10) step = 2;
+      else if (range <= 20) step = 5;
+      else if (range <= 50) step = 10;
+      else step = 20;
+
+      // Calculate nice min and max that cover the full range
+      const niceMin = Math.floor(yMin / step) * step;
+      const niceMax = Math.ceil(yMax / step) * step;
+
+      const ticks = [];
+      for (let value = niceMin; value <= niceMax; value += step) {
+        ticks.push({ 
+          value: Math.round(value),
+          y: yScale(value) 
+        });
+      }
+      return ticks;
+    };
+
+    const yTicks = generatePerfectYTicks();
+
+    // Calculate data point positions
+    const dataPoints = chartData.map((point, index) => ({
+      x: xScale(index),
+      y: yScale(point.weight),
+      entry: point.entry,
+      index
+    }));
+
+    return (
+      <View style={styles.perfectChartContainer}>
+        <Text style={styles.chartTitle}>Weight Progression</Text>
+        
+        {/* Centered Chart Area */}
+        <View style={styles.centeredChartArea}>
+          <Svg width={chartWidth} height={chartHeight}>
+            <Defs>
+              <LinearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <Stop offset="0%" stopColor={Colors.light.primary} stopOpacity="0.9" />
+                <Stop offset="100%" stopColor={Colors.light.primary} stopOpacity="1" />
+              </LinearGradient>
+            </Defs>
+
+            {/* Grid lines covering full range */}
+            {yTicks.map((tick, index) => (
+              <Line
+                key={`grid-${index}`}
+                x1={padding.left}
+                y1={tick.y}
+                x2={chartWidth - padding.right}
+                y2={tick.y}
+                stroke="#f0f0f0"
+                strokeWidth="1"
+                strokeDasharray="2,3"
+              />
+            ))}
+
+            {/* Vertical grid lines */}
+            {chartData.map((_, index) => (
+              <Line
+                key={`vgrid-${index}`}
+                x1={xScale(index)}
+                y1={padding.top}
+                x2={xScale(index)}
+                y2={chartHeight - padding.bottom}
+                stroke="#f8f8f8"
+                strokeWidth="1"
+                strokeDasharray="1,2"
+              />
+            ))}
+
+            {/* Y-axis extending to full range */}
+            <Line
+              x1={padding.left}
+              y1={yScale(yTicks[yTicks.length - 1].value)} // Top of range
+              x2={padding.left}
+              y2={yScale(yTicks[0].value)} // Bottom of range
+              stroke="#d0d0d0"
+              strokeWidth="2"
+            />
+
+            {/* X-axis */}
+            <Line
+              x1={padding.left}
+              y1={chartHeight - padding.bottom}
+              x2={chartWidth - padding.right}
+              y2={chartHeight - padding.bottom}
+              stroke="#d0d0d0"
+              strokeWidth="2"
+            />
+
+            {/* Main line */}
+            <Path
+              d={pathData}
+              fill="none"
+              stroke="url(#lineGradient)"
+              strokeWidth="4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+
+            {/* Data points */}
+            {dataPoints.map((point, index) => (
+              <Circle
+                key={`point-${index}`}
+                cx={point.x}
+                cy={point.y}
+                r="8"
+                fill="#ffffff"
+                stroke={Colors.light.primary}
+                strokeWidth="4"
+              />
+            ))}
+
+            {/* Y-axis labels */}
+            {yTicks.map((tick, index) => (
+              <SvgText
+                key={`ylabel-${index}`}
+                x={padding.left - 15}
+                y={tick.y + 4}
+                fontSize="11"
+                fill="#666"
+                textAnchor="end"
+                fontWeight="500"
+              >
+                {`${tick.value}kg`}
+              </SvgText>
+            ))}
+
+            {/* X-axis labels - properly positioned to avoid clipping */}
+            {chartData.map((point, index) => (
+              <SvgText
+                key={`xlabel-${index}`}
+                x={xScale(index)}
+                y={chartHeight - padding.bottom + 20}
+                fontSize="10"
+                fill="#666"
+                textAnchor="middle"
+                fontWeight="500"
+              >
+                {point.label}
+              </SvgText>
+            ))}
+          </Svg>
+
+          {/* Touch overlay */}
+          <View style={styles.touchOverlay}>
+            {dataPoints.map((point, index) => (
+              <TouchableOpacity
+                key={`touch-${index}`}
+                style={[
+                  styles.touchArea,
+                  {
+                    left: point.x - 20,
+                    top: point.y - 20,
+                  }
+                ]}
+                onPress={() => handleDataPointClick(point.entry, index)}
+                activeOpacity={0.3}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              />
+            ))}
+          </View>
+        </View>
+
+        {/* Legend */}
+        <View style={styles.legend}>
+          <View style={styles.legendDot} />
+          <Text style={styles.legendText}>Weight progression over time (tap dots for details)</Text>
+        </View>
+
+        {/* Stats */}
+        <View style={styles.statsContainer}>
+          <View style={styles.statItem}>
+            <Text style={styles.statLabel}>Entries</Text>
+            <Text style={styles.statValue}>{chartData.length}</Text>
+          </View>
+          <View style={styles.statItem}>
+            <Text style={styles.statLabel}>Min Weight</Text>
+            <Text style={styles.statValue}>{minWeight} kg</Text>
+          </View>
+          <View style={styles.statItem}>
+            <Text style={styles.statLabel}>Max Weight</Text>
+            <Text style={styles.statValue}>{maxWeight} kg</Text>
+          </View>
+          <View style={styles.statItem}>
+            <Text style={styles.statLabel}>Trend</Text>
+            <Text style={[styles.statValue, { 
+              color: weights[weights.length - 1] > weights[0] ? '#EF5350' : '#66BB6A' 
+            }]}>
+              {weights[weights.length - 1] > weights[0] ? '↗' : '↘'}
+            </Text>
+          </View>
+        </View>
+
+        {/* Latest Entry Info */}
+        <View style={styles.latestEntryInfo}>
+          <Text style={styles.latestEntryTitle}>Latest Entry</Text>
+          <Text style={styles.latestEntryText}>
+            Weight: {latestEntry.weight} kg | Height: {latestEntry.height} cm
+          </Text>
+          <Text style={styles.latestEntryText}>
+            BMI: {currentBMI} | Date: {new Date(latestEntry.timestamp).toLocaleDateString()}
+          </Text>
+        </View>
+      </View>
+    );
   };
 
   /**
-   * Render Weight Chart using Chart Kit
+   * Render Weight Chart
    */
   const renderChart = () => {
     const screenWidth = Dimensions.get('window').width;
     const chartWidth = screenWidth - 40;
+    const chartHeight = 300; // Increased height for better proportions
     
-    // If no data or insufficient data, show message
     if (entries.length < 2) {
       return (
-        <View style={styles.chartContainer}>
+        <View style={styles.perfectChartContainer}>
           <Text style={styles.chartTitle}>Weight Progression</Text>
           <View style={styles.noDataContainer}>
             <Text style={styles.noDataText}>
@@ -173,76 +367,17 @@ const BiometricsDashboard = ({ entries, onDeleteEntry, onAddEntry }) => {
       );
     }
 
-    const chartData = prepareChartData();
+    const chartEntries = entries.slice(0, 8).reverse();
+    const chartData = chartEntries.map((entry, index) => {
+      const date = new Date(entry.timestamp);
+      return {
+        weight: entry.weight,
+        label: `${date.getDate()}/${date.getMonth() + 1}`,
+        entry: entry
+      };
+    });
 
-    return (
-      <View style={styles.chartContainer}>
-        <Text style={styles.chartTitle}>Weight Progression</Text>
-        
-        {/* Chart */}
-        <View style={styles.chartWrapper}>
-          <LineChart
-            data={chartData}
-            width={chartWidth}
-            height={220}
-            chartConfig={chartConfig}
-            bezier
-            style={styles.chart}
-            withInnerLines={true}
-            withOuterLines={true}
-            withHorizontalLabels={true}
-            withVerticalLabels={true}
-            fromZero={false}
-            segments={4}
-            onDataPointClick={handleDataPointClick}
-          />
-        </View>
-        
-        {/* Chart Legend */}
-        <View style={styles.chartLegend}>
-          <View style={styles.legendItem}>
-            <View style={styles.legendDot} />
-            <Text style={styles.legendText}>Weight progression over time (tap dots for details)</Text>
-          </View>
-        </View>
-        
-        {/* Chart Stats */}
-        <View style={styles.chartStats}>
-          <View style={styles.statItem}>
-            <Text style={styles.statLabel}>Entries</Text>
-            <Text style={styles.statValue}>{chartData.datasets[0].data.length}</Text>
-          </View>
-          <View style={styles.statItem}>
-            <Text style={styles.statLabel}>Min Weight</Text>
-            <Text style={styles.statValue}>{Math.min(...chartData.datasets[0].data)} kg</Text>
-          </View>
-          <View style={styles.statItem}>
-            <Text style={styles.statLabel}>Max Weight</Text>
-            <Text style={styles.statValue}>{Math.max(...chartData.datasets[0].data)} kg</Text>
-          </View>
-          <View style={styles.statItem}>
-            <Text style={styles.statLabel}>Trend</Text>
-            <Text style={[styles.statValue, { 
-              color: chartData.datasets[0].data[chartData.datasets[0].data.length - 1] > chartData.datasets[0].data[0] 
-                ? '#EF5350' : '#66BB6A' 
-            }]}>
-              {chartData.datasets[0].data[chartData.datasets[0].data.length - 1] > chartData.datasets[0].data[0] ? '↗' : '↘'}
-            </Text>
-          </View>
-        </View>
-        
-        {/* Latest Data Info Box */}
-        <View style={styles.dataInfoBox}>
-          <Text style={styles.dataInfoTitle}>Latest Entry</Text>
-          <Text style={styles.dataInfoText}>
-            Weight: {latestEntry.weight} kg | Height: {latestEntry.height} cm
-          </Text>
-          <Text style={styles.dataInfoText}>
-            BMI: {currentBMI} | Date: {new Date(latestEntry.timestamp).toLocaleDateString()}
-          </Text>
-        </View>
-      </View>
-    );
+    return <PerfectChart chartData={chartData} chartWidth={chartWidth} chartHeight={chartHeight} />;
   };
 
   return (
@@ -263,7 +398,6 @@ const BiometricsDashboard = ({ entries, onDeleteEntry, onAddEntry }) => {
 
           {/* Weight and Height Comparison Cards */}
           <View style={styles.comparisonContainer}>
-            {/* Weight Card */}
             <View style={styles.comparisonCard}>
               <Text style={styles.cardTitle}>Weight (kg)</Text>
               <View style={styles.comparisonRow}>
@@ -280,7 +414,6 @@ const BiometricsDashboard = ({ entries, onDeleteEntry, onAddEntry }) => {
               </View>
             </View>
 
-            {/* Height Card */}
             <View style={styles.comparisonCard}>
               <Text style={styles.cardTitle}>Height (cm)</Text>
               <View style={styles.comparisonRow}>
@@ -336,7 +469,6 @@ const BiometricsDashboard = ({ entries, onDeleteEntry, onAddEntry }) => {
           {/* Content Area */}
           <View style={styles.contentArea}>
             {activeView === 'entries' ? (
-              // Previous Entries View
               <View style={styles.entriesContainer}>
                 {entries.map((entry) => (
                   <BiometricDataCard
@@ -350,7 +482,6 @@ const BiometricsDashboard = ({ entries, onDeleteEntry, onAddEntry }) => {
                 ))}
               </View>
             ) : (
-              // Chart View
               renderChart()
             )}
           </View>
@@ -367,7 +498,6 @@ const BiometricsDashboard = ({ entries, onDeleteEntry, onAddEntry }) => {
           />
         </View>
 
-        {/* Data Point Popup */}
         <DataPointPopup />
       </View>
 
@@ -394,7 +524,6 @@ const BiometricsDashboard = ({ entries, onDeleteEntry, onAddEntry }) => {
         </TouchableOpacity>
       </View>
 
-      {/* Floating AI Button */}
       <FloatingAIButton />
     </>
   );
@@ -541,16 +670,24 @@ const styles = StyleSheet.create({
     marginHorizontal: 0,
   },
 
-  // Chart Styles
-  chartContainer: {
+  // Perfect Chart Styles
+  perfectChartContainer: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    borderRadius: 20,
     padding: 20,
     marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 8,
   },
 
   chartTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 20,
@@ -558,40 +695,35 @@ const styles = StyleSheet.create({
     fontFamily: 'Montserrat_700Bold',
   },
 
-  chartWrapper: {
+  centeredChartArea: {
+    position: 'relative',
+    marginBottom: 20,
+    alignItems: 'center', // Center the chart horizontally
+    justifyContent: 'center',
+  },
+
+  touchOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+
+  touchArea: {
+    position: 'absolute',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    // backgroundColor: 'rgba(255,0,0,0.1)', // Debug
+  },
+
+  legend: {
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
-  },
-
-  chart: {
-    borderRadius: 16,
-  },
-
-  noDataContainer: {
-    height: 200,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f8f9fa',
-    borderRadius: 12,
-  },
-
-  noDataText: {
-    fontSize: 16,
-    color: '#999',
-    fontFamily: 'Montserrat_400Regular',
-    textAlign: 'center',
-    paddingHorizontal: 20,
-  },
-
-  chartLegend: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginBottom: 15,
-  },
-
-  legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    paddingHorizontal: 10,
   },
 
   legendDot: {
@@ -608,13 +740,13 @@ const styles = StyleSheet.create({
     fontFamily: 'Montserrat_400Regular',
   },
 
-  chartStats: {
+  statsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginBottom: 15,
-    paddingVertical: 12,
+    marginBottom: 20,
+    paddingVertical: 15,
     backgroundColor: '#f8f9fa',
-    borderRadius: 8,
+    borderRadius: 12,
   },
 
   statItem: {
@@ -625,7 +757,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: '#666',
     fontFamily: 'Montserrat_400Regular',
-    marginBottom: 2,
+    marginBottom: 4,
   },
 
   statValue: {
@@ -635,27 +767,43 @@ const styles = StyleSheet.create({
     fontFamily: 'Montserrat_700Bold',
   },
 
-  dataInfoBox: {
+  latestEntryInfo: {
     backgroundColor: '#f0f9ff',
-    borderRadius: 8,
-    padding: 12,
+    borderRadius: 12,
+    padding: 15,
     borderLeftWidth: 4,
     borderLeftColor: Colors.light.primary,
   },
 
-  dataInfoTitle: {
+  latestEntryTitle: {
     fontSize: 14,
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: 4,
+    marginBottom: 6,
     fontFamily: 'Montserrat_700Bold',
   },
 
-  dataInfoText: {
+  latestEntryText: {
     fontSize: 12,
     color: '#666',
     fontFamily: 'Montserrat_400Regular',
     marginBottom: 2,
+  },
+
+  noDataContainer: {
+    height: 200,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+    borderRadius: 12,
+  },
+
+  noDataText: {
+    fontSize: 16,
+    color: '#999',
+    fontFamily: 'Montserrat_400Regular',
+    textAlign: 'center',
+    paddingHorizontal: 20,
   },
 
   // Floating Button Styles
