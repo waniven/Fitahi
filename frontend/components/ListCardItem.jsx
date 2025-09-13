@@ -23,7 +23,7 @@ export default function ListCardItem({
               Workout name
             </Text>
             <Text style={[styles.value, { color: theme.background, fontFamily: Font.bold }]}>
-              {workout?.name || "—"}
+              {workout?.workoutName || "—"}
             </Text>
           </View>
 
@@ -46,13 +46,13 @@ export default function ListCardItem({
               Workout type
             </Text>
             <Text style={[styles.value, { color: theme.background, fontFamily: Font.bold }]}>
-              {workout?.type || "—"}
+              {workout?.workoutType || "—"}
             </Text>
           </View>
 
           <TouchableOpacity
             activeOpacity={0.8}
-            onPress={() => onDelete?.(workout.id)}
+            onPress={() => onDelete?.(workout._id)}
             style={[styles.actionBtn, { borderColor: theme.error, backgroundColor: theme.error }]}
             accessibilityRole="button"
             accessibilityLabel={`Delete ${workout?.name ?? "workout"}`}

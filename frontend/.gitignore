@@ -37,4 +37,6 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
-.expo/
+
+# other
+.vscode/
