@@ -10,7 +10,6 @@ import {
 import { MaterialIcons } from "@expo/vector-icons";
 import { Colors } from "@/constants/Colors";
 import { Font } from "@/constants/Font";
-import WorkoutResult from "@/components/workouts/models/WorkoutResult";
 import PrimaryButton from "@/components/PrimaryButton";
 import { createWorkoutResult } from "@/services/workoutResultService";
 
