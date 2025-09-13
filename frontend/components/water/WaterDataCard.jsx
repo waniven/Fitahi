@@ -3,11 +3,8 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/Colors';
-
-/**
- * WaterDataCard - Component for displaying water intake entries
- * Clean card with soft corners and instant delete (no confirmation)
- */
+import CustomToast from '../common/CustomToast';
+// Component for displaying water intake entries with instant delete functionality
 const WaterDataCard = ({ 
   entry, 
   onDelete, 
@@ -15,9 +12,7 @@ const WaterDataCard = ({
   style 
 }) => {
   
-  /**
-   * Format time to 12-hour format with am/pm
-   */
+  // Format time to 12-hour format with am/pm
   const formatTime = (timeString) => {
     if (timeString && timeString.includes(':')) {
       const [hours, minutes] = timeString.split(':');
@@ -40,11 +35,9 @@ const WaterDataCard = ({
     return timeString || 'Time not set';
   };
 
-  /**
-   * Handle instant delete - no confirmation
-   */
+  // Handle instant delete with toast notification
   const handleDelete = () => {
-    console.log('Instantly deleting entry:', entry.id);
+    CustomToast.waterDeleted(entry.amount);
     if (onDelete) {
       onDelete(entry.id);
     }
@@ -84,8 +77,8 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginTop: 0,
     marginBottom: 16,
-    width: '150%', // Use full available width instead of fixed 374px
-    maxWidth: 350, // Maximum width to prevent it from being too wide
+    width: '150%',
+    maxWidth: 350,
     height: 70,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },

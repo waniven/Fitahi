@@ -1,50 +1,103 @@
 import React, { useState } from "react";
-import {ScrollView, StyleSheet, Text, View, KeyboardAvoidingView, Platform,} from "react-native";
+import { ScrollView, StyleSheet, Text, View, KeyboardAvoidingView, Platform } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from "expo-router";
 import { Colors } from "../../constants/Colors";
 import FitahiLogo from "../../constants/FitahiLogo";
 import CustomInput from "../../components/common/CustomInput";
 import CustomButton from "../../components/common/CustomButton";
+import CustomToast from "../../components/common/CustomToast";
 import globalStyles from "../../styles/globalStyles"; 
 
 export default function Login() {
-  const router = useRouter(); //navigation handler
+  const router = useRouter();
   const theme = Colors["dark"];
- //for state
+  
+  // Form state
   const [formData, setFormData] = useState({ email: "", password: "" });
-  const [error, setError] = useState(""); //error message for validation
+  const [errors, setErrors] = useState({});
+  const [hasAttemptedLogin, setHasAttemptedLogin] = useState(false);
 
-  //update form field/clears error if present
-  const updateField = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    if (error) setError("");
+  // Email validation function
+  const validateEmail = (email) => {
+    if (!email || !email.trim()) return 'Email is required';
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) return 'Please enter a valid email address';
+    return null;
   };
 
-  //validation and navigation
+  // Password validation function
+  const validatePassword = (password) => {
+    if (!password || !password.trim()) return 'Password is required';
+    return null;
+  };
+
+  // Update form field and clear errors if user has attempted login
+  const updateField = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    
+    // Clear specific field error if user has attempted login and field is now valid
+    if (hasAttemptedLogin && errors[field]) {
+      let fieldError = null;
+      
+      if (field === 'email') {
+        fieldError = validateEmail(value);
+      } else if (field === 'password') {
+        fieldError = validatePassword(value);
+      }
+      
+      if (!fieldError) {
+        setErrors(prev => ({ ...prev, [field]: null }));
+      }
+    }
+  };
+
+  // Validate all form fields
+  const validateForm = () => {
+    const newErrors = {};
+    
+    const emailError = validateEmail(formData.email);
+    if (emailError) {
+      newErrors.email = emailError;
+    }
+    
+    const passwordError = validatePassword(formData.password);
+    if (passwordError) {
+      newErrors.password = passwordError;
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // Handle login with validation and toast notifications
   const handleLogin = () => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    if (!formData.email || !emailRegex.test(formData.email)) {
-      setError("Please enter a valid email");
-      return;
+    setHasAttemptedLogin(true);
+    
+    if (validateForm()) {
+      // Success case
+      CustomToast.success("Welcome Back!", "Login successful");
+      router.push("/home");
+    } else {
+      // Show validation error toast
+      if (errors.email && errors.password) {
+        CustomToast.error("Login Failed", "Please check your email and password");
+      } else if (errors.email) {
+        CustomToast.error("Invalid Email", "Please enter a valid email address");
+      } else if (errors.password) {
+        CustomToast.error("Login Failed", "Password is required");
+      } else {
+        CustomToast.error("Login Failed", "Please check your credentials");
+      }
     }
-    if (!formData.password) {
-      setError("Incorrect email or Password");
-      return;
-    }
-
-    router.push("/home"); //navigate to home
   };
 
   return (
-    //safeareview to prevent overlappting
-    //keyboardavoiding to prevent inputs from being covered by keyboard
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 60 : 0} // adjust as needed
+        keyboardVerticalOffset={Platform.OS === "ios" ? 60 : 0}
       >
         <ScrollView
           contentContainerStyle={styles.contentContainer}
@@ -67,6 +120,9 @@ export default function Login() {
               placeholder="Email Address"
               value={formData.email}
               onChangeText={(text) => updateField("email", text)}
+              keyboardType="email-address"
+              errorMessage={errors.email}
+              required
             />
 
             <CustomInput
@@ -75,9 +131,9 @@ export default function Login() {
               value={formData.password}
               onChangeText={(text) => updateField("password", text)}
               secureTextEntry
+              errorMessage={errors.password}
+              required
             />
-
-            {error ? <Text style={styles.errorText}>{error}</Text> : null}
           </View>
 
           <View style={{ width: "100%", alignItems: "center", marginTop: 20 }}>
@@ -95,32 +151,23 @@ export default function Login() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: { 
+    flex: 1 
+  },
+  
   contentContainer: {
     paddingHorizontal: 20,
     paddingTop: 80, 
     paddingBottom: 40,
     alignItems: "center",
   },
+  
   logoContainer: { 
     marginBottom: 30 
   },
-  welcomeText: { 
-    textAlign: "center", 
-    marginBottom: 6, 
-    fontWeight: "700" 
-  },
-  subText: { 
-    textAlign: "center", 
-    marginBottom: 30 
-  },
+  
   formContainer: { 
     width: "100%", 
     alignItems: "center" 
-  },
-  errorText: { 
-    color: "#FF4D4D", 
-    fontSize: 14, 
-    marginTop: 10 
   },
 });
