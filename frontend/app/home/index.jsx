@@ -2,16 +2,24 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View, Modal, TextInput, } from "react-native";
-import { SafeAreaView } from 'react-native-safe-area-context';
+import {
+  Dimensions,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  Modal,
+  TextInput,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Colors } from "../../constants/Colors";
 import FloatingAIButton from "../ai/FloatingAIButton";
 import FitahiLogo from "../../constants/FitahiLogo";
 import { Calendar } from "react-native-calendars";
 import Toast from "react-native-toast-message";
 import globalStyles from "../../styles/globalStyles";
-// import BottomNav from "@/components/navbar/BottomNav";
-import BottomNav from "@/components/navbar/Bottomnav";
+import BottomNav from "../../components/navbar/Bottomnav";
 
 const { width } = Dimensions.get("window");
 
@@ -79,7 +87,9 @@ export default function Home() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: theme.background }]}
+    >
       <ScrollView contentContainerStyle={{ flexGrow: 1, paddingBottom: 140 }}>
         {/* logo */}
         <View style={styles.logoContainer}>
@@ -91,14 +101,14 @@ export default function Home() {
           <Calendar
             style={{ borderRadius: 16, backgroundColor: "#fff" }}
             theme={{
-              backgroundColor: "#fff",          // calender background
-              calendarBackground: "#fff",       // Calendar container 
-              textSectionTitleColor: "#000",    // Weekday headers black
+              backgroundColor: "#fff", // calender background
+              calendarBackground: "#fff", // Calendar container
+              textSectionTitleColor: "#000", // Weekday headers black
               todayTextColor: "#000",
               todayBackgroundColor: theme.tint, // highight current day
               dayTextColor: "#000",
               monthTextColor: "#000",
-              arrowColor: theme.tint,           // Navigation arrows 
+              arrowColor: theme.tint, // Navigation arrows
               textDisabledColor: "#999",
               textDayFontSize: 14,
               textMonthFontSize: 16,
@@ -120,7 +130,9 @@ export default function Home() {
 
           {/* Reminders next to calender*/}
           <View style={styles.remindersContainer}>
-            <Text style={[globalStyles.cardText, { color: "#000" }]}>Reminders</Text>
+            <Text style={[globalStyles.cardText, { color: "#000" }]}>
+              Reminders
+            </Text>
             {reminders
               .filter((r) => r.date === selectedDate)
               .map((r) => (
@@ -145,8 +157,13 @@ export default function Home() {
         {showPremium && (
           <View style={[styles.premiumCard, { backgroundColor: "#fff" }]}>
             <Ionicons name="diamond-outline" size={20} color={theme.tint} />
-            <Text style={[globalStyles.premiumText, { color: theme.tint }]}>Premium Membership</Text>
-            <TouchableOpacity style={styles.closeButton} onPress={() => setShowPremium(false)}>
+            <Text style={[globalStyles.premiumText, { color: theme.tint }]}>
+              Premium Membership
+            </Text>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setShowPremium(false)}
+            >
               <Text style={{ color: theme.tint, fontWeight: "700" }}>✕</Text>
             </TouchableOpacity>
           </View>
@@ -158,14 +175,18 @@ export default function Home() {
             style={[styles.card, { width: cardWidth, backgroundColor: "#fff" }]}
             onPress={() => router.push("/main/analytics")}
           >
-            <Text style={[globalStyles.cardText, { color: theme.tint }]}>📊 Your Analytics</Text>
+            <Text style={[globalStyles.cardText, { color: theme.tint }]}>
+              📊 Your Analytics
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.card, { width: cardWidth, backgroundColor: "#fff" }]}
             onPress={() => router.push("/main/reminders")}
           >
-            <Text style={[globalStyles.cardText, { color: theme.tint }]}>🔔 Your Reminders</Text>
+            <Text style={[globalStyles.cardText, { color: theme.tint }]}>
+              🔔 Your Reminders
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -174,14 +195,18 @@ export default function Home() {
             style={[styles.card, { width: cardWidth, backgroundColor: "#fff" }]}
             onPress={() => router.push("/main/workouts")}
           >
-            <Text style={[globalStyles.cardText, { color: theme.tint }]}>🏋️ Workout Log</Text>
+            <Text style={[globalStyles.cardText, { color: theme.tint }]}>
+              🏋️ Workout Log
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.card, { width: cardWidth, backgroundColor: "#fff" }]}
             onPress={() => router.push("/main/nutrition")}
           >
-            <Text style={[globalStyles.cardText, { color: theme.tint }]}>🍎 Nutrition Log</Text>
+            <Text style={[globalStyles.cardText, { color: theme.tint }]}>
+              🍎 Nutrition Log
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -190,14 +215,18 @@ export default function Home() {
             style={[styles.card, { width: cardWidth, backgroundColor: "#fff" }]}
             onPress={() => router.push("/main/supplements")}
           >
-            <Text style={[globalStyles.cardText, { color: theme.tint }]}>💊 Supplement Log</Text>
+            <Text style={[globalStyles.cardText, { color: theme.tint }]}>
+              💊 Supplement Log
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.card, { width: cardWidth, backgroundColor: "#fff" }]}
             onPress={() => router.push("/main/water")}
           >
-            <Text style={[globalStyles.cardText, { color: theme.tint }]}>💧 Water Log</Text>
+            <Text style={[globalStyles.cardText, { color: theme.tint }]}>
+              💧 Water Log
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -206,20 +235,24 @@ export default function Home() {
             style={[styles.card, { width: cardWidth, backgroundColor: "#fff" }]}
             onPress={() => router.push("/main/gymsFinder")}
           >
-            <Text style={[globalStyles.cardText, { color: theme.tint }]}>🗺️ Gym Finder</Text>
+            <Text style={[globalStyles.cardText, { color: theme.tint }]}>
+              🗺️ Gym Finder
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.card, { width: cardWidth, backgroundColor: "#fff" }]}
             onPress={() => router.push("/main/biometrics")}
           >
-            <Text style={[globalStyles.cardText, { color: theme.tint }]}>📏 Biometrics Log</Text>
+            <Text style={[globalStyles.cardText, { color: theme.tint }]}>
+              📏 Biometrics Log
+            </Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
 
       {/* bottom navigation */}
-      <BottomNav/>
+      <BottomNav />
 
       {/* floating ai button */}
       <FloatingAIButton />
@@ -239,9 +272,14 @@ export default function Home() {
             <TextInput
               placeholder="Reminder text"
               placeholderTextColor="#888"
-              style={[globalStyles.input, { color: "#000", borderColor: theme.tint }]}
+              style={[
+                globalStyles.input,
+                { color: "#000", borderColor: theme.tint },
+              ]}
               value={currentReminder.text}
-              onChangeText={(text) => setCurrentReminder({ ...currentReminder, text })}
+              onChangeText={(text) =>
+                setCurrentReminder({ ...currentReminder, text })
+              }
             />
 
             <View style={styles.modalButtons}>
@@ -250,20 +288,26 @@ export default function Home() {
                   style={[styles.modalButton, { backgroundColor: "#FF4D4D" }]}
                   onPress={() => deleteReminder(currentReminder.id)}
                 >
-                  <Text style={[globalStyles.cardText, { color: "#fff" }]}>Delete</Text>
+                  <Text style={[globalStyles.cardText, { color: "#fff" }]}>
+                    Delete
+                  </Text>
                 </TouchableOpacity>
               )}
               <TouchableOpacity
                 style={[styles.modalButton, { backgroundColor: theme.tint }]}
                 onPress={saveReminder}
               >
-                <Text style={[globalStyles.cardText, { color: "#fff" }]}>Save</Text>
+                <Text style={[globalStyles.cardText, { color: "#fff" }]}>
+                  Save
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalButton, { backgroundColor: "#888" }]}
                 onPress={() => setModalVisible(false)}
               >
-                <Text style={[globalStyles.cardText, { color: "#fff" }]}>Cancel</Text>
+                <Text style={[globalStyles.cardText, { color: "#fff" }]}>
+                  Cancel
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -282,7 +326,7 @@ const styles = StyleSheet.create({
   logoContainer: {
     alignItems: "center",
     marginVertical: 10,
-    marginTop: 70
+    marginTop: 70,
   },
 
   // Calendar + Reminders Card
@@ -292,16 +336,16 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginVertical: 10,
     flexDirection: "row",
-    backgroundColor: "#fff"
+    backgroundColor: "#fff",
   },
   remindersContainer: {
     flex: 1,
-    marginTop: 0
+    marginTop: 0,
   },
   reminderItem: {
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: "#444"
+    borderBottomColor: "#444",
   },
 
   // Premium card
@@ -316,10 +360,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 6,
     elevation: 4,
-    marginTop: 30
+    marginTop: 30,
   },
   closeButton: {
-    marginLeft: "auto"
+    marginLeft: "auto",
   },
 
   // Quick log button grid
@@ -327,7 +371,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     paddingHorizontal: 20,
-    marginBottom: 16
+    marginBottom: 16,
   },
   card: {
     borderRadius: 16,
@@ -336,7 +380,7 @@ const styles = StyleSheet.create({
     shadowColor: "#000",
     shadowOpacity: 0.1,
     shadowRadius: 6,
-    elevation: 3
+    elevation: 3,
   },
 
   // Modal
@@ -345,7 +389,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "rgba(0,0,0,0.6)",
-    paddingHorizontal: 20
+    paddingHorizontal: 20,
   },
   modalContent: {
     width: "100%",
@@ -354,17 +398,17 @@ const styles = StyleSheet.create({
     shadowColor: "#000",
     shadowOpacity: 0.2,
     shadowRadius: 6,
-    elevation: 6
+    elevation: 6,
   },
   modalButtons: {
     flexDirection: "row",
-    justifyContent: "space-between"
+    justifyContent: "space-between",
   },
   modalButton: {
     flex: 1,
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: "center",
-    marginHorizontal: 4
+    marginHorizontal: 4,
   },
 });

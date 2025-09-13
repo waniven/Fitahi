@@ -1,12 +1,5 @@
 import React from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  useColorScheme,
-  FlatList,
-} from "react-native";
+import { View, Text, StyleSheet, useColorScheme, FlatList } from "react-native";
 import { Colors } from "@/constants/Colors";
 import { Font } from "@/constants/Font";
 import PrimaryButton from "@/components/PrimaryButton";
