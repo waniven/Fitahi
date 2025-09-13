@@ -26,7 +26,7 @@ export default function Index() {
   const buttonFade = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // try temp login once when this screen mounts
+    // try temp login once when this screen mounts - TO BE CHANGED LATER
     (async () => {
       const ok = await loginTemp();
       if (!ok) {
