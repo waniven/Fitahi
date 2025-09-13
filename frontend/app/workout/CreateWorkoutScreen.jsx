@@ -18,15 +18,14 @@ import { Font } from "@/constants/Font";
 import Fab from "@/components/FloatingActionButton";
 import CustomButtonThree from "../../components/common/CustomButtonThree";
 import { AIContext } from "../ai/AIContext";
-import { useRouter } from "expo-router";
 import BottomNav from "@/components/navbar/Bottomnav";
+import LoadingProgress from "@/components/LoadingProgress";
 
 // CreateWorkout creates a workout which pops up a workout input and display the created workout
 function CreateWorkout({ navigation }) {
   const scheme = useColorScheme();
   const theme = Colors[scheme ?? "light"];
   const { toggleChat } = useContext(AIContext);
-  const router = useRouter();
 
   // Back button to go back to Homepage
   useLayoutEffect(() => {
@@ -67,6 +66,8 @@ function CreateWorkout({ navigation }) {
   const [modalIsVisible, setModalIsVisible] = useState(false);
   const [workout, setWorkout] = useState([]);
   const [selectedWorkout, setSelectedWorkout] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadingProgress, setLoadingProgress] = useState(0);
 
   const NAV_BAR_HEIGHT = 64;
   const BOX_MAX_HEIGHT = Math.round(Dimensions.get("window").height * 0.7);
@@ -79,17 +80,26 @@ function CreateWorkout({ navigation }) {
       const loggedIn = await loginTemp();
       if (!loggedIn) {
         console.error("Could not log in, skipping fetch.");
+        setIsLoading(false);
         return;
       }
 
       try {
+        // Example: simulate incremental progress while fetching
+        setLoadingProgress(0.3);
         const data = await workoutService.getWorkouts();
+        setLoadingProgress(0.7);
+
         setWorkout(data);
+        setLoadingProgress(1); // complete
       } catch (err) {
         console.error(
           "Failed to fetch workouts:",
           err.response?.data || err.message
         );
+      } finally {
+        // wait a short tick so users see the bar finish
+        setTimeout(() => setIsLoading(false), 300);
       }
     }
     init();
@@ -222,6 +232,13 @@ function CreateWorkout({ navigation }) {
           />
         )}
       </View>
+
+      {isLoading && (
+        <LoadingProgress
+          progress={loadingProgress}
+          message="Fetching workouts..."
+        />
+      )}
 
       {/* bottom navigation */}
       <BottomNav />

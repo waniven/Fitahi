@@ -64,14 +64,15 @@ function ExerciseInput(props) {
   useEffect(() => {
     if (!props.visible) return;
 
-    // if workout exists and has exercises, seed them
-    const existing = props.workout?.exercises;
-
-    // always start fresh if workout is new (no id) or no exercises
-    if (!props.workout || !existing || existing.length === 0) {
+    if (!props.workout || !props.workout._id) {
+      // brand new workout → always start with fresh empty exercise
       setExercises([makeExercise()]);
+    } else if (props.workout.exercises?.length > 0) {
+      // editing → load existing ones
+      setExercises(props.workout.exercises.map(fromModelToForm));
     } else {
-      setExercises(existing.map(fromModelToForm));
+      // editing but no exercises yet → still start with one empty
+      setExercises([makeExercise()]);
     }
 
     setShowErrors(false);
@@ -82,6 +83,11 @@ function ExerciseInput(props) {
     const filtered = value.replace(/[^0-9]/g, "");
     if (optional && filtered === "") return "";
     return filtered;
+  }
+
+  // isInvalidNumber checks if a value is an invalid number (empty or <= 0)
+  function isInvalidNumber(value) {
+    return !value.trim() || Number(value) <= 0;
   }
 
   // resetForm allows to reset form to original state
@@ -126,23 +132,13 @@ function ExerciseInput(props) {
     for (let i = 0; i < exercises.length; i++) {
       const ex = exercises[i];
 
-      // validation: required fields must be filled
       if (
         !ex.name.trim() ||
-        !ex.reps.trim() ||
-        !ex.sets.trim() ||
-        !ex.rest.trim()
+        isInvalidNumber(ex.reps) ||
+        isInvalidNumber(ex.sets) ||
+        isInvalidNumber(ex.rest)
       ) {
-        return; // errors will show under fields
-      }
-
-      // validation: reps, sets, rest cannot be 0
-      if (
-        Number(ex.reps) <= 0 ||
-        Number(ex.sets) <= 0 ||
-        Number(ex.rest) <= 0
-      ) {
-        return;
+        return; // will show errors
       }
     }
 
@@ -215,9 +211,9 @@ function ExerciseInput(props) {
           >
             {exercises.map((ex, idx) => {
               const nameError = showErrors && !ex.name.trim();
-              const repsError = showErrors && !ex.reps.trim();
-              const setsError = showErrors && !ex.sets.trim();
-              const restError = showErrors && !ex.rest.trim();
+              const repsError = showErrors && isInvalidNumber(ex.reps);
+              const setsError = showErrors && isInvalidNumber(ex.sets);
+              const restError = showErrors && isInvalidNumber(ex.rest);
 
               return (
                 <View
@@ -287,7 +283,7 @@ function ExerciseInput(props) {
                       />
                       {repsError ? (
                         <Text style={[styles.err, { color: theme.error }]}>
-                          Required
+                          {ex.reps.trim() === "" ? "Required" : "Cannot be 0"}
                         </Text>
                       ) : null}
                     </View>
@@ -313,7 +309,7 @@ function ExerciseInput(props) {
                       />
                       {setsError ? (
                         <Text style={[styles.err, { color: theme.error }]}>
-                          Required
+                          {ex.reps.trim() === "" ? "Required" : "Cannot be 0"}
                         </Text>
                       ) : null}
                     </View>
@@ -361,7 +357,7 @@ function ExerciseInput(props) {
                       />
                       {restError ? (
                         <Text style={[styles.err, { color: theme.error }]}>
-                          Required
+                          {ex.reps.trim() === "" ? "Required" : "Cannot be 0"}
                         </Text>
                       ) : null}
                     </View>
