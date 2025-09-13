@@ -1,15 +1,29 @@
 import { useEffect, useRef, useState } from "react";
-import { Animated, Dimensions, FlatList, KeyboardAvoidingView, Modal, PanResponder, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View} from "react-native";
+import {
+  Animated,
+  Dimensions,
+  FlatList,
+  KeyboardAvoidingView,
+  Modal,
+  PanResponder,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { Colors } from "../../constants/Colors";
 import globalStyles from "../../styles/globalStyles";
-import { AILocal } from "../../constants/AILocal";
+//import { AILocal } from "../../constants/AILocal";
+import * as messageService from "../../services/messageService";
 
 //screen height for dragging to close
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 //constants for spacing
 const CHAT_TOP = 80; //distance from top screen
-const CHAT_SIDE = 20;  //horizontal margin
+const CHAT_SIDE = 20; //horizontal margin
 const CHAT_BOTTOM = 40; // bottom margin/ so it stays above the navigation bar
 const INPUT_ROW_HEIGHT = 56;
 
@@ -22,6 +36,7 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [historyVisible, setHistoryVisible] = useState(false);
+  const [historyMessages, setHistoryMessages] = useState([]);
   const [showScrollDown, setShowScrollDown] = useState(false);
 
   const flatListRef = useRef(null);
@@ -36,8 +51,7 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
       },
       onPanResponderRelease: (_, g) => {
         if (g.dy > 150) {
-
-          //animate off screen and close 
+          //animate off screen and close
           Animated.timing(translateY, {
             toValue: SCREEN_HEIGHT,
             duration: 200,
@@ -45,7 +59,10 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
           }).start(() => onClose?.());
         } else {
           //else go to back to original position
-          Animated.spring(translateY, { toValue: 0, useNativeDriver: true }).start();
+          Animated.spring(translateY, {
+            toValue: 0,
+            useNativeDriver: true,
+          }).start();
         }
       },
     })
@@ -65,30 +82,58 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
     const clean = text?.trim();
     if (!clean) return;
 
-    const userMsg = { id: Date.now().toString(), text: clean, fromAI: false };
-    
-    setChatMessages((prev) => [...prev, userMsg]); //update external state
-    
-    setMessages((prev) => [...prev, userMsg]);
-
     setInput("");
     setLoading(true);
 
     try {
-      await new Promise((r) => setTimeout(r, 350)); // simulate processing
-      const aiText = await AILocal(clean); //local AI response
-      const aiMsg = { id: (Date.now() + 1).toString(), text: aiText, fromAI: true };
+      const { userMessage, aiMessage } = await messageService.sendMessage(
+        clean
+      );
 
-      setChatMessages((prev) => [...prev, aiMsg]);
-      setMessages((prev) => [...prev, aiMsg]);
-    } catch (e) {
-      const errMsg = { id: Date.now().toString(), text: "Sorry I can't process your request right now. Please try again later", fromAI: true };
+      // if backend didn't provide id, generate one
+      const safeUserMsg = {
+        ...userMessage,
+        id: userMessage.id || Date.now().toString(),
+      };
+      const safeAiMsg = {
+        ...aiMessage,
+        id: aiMessage.id || (Date.now() + 1).toString(),
+      };
+
+      setChatMessages((prev) => [...prev, safeUserMsg, safeAiMsg]);
+      setMessages((prev) => [...prev, safeUserMsg, safeAiMsg]);
+    } catch (err) {
+      const errMsg = {
+        id: Date.now().toString(),
+        text: "Darwin is unavailable right now.",
+        fromAI: true,
+      };
       setChatMessages((prev) => [...prev, errMsg]);
       setMessages((prev) => [...prev, errMsg]);
     } finally {
       setLoading(false);
     }
   };
+
+  const loadHistory = async () => {
+    try {
+      const msgs = await messageService.getMessages();
+      const safeMsgs = msgs.map((m) => ({
+        ...m,
+        id: m._id || Date.now().toString(),
+      }));
+      setHistoryMessages(safeMsgs);
+    } catch (err) {
+      console.error("Failed to load history:", err);
+    }
+  };
+
+  // trigger load when history modal opens
+  useEffect(() => {
+    if (historyVisible) {
+      loadHistory();
+    }
+  }, [historyVisible]);
 
   //render message bubble
   const renderItem = ({ item }) => (
@@ -97,11 +142,11 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
         styles.messageBubble,
         {
           alignSelf: item.fromAI ? "flex-start" : "flex-end", //align left-right
-          backgroundColor: item.fromAI ? theme.tint : "#007AFF",  //ai colour and user colour
+          backgroundColor: item.fromAI ? theme.tint : "#007AFF", //ai colour and user colour
         },
       ]}
     >
-      <Text style={[{ color:"#FFF" }, globalStyles.textRegular]}>
+      <Text style={[{ color: "#FFF" }, globalStyles.textRegular]}>
         {item.text}
       </Text>
     </View>
@@ -111,28 +156,46 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
     <Modal visible animationType="slide" transparent>
       <View style={styles.overlay}>
         <Animated.View
-          style={[styles.container, { backgroundColor: theme.background, transform: [{ translateY }] }]}
+          style={[
+            styles.container,
+            { backgroundColor: theme.background, transform: [{ translateY }] },
+          ]}
           {...panResponder.panHandlers}
         >
           {/* Header */}
           <View style={styles.header}>
-            <Text style={[styles.headerText, globalStyles.textBold, { color: theme.tint }]}>
+            <Text
+              style={[
+                styles.headerText,
+                globalStyles.textBold,
+                { color: theme.tint },
+              ]}
+            >
               Darwin
             </Text>
             <TouchableOpacity onPress={onClose} style={{ padding: 8 }}>
-              <Text style={[globalStyles.textBold, { color: "red", fontSize: 20 }]}>✕</Text>
+              <Text
+                style={[globalStyles.textBold, { color: "red", fontSize: 20 }]}
+              >
+                ✕
+              </Text>
             </TouchableOpacity>
           </View>
 
           {/* Chat Messages */}
           <FlatList
             ref={flatListRef}
-            data={chatMessages} 
+            data={chatMessages}
             keyExtractor={(item) => item.id}
             renderItem={renderItem}
-            contentContainerStyle={{ padding: 12, paddingBottom: INPUT_ROW_HEIGHT + 24 }}
+            contentContainerStyle={{
+              padding: 12,
+              paddingBottom: INPUT_ROW_HEIGHT + 24,
+            }}
             keyboardShouldPersistTaps="handled"
-            onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+            onContentSizeChange={() =>
+              flatListRef.current?.scrollToEnd({ animated: true })
+            }
             onScroll={(e) => {
               const offsetY = e.nativeEvent.contentOffset.y;
               const contentHeight = e.nativeEvent.contentSize.height;
@@ -147,24 +210,45 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
           {showScrollDown && (
             <TouchableOpacity
               style={[styles.scrollButton, { backgroundColor: theme.tint }]}
-              onPress={() => flatListRef.current?.scrollToEnd({ animated: true })}
+              onPress={() =>
+                flatListRef.current?.scrollToEnd({ animated: true })
+              }
             >
-              <Text style={[globalStyles.textBold, { color: theme.background, fontSize: 16 }]}>↓</Text>
+              <Text
+                style={[
+                  globalStyles.textBold,
+                  { color: theme.background, fontSize: 16 },
+                ]}
+              >
+                ↓
+              </Text>
             </TouchableOpacity>
           )}
 
           {/* Typing indicator */}
           {loading && (
-            <Text style={[globalStyles.textRegular, { color: theme.tint, marginHorizontal: 12 }]}>
+            <Text
+              style={[
+                globalStyles.textRegular,
+                { color: theme.tint, marginHorizontal: 12 },
+              ]}
+            >
               Darwin is typing...
             </Text>
           )}
 
           {/* Input Row */}
-          <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} keyboardVerticalOffset={CHAT_TOP}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
+            keyboardVerticalOffset={CHAT_TOP}
+          >
             <View style={[styles.inputBar, { backgroundColor: "#020114ff" }]}>
               <TextInput
-                style={[styles.input, { backgroundColor: theme.backgroundAlt, color: "#FFF" }, globalStyles.textRegular]}
+                style={[
+                  styles.input,
+                  { backgroundColor: theme.backgroundAlt, color: "#FFF" },
+                  globalStyles.textRegular,
+                ]}
                 placeholder="Type your message..."
                 placeholderTextColor={theme.textSecondary}
                 value={input}
@@ -172,11 +256,28 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
                 onSubmitEditing={() => sendMessage(input)}
                 returnKeyType="send"
               />
-              <TouchableOpacity style={[styles.iconBtn, { backgroundColor: theme.tint }]} onPress={() => setHistoryVisible(true)}>
-                <Text style={[globalStyles.textBold, { color: theme.background, fontSize: 18 }]}>≡</Text>
+              <TouchableOpacity
+                style={[styles.iconBtn, { backgroundColor: theme.tint }]}
+                onPress={() => setHistoryVisible(true)}
+              >
+                <Text
+                  style={[
+                    globalStyles.textBold,
+                    { color: theme.background, fontSize: 18 },
+                  ]}
+                >
+                  ≡
+                </Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.sendButton, { backgroundColor: theme.tint }]} onPress={() => sendMessage(input)}>
-                <Text style={[globalStyles.textBold, { color: theme.background }]}>Send</Text>
+              <TouchableOpacity
+                style={[styles.sendButton, { backgroundColor: theme.tint }]}
+                onPress={() => sendMessage(input)}
+              >
+                <Text
+                  style={[globalStyles.textBold, { color: theme.background }]}
+                >
+                  Send
+                </Text>
               </TouchableOpacity>
             </View>
           </KeyboardAvoidingView>
@@ -186,12 +287,49 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
       {/* Past Conversations */}
       <Modal visible={historyVisible} animationType="fade" transparent>
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: theme.backgroundAlt }]}>
-            <Text style={[globalStyles.textBold, { color: theme.textPrimary, fontSize: 20, marginBottom: 12 }]}>
+          <View
+            style={[
+              styles.modalContent,
+              { backgroundColor: theme.backgroundAlt },
+            ]}
+          >
+            <Text
+              style={[
+                globalStyles.textBold,
+                { color: theme.textPrimary, fontSize: 20, marginBottom: 12 },
+              ]}
+            >
               History
             </Text>
-            <TouchableOpacity onPress={() => setHistoryVisible(false)} style={{ paddingVertical: 12, alignItems: "center" }}>
-              <Text style={[globalStyles.textBold, { color: "red" }]}>Close</Text>
+
+            <FlatList
+              data={historyMessages}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => (
+                <View
+                  style={[
+                    styles.messageBubble,
+                    {
+                      alignSelf: item.fromAI ? "flex-start" : "flex-end",
+                      backgroundColor: item.fromAI ? theme.tint : "#007AFF",
+                    },
+                  ]}
+                >
+                  <Text style={[{ color: "#FFF" }, globalStyles.textRegular]}>
+                    {item.text}
+                  </Text>
+                </View>
+              )}
+              contentContainerStyle={{ paddingBottom: 20 }}
+            />
+
+            <TouchableOpacity
+              onPress={() => setHistoryVisible(false)}
+              style={{ paddingVertical: 12, alignItems: "center" }}
+            >
+              <Text style={[globalStyles.textBold, { color: "red" }]}>
+                Close
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
