@@ -3,12 +3,22 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, StatusBar } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 import { Colors } from '../../constants/Colors';
+import { Font, Type, TextVariants } from '../../constants/Font';
 import CustomButton from '../common/CustomButton';
 import CustomButtonThree from '../common/CustomButtonThree';
 import NutritionDataCard from './NutritionDataCard';
 import FloatingAIButton from '../../app/ai/FloatingAIButton';
 import BottomNav from '../navbar/BottomNav';
-import globalStyles from '../../styles/globalStyles';
+
+// Local text styles using Font constants
+const textStyles = {
+  heading2: { fontSize: 24, ...Type.bold },
+  heading3: { fontSize: 20, ...Type.bold },
+  heading4: { fontSize: 18, ...Type.bold },
+  welcomeText: { fontSize: 18, fontWeight: '600', ...Type.bold },
+  bodyMedium: { fontSize: 16, ...Type.regular },
+  bodySmall: { fontSize: 14, ...Type.regular },
+};
 
 /**
  * NutritionDashboard - Comprehensive nutrition tracking dashboard
@@ -52,8 +62,8 @@ const NutritionDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress, d
       return (
         <View style={[styles.pieChartContainer, { width: size, height: size }]}>
           <View style={styles.emptyPieChart}>
-            <Text style={[globalStyles.heading3, styles.emptyChartText]}>0</Text>
-            <Text style={[globalStyles.bodySmall, styles.emptyChartSubtext]}>kcal</Text>
+            <Text style={[textStyles.heading3, styles.emptyChartText]}>0</Text>
+            <Text style={[textStyles.bodySmall, styles.emptyChartSubtext]}>kcal</Text>
           </View>
         </View>
       );
@@ -162,8 +172,8 @@ const NutritionDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress, d
                   }
                 ]}
               >
-                <Text style={[globalStyles.captionBold, styles.donutLabelText]}>{segment.value} kcal</Text>
-                <Text style={[globalStyles.captionSmall, styles.donutLabelSubtext]}>{segment.label}</Text>
+                <Text style={styles.donutLabelText}>{segment.value} kcal</Text>
+                <Text style={styles.donutLabelSubtext}>{segment.label}</Text>
               </View>
             );
           })}
@@ -171,8 +181,8 @@ const NutritionDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress, d
         
         {/* Center display showing total calories */}
         <View style={styles.donutCenter}>
-          <Text style={[globalStyles.bodyMedium, styles.donutCenterText]}>{total}</Text>
-          <Text style={[globalStyles.captionSmall, styles.donutCenterSubtext]}>kcal total</Text>
+          <Text style={[textStyles.bodyMedium, styles.donutCenterText]}>{total}</Text>
+          <Text style={styles.donutCenterSubtext}>kcal total</Text>
         </View>
       </View>
     );
@@ -185,18 +195,18 @@ const NutritionDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress, d
     <SafeAreaView style={[styles.safeArea, { backgroundColor: Colors.dark.background }]}>
       <StatusBar barStyle="light-content" backgroundColor={Colors.dark.background} />
       
-      <View style={[globalStyles.container, { backgroundColor: Colors.dark.background }]}>
+      <View style={[styles.container, { backgroundColor: Colors.dark.background }]}>
         {/* Header navigation with title */}
         <View style={styles.header}>
           <View style={styles.backButtonContainer}>
             <CustomButtonThree onPress={onBackPress} />
           </View>
-          <Text style={[globalStyles.welcomeText, styles.title, { color: Colors.dark.textPrimary }]}>
+          <Text style={[textStyles.welcomeText, styles.title, { color: Colors.dark.textPrimary }]}>
             Nutrition Log
           </Text>
         </View>
 
-        <Text style={[globalStyles.heading4, styles.totalsSectionTitle]}>YOUR TOTALS FOR TODAY</Text>
+        <Text style={[textStyles.heading4, styles.totalsSectionTitle]}>YOUR TOTALS FOR TODAY</Text>
 
         <ScrollView 
           style={styles.scrollContainer} 
@@ -212,7 +222,7 @@ const NutritionDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress, d
             {/* Individual macronutrient progress indicators */}
             <View style={styles.macroProgressSection}>
               <View style={styles.macroProgressItem}>
-                <Text style={[globalStyles.bodyMedium, styles.macroLabel]}>Protein</Text>
+                <Text style={[textStyles.bodyMedium, styles.macroLabel]}>Protein</Text>
                 <View style={styles.progressBarContainer}>
                   <View 
                     style={[
@@ -222,13 +232,13 @@ const NutritionDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress, d
                     ]} 
                   />
                 </View>
-                <Text style={[globalStyles.bodySmall, styles.macroText]}>
-                  {totalNutrition.protein} kcal / {dailyGoals.protein} kcal
+                <Text style={[textStyles.bodySmall, styles.macroText]}>
+                  {totalNutrition.protein} g / {dailyGoals.protein} g
                 </Text>
               </View>
 
               <View style={styles.macroProgressItem}>
-                <Text style={[globalStyles.bodyMedium, styles.macroLabel]}>Fat</Text>
+                <Text style={[textStyles.bodyMedium, styles.macroLabel]}>Fat</Text>
                 <View style={styles.progressBarContainer}>
                   <View 
                     style={[
@@ -238,13 +248,13 @@ const NutritionDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress, d
                     ]} 
                   />
                 </View>
-                <Text style={[globalStyles.bodySmall, styles.macroText]}>
-                  {totalNutrition.fat} kcal / {dailyGoals.fat} kcal
+                <Text style={[textStyles.bodySmall, styles.macroText]}>
+                  {totalNutrition.fat} g / {dailyGoals.fat} g
                 </Text>
               </View>
 
               <View style={styles.macroProgressItem}>
-                <Text style={[globalStyles.bodyMedium, styles.macroLabel]}>Carbs</Text>
+                <Text style={[textStyles.bodyMedium, styles.macroLabel]}>Carbs</Text>
                 <View style={styles.progressBarContainer}>
                   <View 
                     style={[
@@ -254,8 +264,8 @@ const NutritionDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress, d
                     ]} 
                   />
                 </View>
-                <Text style={[globalStyles.bodySmall, styles.macroText]}>
-                  {totalNutrition.carbs} kcal / {dailyGoals.carbs} kcal
+                <Text style={[textStyles.bodySmall, styles.macroText]}>
+                  {totalNutrition.carbs} g / {dailyGoals.carbs} g
                 </Text>
               </View>
             </View>
@@ -265,9 +275,9 @@ const NutritionDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress, d
           <View style={styles.caloriesCard}>
             <View style={styles.caloriesContent}>
               <View style={styles.caloriesAmountRow}>
-                <Text style={[globalStyles.bodyMedium, styles.caloriesLabel]}>Calories</Text>
-                <Text style={[globalStyles.heading2, styles.caloriesAmount]}>
-                  {totalNutrition.calories} kcal <Text style={[globalStyles.bodyMedium, styles.caloriesGoal]}>/ {dailyGoals.calories}</Text>
+                <Text style={[textStyles.bodyMedium, styles.caloriesLabel]}>Calories</Text>
+                <Text style={[textStyles.heading2, styles.caloriesAmount]}>
+                  {totalNutrition.calories} kcal <Text style={[textStyles.bodyMedium, styles.caloriesGoal]}>/ {dailyGoals.calories}</Text>
                 </Text>
               </View>
               
@@ -285,7 +295,7 @@ const NutritionDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress, d
 
           {/* List of today's food entries */}
           <View style={styles.entriesSection}>
-            <Text style={[globalStyles.heading4, styles.entriesSectionTitle]}>TODAY'S ENTRIES</Text>
+            <Text style={[textStyles.heading4, styles.entriesSectionTitle]}>TODAY'S ENTRIES</Text>
             
             <View style={styles.entriesContainer}>
               {todaysEntries.length > 0 ? (
@@ -300,10 +310,10 @@ const NutritionDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress, d
                 ))
               ) : (
                 <View style={styles.noEntriesContainer}>
-                  <Text style={[globalStyles.heading3, styles.noEntriesText]}>
+                  <Text style={[textStyles.heading3, styles.noEntriesText]}>
                     No food entries for today
                   </Text>
-                  <Text style={[globalStyles.bodyMedium, styles.noEntriesSubtext]}>
+                  <Text style={[textStyles.bodyMedium, styles.noEntriesSubtext]}>
                     Tap the button below to log your first meal!
                   </Text>
                 </View>
@@ -333,6 +343,10 @@ const NutritionDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress, d
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
+  },
+  container: { 
+    flex: 1, 
+    paddingHorizontal: 20 
   },
   header: {
     flexDirection: 'row',
@@ -406,18 +420,22 @@ const styles = StyleSheet.create({
     height: 20,
   },
   donutLabelText: {
+    fontSize: 10,
     color: '#FFFFFF',
     textAlign: 'center',
     textShadowColor: 'rgba(0, 0, 0, 0.5)',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
+    ...Type.bold,
   },
   donutLabelSubtext: {
+    fontSize: 8,
     color: '#FFFFFF',
     textAlign: 'center',
     textShadowColor: 'rgba(0, 0, 0, 0.5)',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
+    ...Type.regular,
   },
   donutCenter: {
     position: 'absolute',
@@ -428,7 +446,9 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   donutCenterSubtext: {
+    fontSize: 10,
     color: '#666',
+    ...Type.regular,
   },
   macroProgressSection: {
     flex: 1,

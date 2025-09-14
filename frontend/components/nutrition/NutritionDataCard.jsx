@@ -2,6 +2,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { Font, Type, TextVariants } from '../../constants/Font';
 import CustomToast from '../common/CustomToast';
 
 // Displays nutrition entry with meal/time on left, nutrition badges on right in 2x2 grid
@@ -49,16 +50,16 @@ const NutritionDataCard = ({
             <Text style={styles.badgeText}>Calories: {calories} kcal</Text>
           </View>
           <View style={[styles.nutritionBadge, styles.proteinBadge]}>
-            <Text style={styles.badgeText}>Protein: {protein} kcal</Text>
+            <Text style={styles.badgeText}>Protein: {protein} g</Text>
           </View>
         </View>
 
         <View style={styles.nutritionRow}>
           <View style={[styles.nutritionBadge, styles.fatBadge]}>
-            <Text style={styles.badgeText}>Fat: {fat} kcal</Text>
+            <Text style={styles.badgeText}>Fat: {fat} g</Text>
           </View>
           <View style={[styles.nutritionBadge, styles.carbsBadge]}>
-            <Text style={styles.badgeText}>Carbs: {carbs} kcal</Text>
+            <Text style={styles.badgeText}>Carbs: {carbs} g</Text>
           </View>
         </View>
       </View>
@@ -109,16 +110,15 @@ const styles = StyleSheet.create({
 
   mealTypeText: {
     fontSize: 16,
-    fontWeight: 'bold',
     color: '#4A90E2',
-    fontFamily: 'Montserrat_700Bold',
     marginBottom: 2,
+    ...Type.bold,
   },
 
   timeText: {
     fontSize: 14,
     color: '#4A90E2',
-    fontFamily: 'Montserrat_400Regular',
+    ...Type.regular,
   },
 
   rightSection: {
@@ -162,9 +162,8 @@ const styles = StyleSheet.create({
   badgeText: {
     color: '#FFFFFF',
     fontSize: 10,
-    fontWeight: '600',
-    fontFamily: 'Montserrat_600SemiBold',
     textAlign: 'center',
+    ...Type.semibold,
   },
 
   deleteButton: {
@@ -187,5 +186,4 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
 });
-
 export default NutritionDataCard;

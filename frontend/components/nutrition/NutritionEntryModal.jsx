@@ -1,5 +1,5 @@
 // components/nutrition/NutritionEntryModal.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -12,9 +12,9 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/Colors';
+import { Font, Type, TextVariants } from '../../constants/Font';
 import CustomButton from '../common/CustomButton';
 import CustomToast from '../common/CustomToast';
-import globalStyles from '../../styles/globalStyles';
 
 // Configuration constants - move these to a config file
 const VALIDATION_CONFIG = {
@@ -56,6 +56,14 @@ const ALERT_MESSAGES = {
   }
 };
 
+// Local text styles using Font constants
+const textStyles = {
+  heading1: { fontSize: 28, ...Type.bold },
+  bodyMedium: { fontSize: 16, ...Type.bold },
+  bodySmall: { fontSize: 16, ...Type.regular },
+  caption: { fontSize: 12, ...Type.regular },
+};
+
 /**
  * NutritionEntryModal - Modal for entering food intake data
  * Shows food name, meal type, and nutritional information
@@ -71,13 +79,24 @@ export default function NutritionEntryModal({
 }) {
   const [foodName, setFoodName] = useState('');
   const [selectedMealType, setSelectedMealType] = useState('');
-  const [nutritionValues, setNutritionValues] = useState({
-    calories: '',
-    protein: '',
-    carbs: '',
-    fat: ''
-  });
+  const [nutritionValues, setNutritionValues] = useState(() =>
+    Object.fromEntries(nutritionFields.map(field => [field.key, '']))
+  );
   const [validationErrors, setValidationErrors] = useState({});
+
+  // Update nutrition values when nutritionFields prop changes
+  useEffect(() => {
+    setNutritionValues(prev => {
+      const newValues = Object.fromEntries(nutritionFields.map(field => [field.key, '']));
+      // Preserve existing values if fields overlap
+      nutritionFields.forEach(field => {
+        if (prev[field.key] !== undefined) {
+          newValues[field.key] = prev[field.key];
+        }
+      });
+      return newValues;
+    });
+  }, [nutritionFields]);
 
   /**
    * Updates a nutrition field value
@@ -88,6 +107,16 @@ export default function NutritionEntryModal({
     // Clear validation error for this field
     if (validationErrors[field]) {
       setValidationErrors(prev => ({ ...prev, [field]: null }));
+    }
+  };
+
+  /**
+   * Clears validation errors for food name
+   */
+  const handleFoodNameChange = (value) => {
+    setFoodName(value);
+    if (validationErrors.foodName) {
+      setValidationErrors(prev => ({ ...prev, foodName: null }));
     }
   };
 
@@ -177,12 +206,7 @@ export default function NutritionEntryModal({
   const closeModal = () => {
     setFoodName('');
     setSelectedMealType('');
-    setNutritionValues({
-      calories: '',
-      protein: '',
-      carbs: '',
-      fat: ''
-    });
+    setNutritionValues(Object.fromEntries(nutritionFields.map(field => [field.key, ''])));
     setValidationErrors({});
     onClose();
   };
@@ -225,7 +249,7 @@ export default function NutritionEntryModal({
         timestamp: new Date().toISOString(),
       };
       
-      CustomToast.nutritionSaved(foodName.trim());
+      CustomToast.nutritionSaved(foodName.trim(), selectedMealType);
       
       if (onSave) {
         onSave(newNutritionEntry);
@@ -259,8 +283,8 @@ export default function NutritionEntryModal({
    * Renders a single nutrition input field
    */
   const renderNutritionField = (field) => (
-    <View style={styles.nutritionColumn}>
-      <Text style={[globalStyles.caption, styles.nutritionFieldLabel]}>
+    <View key={field.key} style={styles.nutritionColumn}>
+      <Text style={[textStyles.caption, styles.nutritionFieldLabel]}>
         {field.label}
       </Text>
       <View style={[
@@ -268,17 +292,17 @@ export default function NutritionEntryModal({
         validationErrors[field.key] && styles.inputError
       ]}>
         <TextInput
-          style={[globalStyles.bodyMedium, styles.textInput]}
+          style={[textStyles.bodySmall, styles.textInput]}
           placeholder={field.placeholder}
           placeholderTextColor="#A0A0A0"
-          value={nutritionValues[field.key]}
+          value={nutritionValues[field.key] || ''}
           onChangeText={(value) => updateNutritionValue(field.key, value)}
           keyboardType="numeric"
-          returnKeyType={field.key === 'fat' ? 'done' : 'next'}
+          returnKeyType={field.key === nutritionFields[nutritionFields.length - 1]?.key ? 'done' : 'next'}
         />
       </View>
       {validationErrors[field.key] && (
-        <Text style={[globalStyles.bodySmall, styles.errorText]}>
+        <Text style={[textStyles.bodySmall, styles.errorText]}>
           {validationErrors[field.key]}
         </Text>
       )}
@@ -310,31 +334,31 @@ export default function NutritionEntryModal({
             <View style={styles.modalContent}>
               {/* Modal header with title and close button */}
               <View style={styles.modalHeaderSection}>
-                <Text style={[globalStyles.heading1, styles.modalTitleText]}>Log Food</Text>
+                <Text style={[textStyles.heading1, styles.modalTitleText]}>Log Food</Text>
                 <TouchableOpacity onPress={requestCloseConfirmation} style={styles.closeButton}>
                   <Ionicons name="close" size={28} color="#666" />
                 </TouchableOpacity>
               </View>
 
-              <Text style={[globalStyles.bodyMedium, styles.modalSubtitleText]}>
+              <Text style={[textStyles.bodyMedium, styles.modalSubtitleText]}>
                 What did you eat today?
               </Text>
 
               {/* Food name input section */}
               <View style={styles.inputSection}>
-                <Text style={[globalStyles.bodyMedium, styles.inputLabel]}>FOOD NAME *</Text>
+                <Text style={[textStyles.bodyMedium, styles.inputLabel]}>FOOD NAME *</Text>
                 <View style={[styles.inputContainer, validationErrors.foodName && styles.inputError]}>
                   <TextInput
-                    style={[globalStyles.bodyMedium, styles.textInput]}
+                    style={[textStyles.bodySmall, styles.textInput]}
                     placeholder="Name of food"
                     placeholderTextColor="#A0A0A0"
                     value={foodName}
-                    onChangeText={setFoodName}
+                    onChangeText={handleFoodNameChange}
                     returnKeyType="next"
                   />
                 </View>
                 {validationErrors.foodName && (
-                  <Text style={[globalStyles.bodySmall, styles.errorText]}>
+                  <Text style={[textStyles.bodySmall, styles.errorText]}>
                     {validationErrors.foodName}
                   </Text>
                 )}
@@ -342,7 +366,7 @@ export default function NutritionEntryModal({
 
               {/* Meal type selection section */}
               <View style={styles.inputSection}>
-                <Text style={[globalStyles.bodyMedium, styles.inputLabel]}>YOU HAD THIS FOR . . . *</Text>
+                <Text style={[textStyles.bodyMedium, styles.inputLabel]}>YOU HAD THIS FOR . . . *</Text>
                 <View style={styles.mealTypeContainer}>
                   {mealTypes.map((meal) => (
                     <TouchableOpacity
@@ -354,7 +378,7 @@ export default function NutritionEntryModal({
                       onPress={() => handleMealTypeSelect(meal.id)}
                     >
                       <Text style={[
-                        globalStyles.bodyMedium,
+                        textStyles.bodySmall,
                         styles.mealTypeButtonText,
                         selectedMealType === meal.id && styles.mealTypeButtonTextSelected
                       ]}>
@@ -364,7 +388,7 @@ export default function NutritionEntryModal({
                   ))}
                 </View>
                 {validationErrors.mealType && (
-                  <Text style={[globalStyles.bodySmall, styles.errorText]}>
+                  <Text style={[textStyles.bodySmall, styles.errorText]}>
                     {validationErrors.mealType}
                   </Text>
                 )}
@@ -372,7 +396,7 @@ export default function NutritionEntryModal({
 
               {/* Nutrition information section */}
               <View style={styles.inputSection}>
-                <Text style={[globalStyles.bodyMedium, styles.inputLabel]}>
+                <Text style={[textStyles.bodyMedium, styles.inputLabel]}>
                   HOW MUCH OF THE FOLLOWING WAS IN YOUR FOOD? *
                 </Text>
                 
@@ -385,7 +409,7 @@ export default function NutritionEntryModal({
               <View style={styles.reminderSection}>
                 <View style={styles.reminderContainer}>
                   <Ionicons name="notifications" size={16} color="#4A90E2" style={styles.reminderIcon} />
-                  <Text style={[globalStyles.bodySmall, styles.reminderText]}>
+                  <Text style={[textStyles.bodySmall, styles.reminderText]}>
                     By default, you will be reminded to drink water {reminderDelay} minutes after logging food.
                   </Text>
                 </View>
@@ -424,7 +448,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    maxHeight: MODAL_CONFIG.maxHeight,
+    maxHeight: '90%',
   },
 
   scrollView: {

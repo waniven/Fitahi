@@ -3,12 +3,23 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Modal, StatusBar } from 'react-native';
 import Svg, { Path, Circle, Line, Text as SvgText, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { Colors } from '../../constants/Colors';
+import { Font, Type, TextVariants } from '../../constants/Font';
 import CustomButton from '../common/CustomButton';
 import CustomButtonThree from '../common/CustomButtonThree';
 import BiometricDataCard from '../biometrics/BiometricDataCard';
 import FloatingAIButton from '../../app/ai/FloatingAIButton';
 import BottomNav from '../navbar/BottomNav';
-import globalStyles from '../../styles/globalStyles';
+
+// Local text styles using Font constants
+const textStyles = {
+  heading1: { fontSize: 28, ...Type.bold },
+  heading2: { fontSize: 24, ...Type.bold },
+  heading3: { fontSize: 20, ...Type.bold },
+  welcomeText: { fontSize: 18, fontWeight: '600', ...Type.bold },
+  bodyMedium: { fontSize: 16, ...Type.regular },
+  bodySmall: { fontSize: 14, ...Type.regular },
+  captionSmall: { fontSize: 10, ...Type.regular },
+};
 
 /**
  * BiometricsDashboard - Body metrics tracking with interactive chart visualization
@@ -86,12 +97,12 @@ const BiometricsDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress }
             activeOpacity={1}
             onPress={(e) => e.stopPropagation()}
           >
-            <Text style={[globalStyles.bodyMedium, styles.popupTitle]}>DATE & TIME LOGGED</Text>
-            <Text style={[globalStyles.heading2, styles.popupDate]}>
+            <Text style={[textStyles.bodyMedium, styles.popupTitle]}>DATE & TIME LOGGED</Text>
+            <Text style={[textStyles.heading2, styles.popupDate]}>
               {formatPopupTimestamp(entry.timestamp)}
             </Text>
-            <Text style={[globalStyles.heading3, styles.popupData]}>Height = {entry.height} cm</Text>
-            <Text style={[globalStyles.heading3, styles.popupData]}>Weight = {entry.weight} kg</Text>
+            <Text style={[textStyles.heading3, styles.popupData]}>Height = {entry.height} cm</Text>
+            <Text style={[textStyles.heading3, styles.popupData]}>Weight = {entry.weight} kg</Text>
           </TouchableOpacity>
         </TouchableOpacity>
       </Modal>
@@ -163,7 +174,7 @@ const BiometricsDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress }
 
     return (
       <View style={styles.perfectChartContainer}>
-        <Text style={[globalStyles.heading2, styles.chartTitle]}>Weight Progression</Text>
+        <Text style={[textStyles.heading2, styles.chartTitle]}>Weight Progression</Text>
         
         <View style={styles.centeredChartArea}>
           <Svg width={chartWidth} height={chartHeight}>
@@ -298,26 +309,26 @@ const BiometricsDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress }
         {/* Chart legend */}
         <View style={styles.legend}>
           <View style={styles.legendDot} />
-          <Text style={[globalStyles.bodySmall, styles.legendText]}>Weight progression over time (tap dots for details)</Text>
+          <Text style={[textStyles.bodySmall, styles.legendText]}>Weight progression over time (tap dots for details)</Text>
         </View>
 
         {/* Statistical summary */}
         <View style={styles.statsContainer}>
           <View style={styles.statItem}>
-            <Text style={[globalStyles.captionSmall, styles.statLabel]}>Entries</Text>
-            <Text style={[globalStyles.bodySmall, styles.statValue]}>{chartData.length}</Text>
+            <Text style={[textStyles.captionSmall, styles.statLabel]}>Entries</Text>
+            <Text style={[textStyles.bodySmall, styles.statValue]}>{chartData.length}</Text>
           </View>
           <View style={styles.statItem}>
-            <Text style={[globalStyles.captionSmall, styles.statLabel]}>Min Weight</Text>
-            <Text style={[globalStyles.bodySmall, styles.statValue]}>{minWeight} kg</Text>
+            <Text style={[textStyles.captionSmall, styles.statLabel]}>Min Weight</Text>
+            <Text style={[textStyles.bodySmall, styles.statValue]}>{minWeight} kg</Text>
           </View>
           <View style={styles.statItem}>
-            <Text style={[globalStyles.captionSmall, styles.statLabel]}>Max Weight</Text>
-            <Text style={[globalStyles.bodySmall, styles.statValue]}>{maxWeight} kg</Text>
+            <Text style={[textStyles.captionSmall, styles.statLabel]}>Max Weight</Text>
+            <Text style={[textStyles.bodySmall, styles.statValue]}>{maxWeight} kg</Text>
           </View>
           <View style={styles.statItem}>
-            <Text style={[globalStyles.captionSmall, styles.statLabel]}>Trend</Text>
-            <Text style={[globalStyles.bodySmall, styles.statValue, { 
+            <Text style={[textStyles.captionSmall, styles.statLabel]}>Trend</Text>
+            <Text style={[textStyles.bodySmall, styles.statValue, { 
               color: weights[weights.length - 1] > weights[0] ? '#EF5350' : '#66BB6A' 
             }]}>
               {weights[weights.length - 1] > weights[0] ? '↗' : '↘'}
@@ -327,11 +338,11 @@ const BiometricsDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress }
 
         {/* Latest entry summary */}
         <View style={styles.latestEntryInfo}>
-          <Text style={[globalStyles.bodyMedium, styles.latestEntryTitle]}>Latest Entry</Text>
-          <Text style={[globalStyles.bodySmall, styles.latestEntryText]}>
+          <Text style={[textStyles.bodyMedium, styles.latestEntryTitle]}>Latest Entry</Text>
+          <Text style={[textStyles.bodySmall, styles.latestEntryText]}>
             Weight: {latestEntry.weight} kg | Height: {latestEntry.height} cm
           </Text>
-          <Text style={[globalStyles.bodySmall, styles.latestEntryText]}>
+          <Text style={[textStyles.bodySmall, styles.latestEntryText]}>
             BMI: {currentBMI} | Date: {new Date(latestEntry.timestamp).toLocaleDateString()}
           </Text>
         </View>
@@ -350,9 +361,9 @@ const BiometricsDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress }
     if (entries.length < 2) {
       return (
         <View style={styles.perfectChartContainer}>
-          <Text style={[globalStyles.heading2, styles.chartTitle]}>Weight Progression</Text>
+          <Text style={[textStyles.heading2, styles.chartTitle]}>Weight Progression</Text>
           <View style={styles.noDataContainer}>
-            <Text style={[globalStyles.bodyMedium, styles.noDataText]}>
+            <Text style={[textStyles.bodyMedium, styles.noDataText]}>
               {entries.length === 0 
                 ? "No data available for chart" 
                 : "Add more entries to see chart progression"}
@@ -384,7 +395,7 @@ const BiometricsDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress }
         <View style={styles.backButtonContainer}>
           <CustomButtonThree onPress={onBackPress} />
         </View>
-        <Text style={[globalStyles.welcomeText, styles.title, { color: Colors.dark.textPrimary }]}>
+        <Text style={[textStyles.welcomeText, styles.title, { color: Colors.dark.textPrimary }]}>
           Biometrics Log
         </Text>
       </View>
@@ -396,8 +407,8 @@ const BiometricsDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress }
       >
         {/* BMI calculation display */}
         <View style={styles.bmiCard}>
-          <Text style={[globalStyles.heading3, styles.bmiLabel]}>BMI</Text>
-          <Text style={[globalStyles.heading1, styles.bmiValue]}>
+          <Text style={[textStyles.heading3, styles.bmiLabel]}>BMI</Text>
+          <Text style={[textStyles.heading1, styles.bmiValue]}>
             {currentBMI} kg/m²
           </Text>
         </View>
@@ -405,15 +416,15 @@ const BiometricsDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress }
         {/* Current vs previous measurements comparison */}
         <View style={styles.comparisonContainer}>
           <View style={styles.comparisonCard}>
-            <Text style={[globalStyles.bodyMedium, styles.cardTitle]}>Weight (kg)</Text>
+            <Text style={[textStyles.bodyMedium, styles.cardTitle]}>Weight (kg)</Text>
             <View style={styles.comparisonRow}>
               <View style={styles.comparisonCol}>
-                <Text style={[globalStyles.bodySmall, styles.comparisonLabel]}>Current</Text>
-                <Text style={[globalStyles.heading2, styles.comparisonValue]}>{latestEntry.weight}</Text>
+                <Text style={[textStyles.bodySmall, styles.comparisonLabel]}>Current</Text>
+                <Text style={[textStyles.heading2, styles.comparisonValue]}>{latestEntry.weight}</Text>
               </View>
               <View style={styles.comparisonCol}>
-                <Text style={[globalStyles.bodySmall, styles.comparisonLabel]}>Previous</Text>
-                <Text style={[globalStyles.heading2, styles.comparisonValue]}>
+                <Text style={[textStyles.bodySmall, styles.comparisonLabel]}>Previous</Text>
+                <Text style={[textStyles.heading2, styles.comparisonValue]}>
                   {previousEntry ? previousEntry.weight : '--'}
                 </Text>
               </View>
@@ -421,15 +432,15 @@ const BiometricsDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress }
           </View>
 
           <View style={styles.comparisonCard}>
-            <Text style={[globalStyles.bodyMedium, styles.cardTitle]}>Height (cm)</Text>
+            <Text style={[textStyles.bodyMedium, styles.cardTitle]}>Height (cm)</Text>
             <View style={styles.comparisonRow}>
               <View style={styles.comparisonCol}>
-                <Text style={[globalStyles.bodySmall, styles.comparisonLabel]}>Current</Text>
-                <Text style={[globalStyles.heading2, styles.comparisonValue]}>{latestEntry.height}</Text>
+                <Text style={[textStyles.bodySmall, styles.comparisonLabel]}>Current</Text>
+                <Text style={[textStyles.heading2, styles.comparisonValue]}>{latestEntry.height}</Text>
               </View>
               <View style={styles.comparisonCol}>
-                <Text style={[globalStyles.bodySmall, styles.comparisonLabel]}>Previous</Text>
-                <Text style={[globalStyles.heading2, styles.comparisonValue]}>
+                <Text style={[textStyles.bodySmall, styles.comparisonLabel]}>Previous</Text>
+                <Text style={[textStyles.heading2, styles.comparisonValue]}>
                   {previousEntry ? previousEntry.height : '--'}
                 </Text>
               </View>
@@ -448,7 +459,7 @@ const BiometricsDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress }
             onPress={() => setActiveView('chart')}
           >
             <Text style={[
-              globalStyles.bodyMedium,
+              textStyles.bodyMedium,
               styles.toggleButtonText,
               activeView === 'chart' && styles.toggleButtonTextActive
             ]}>
@@ -465,7 +476,7 @@ const BiometricsDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress }
             onPress={() => setActiveView('entries')}
           >
             <Text style={[
-              globalStyles.bodyMedium,
+              textStyles.bodyMedium,
               styles.toggleButtonText,
               activeView === 'entries' && styles.toggleButtonTextActive
             ]}>
