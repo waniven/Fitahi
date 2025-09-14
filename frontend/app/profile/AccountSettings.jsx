@@ -8,6 +8,8 @@ import * as ImagePicker from "expo-image-picker";
 import * as ImageManipulator from 'expo-image-manipulator';
 import { useNavigation } from "@react-navigation/native";
 import { getMe, updateMe } from "@/services/userService";
+import { logout } from "@/services/authService";
+import { router } from "expo-router";
 
 export default function AccountSettings() {
   const theme = Colors["dark"];
@@ -130,6 +132,12 @@ export default function AccountSettings() {
     }
   };
 
+  const handleLogout = () => {
+    console.log("logout");
+    logout()
+    router.replace("/");
+  }
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       <KeyboardAvoidingView
@@ -201,6 +209,18 @@ export default function AccountSettings() {
               />
             </View>
           ))}
+
+        {/* Logout button */}
+        <View style={styles.logoutButtonWrapper}>
+          <TouchableOpacity
+            style={[styles.saveButton, { backgroundColor: theme.error }]}
+            onPress={handleLogout}
+          >
+            <Text style={[styles.saveButtonText, { fontFamily: "Montserrat" }]}>
+              Logout
+            </Text>
+          </TouchableOpacity>
+        </View>
 
           {/* Extra spacing to avoid save button overlap */}
           <View style={{ height: 100 }} />
@@ -305,11 +325,20 @@ const styles = StyleSheet.create({
     left: 20,
     right: 20,
   },
+
+  logoutButtonWrapper: {
+    position: "absolute",
+    bottom: 95,
+    left: 20,
+    right: 20,
+  },
+
   saveButton: {
     paddingVertical: 16,
     borderRadius: 30,
     alignItems: "center",
   },
+
   saveButtonText: {
     fontSize: 16,
     fontWeight: "bold",
