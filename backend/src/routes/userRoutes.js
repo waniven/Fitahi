@@ -44,7 +44,7 @@ router.post('/', async (req, res, next) => {
 /**
  * PATCH /api/users/me
  * Update a user (partial)
- * body: { name, email, dateofbirth, password }
+ * body: { name, email, dateofbirth, password, pfp }
  * auth needed
  */
 router.patch('/me', auth, async (req, res, next) => {
@@ -61,6 +61,7 @@ router.patch('/me', auth, async (req, res, next) => {
         if (typeof req.body.email === 'string') updates.email = req.body.email;
         if (typeof req.body.dateofbirth === 'string') updates.dateofbirth = req.body.dateofbirth;
         if (typeof req.body.password === 'string') updates.password = req.body.password;
+        if (typeof req.body.pfp === 'string') updates.pfp = req.body.pfp;
 
         //check if whitelist object is empty, if so dont update anything
         if(Object.keys(updates).length === 0) {

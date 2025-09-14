@@ -1,15 +1,20 @@
 // profile/AccountSettings.jsx
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {StyleSheet, Text, TextInput, TouchableOpacity, View, KeyboardAvoidingView, Platform, ScrollView, Image,} from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from "../../constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker"; 
+import * as ImageManipulator from 'expo-image-manipulator';
 import { useNavigation } from "@react-navigation/native";
+import { getMe, updateMe } from "@/services/userService";
 
 export default function AccountSettings() {
   const theme = Colors["dark"];
   const navigation = useNavigation();
+  const [profileImage, setProfileImage] = useState(null); // State for profile image
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
 
   // Form state for all input fields
   const [form, setForm] = useState({
@@ -29,31 +34,99 @@ export default function AccountSettings() {
     caloriesGoal: "",
   });
 
-  // State for profile image
-  const [profileImage, setProfileImage] = useState(null);
+  //Fetch profile on mount and prefill form
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        setLoading(true);
+        const me = await getMe(); //get user info from backend
+        if (!alive) return;
+
+        const toYmd = (d) => (d ? new Date(d).toISOString().slice(0, 10) : "");
+
+        setForm((prev) => ({
+          ...prev,
+          firstName: me.firstname ?? "",
+          lastName : me.lastname ?? "",
+          email : me.email ?? "",
+          dob : toYmd(me.dateofbirth),
+        }));
+
+        if (me.pfp) {
+          setProfileImage({ uri: me.pfp });
+        }
+
+      } catch (e) {
+        if (!alive) return;
+        const msg = e?.response?.data?.error || "Failed to load profile";
+        setLoadError(msg);
+      } finally {
+        if (alive) setLoading(false);
+      }
+    })();
+    return () => { alive = false; };
+  }, []);
+
+  // Pick profile image from gallery
+  const pickImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: 'images',
+      base64: true,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+  if (!result.canceled) {
+    const a = result.assets[0];
+    const manip = await ImageManipulator.manipulateAsync(
+      a.uri,
+      [{ resize: { width: 512 } }],//make image smaller for upload
+      { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG, base64: true }
+    );
+
+    setProfileImage({
+      uri: manip.uri,
+      base64: manip.base64,
+      mime: 'image/jpeg'
+    });
+  }
+  };
 
   // Handle input changes
   const handleChange = (key, value) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
-  // Save form data (placeholder)
-  const handleSave = () => {
-    console.log("Saved form data:", form);
-    alert("Information updated!");
-  };
+  //Save chances to backend 
+  const handleSave = async () => {
+    try {
+      const firstname = form.firstName.trim();
+      const lastname = form.lastName.trim();
+      const email = form.email.trim().toLowerCase();
+      const dateofbirth = form.dob; 
 
-  // Pick profile image from gallery
-  const pickImage = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.7,
-    });
+      //Build data URL if we have base64
+      const pfp = profileImage?.base64
+        ? `data:${profileImage.mime};base64,${profileImage.base64}`
+        : undefined;
 
-    if (!result.canceled) {
-      setProfileImage(result.assets[0].uri);
+      await updateMe({
+        firstname,
+        lastname,
+        email,
+        dateofbirth,
+
+        //only include password if the user actually changed it
+        ...(form.password ? { password: form.password } : {}),
+        ...(pfp ? { pfp } : {}),
+      });
+
+      alert("Information updated!"); //should change to toast 
+    } catch (e) {
+      const msg = e?.response?.data?.error || "Update failed";
+      alert(msg);
     }
   };
 
@@ -86,7 +159,7 @@ export default function AccountSettings() {
           <View style={styles.profilePicWrapper}>
             <View style={styles.profileCircle}>
               {profileImage ? (
-                <Image source={{ uri: profileImage }} style={styles.profileImage} />
+                <Image source={{ uri: profileImage.uri }} style={styles.profileImage} />
               ) : (
                 <Ionicons name="person" size={60} color="white" />
               )}
