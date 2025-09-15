@@ -1,30 +1,29 @@
 // components/common/LogScreen.jsx
-import React from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  SafeAreaView, 
-  StatusBar,
-} from 'react-native';
-import CustomButtonTwo from './CustomButtonTwo';
-import CustomButtonThree from './CustomButtonThree';
-import FloatingAIButton from '../../app/ai/FloatingAIButton';
-import BottomNav from '../navbar/BottomNav';
-import { Colors } from '../../constants/Colors';
-import globalStyles from '../../styles/globalStyles';
+import React from "react";
+import { View, Text, StyleSheet, StatusBar, Platform } from "react-native";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
+import CustomButtonTwo from "./CustomButtonTwo";
+import CustomButtonThree from "./CustomButtonThree";
+import FloatingAIButton from "../../app/ai/FloatingAIButton";
+import BottomNav from "../navbar/BottomNav";
+import { Colors } from "../../constants/Colors";
+import globalStyles from "../../styles/globalStyles";
+import { Font } from "@/constants/Font";
 
 /**
  * LogScreen - Reusable screen template with consistent layout and navigation
  * Provides standardized header, content area, and navigation components
  */
 const LogScreen = ({
-  title = '',
-  subtitle = '',
+  title = "",
+  subtitle = "",
   showBackButton = true,
   showAddButton = true,
-  onBackPress = () => console.log('Back pressed'),
-  onAddPress = () => console.log('Add pressed'),
+  onBackPress = () => console.log("Back pressed"),
+  onAddPress = () => console.log("Add pressed"),
   children,
   containerStyle,
   titleStyle,
@@ -33,21 +32,35 @@ const LogScreen = ({
   titleColor = Colors.dark.textPrimary,
   subtitleColor = Colors.dark.textPrimary,
 }) => {
+  const insets = useSafeAreaInsets();
+  const topPad = Math.max(
+    insets.top,
+    Platform.OS === "android" ? StatusBar.currentHeight ?? 0 : 0
+  );
+
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor }]}>
+    <SafeAreaView edges={['top', 'bottom']} style={[styles.safeArea, { backgroundColor }]}>
       <StatusBar barStyle="light-content" backgroundColor={backgroundColor} />
-      
+
       <View style={[globalStyles.container, { backgroundColor }, containerStyle]}>
         {/* Header section with optional back button and title */}
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: topPad -30}]}>
           {showBackButton && (
-            <View style={styles.backButtonContainer}>
+            <View style={[styles.backButtonContainer, { top: topPad - 30 }]}>
               <CustomButtonThree onPress={onBackPress} />
             </View>
           )}
-          
+
           {title && (
-            <Text style={[styles.title, globalStyles.welcomeText, { color: titleColor }, titleStyle]}>
+            <Text
+              style={[
+                styles.title,
+                globalStyles.welcomeText,
+                { color: titleColor, fontSize: 20, fontFamily: Font.semibold },
+                titleStyle,
+                
+              ]}
+            >
               {title}
             </Text>
           )}
@@ -60,11 +73,18 @@ const LogScreen = ({
           ) : (
             <>
               {subtitle && (
-                <Text style={[styles.subtitle, globalStyles.cardText, { color: subtitleColor }, subtitleStyle]}>
+                <Text
+                  style={[
+                    styles.subtitle,
+                    globalStyles.cardText,
+                    { color: subtitleColor, fontSize: 24 },
+                    subtitleStyle,
+                  ]}
+                >
                   {subtitle}
                 </Text>
               )}
-              
+
               {showAddButton && (
                 <View style={styles.addButtonContainer}>
                   <CustomButtonTwo onPress={onAddPress} />
@@ -86,37 +106,43 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
+<<<<<<< Updated upstream
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingTop: 40,
     paddingBottom: 40,
     position: 'relative',
+=======
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    position: "relative",
+>>>>>>> Stashed changes
   },
   backButtonContainer: {
-    position: 'absolute',
+    position: "absolute",
     left: 0,
     top: 40,
   },
   title: {
     fontSize: 20,
-    textAlign: 'center',
+    textAlign: "center",
   },
   content: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: -80,
+    justifyContent: "center",
+    alignItems: "center",
     paddingBottom: 100,
   },
   subtitle: {
     fontSize: 25,
-    textAlign: 'center',
-    marginBottom: 50,
+    textAlign: "center",
+    marginBottom: 30,
     lineHeight: 30,
   },
   addButtonContainer: {
-    marginTop: 20,
+    marginTop: 0,
   },
 });
 
