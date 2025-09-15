@@ -8,6 +8,8 @@ import LogScreen from '../../components/common/LogScreen';
 import BiometricEntryModal from '../../components/biometrics/BiometricEntryModal';
 import BiometricsDashboard from '../../components/biometrics/BiometricsDashboard';
 import { Colors } from '../../constants/Colors';
+import { sampleEntries } from '../../components/common/SampleData';
+
 
 /**
  * Dedicated Biometrics Screen
@@ -16,7 +18,8 @@ import { Colors } from '../../constants/Colors';
 export default function BiometricsScreen() {
   const router = useRouter();
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [biometricEntries, setBiometricEntries] = useState([]);
+  const [biometricEntries, setBiometricEntries] = useState(sampleEntries.biometricEntries);
+
 
   // Handle back navigation to home screen
   const handleBackPress = () => {

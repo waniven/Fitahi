@@ -352,14 +352,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: 20,
+    paddingTop: 40,
     paddingBottom: 20,
     position: 'relative',
   },
   backButtonContainer: {
     position: 'absolute',
     left: 0,
-    top: 20,
+    top: 40,
   },
   title: {
     textAlign: 'center',
