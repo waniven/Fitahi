@@ -10,13 +10,18 @@ import { useNavigation } from "@react-navigation/native";
 import { getMe, updateMe } from "@/services/userService";
 import { logout } from "@/services/authService";
 import { router } from "expo-router";
+import CustomInput from '../../components/common/CustomInput';
 
 export default function AccountSettings() {
   const theme = Colors["dark"];
   const navigation = useNavigation();
   const [profileImage, setProfileImage] = useState(null); // State for profile image
+  const [selectedDob, setSelectedDob] = useState(null); //for date picker
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
+
+  const toYmd = (d) => (d ? new Date(d).toISOString().slice(0, 10) : "");
+  const fromYmd = (s) => (s ? new Date(s) : null);
 
   // Form state for all input fields
   const [form, setForm] = useState({
@@ -45,15 +50,17 @@ export default function AccountSettings() {
         const me = await getMe(); //get user info from backend
         if (!alive) return;
 
-        const toYmd = (d) => (d ? new Date(d).toISOString().slice(0, 10) : "");
+        const dobStr = toYmd(me.dateofbirth);
 
         setForm((prev) => ({
           ...prev,
           firstName: me.firstname ?? "",
-          lastName : me.lastname ?? "",
-          email : me.email ?? "",
-          dob : toYmd(me.dateofbirth),
+          lastName:  me.lastname ?? "",
+          email:     me.email ?? "",
+          dob:       dobStr,
         }));
+
+        setSelectedDob(fromYmd(dobStr));
 
         if (me.pfp) {
           setProfileImage({ uri: me.pfp });
@@ -132,6 +139,12 @@ export default function AccountSettings() {
     }
   };
 
+  const handleDobChange = (date) => {
+    setSelectedDob(date);
+    setForm((prev) => ({ ...prev, dob: toYmd(date) }));
+  };
+
+
   const handleLogout = () => {
     console.log("logout");
     logout()
@@ -178,37 +191,114 @@ export default function AccountSettings() {
             </TouchableOpacity>
           </View>
 
-          {/* Form Inputs */}
-          {[ 
-            { key: "firstName", label: "First Name", placeholder: "Enter first name" },
-            { key: "lastName", label: "Last Name", placeholder: "Enter last name" },
-            { key: "dob", label: "Date of Birth", placeholder: "e.g. 01/01/2000" },
-            { key: "email", label: "Email", placeholder: "Enter email" },
-            { key: "password", label: "Password", placeholder: "Enter password", secure: true },
-            { key: "fitnessGoal", label: "Fitness Goal", placeholder: "e.g. Lose weight" },
-            { key: "fitnessLevel", label: "Fitness Level", placeholder: "Beginner/Intermediate/Advanced" },
-            { key: "trainingDays", label: "Training Days", placeholder: "e.g. 3 days/week" },
-            { key: "trainingTime", label: "Training Time", placeholder: "e.g. 1 hour/session" },
-            { key: "diet", label: "Diet", placeholder: "e.g. Vegetarian" },
-            { key: "height", label: "Height", placeholder: "e.g. 168 cm" },
-            { key: "weight", label: "Weight", placeholder: "e.g. 60 kg" },
-            { key: "waterGoal", label: "Water Intake Goal", placeholder: "e.g. 2L per day" },
-            { key: "caloriesGoal", label: "Calories Intake Goal", placeholder: "e.g. 2000 kcal" },
-          ].map((field) => (
-            <View key={field.key} style={styles.inputGroup}>
-              <Text style={[styles.label, { color: theme.textPrimary }]}>
-                {field.label}
-              </Text>
-              <TextInput
-                style={[styles.input, { backgroundColor: "white", color: "black" }]}
-                placeholder={field.placeholder}
-                placeholderTextColor="#888"
-                secureTextEntry={field.secure || false}
-                value={form[field.key]}
-                onChangeText={(text) => handleChange(field.key, text)}
-              />
-            </View>
-          ))}
+          {/* Form Fields*/}
+          <View style={styles.formContainer}>
+            <CustomInput
+              label="First Name"
+              placeholder="First Name"
+              value={form.firstName}
+              onChangeText={(text) => handleChange('firstName', text)}
+              required
+            />
+
+            <CustomInput
+              label="Last Name"
+              placeholder="Last Name"
+              value={form.lastName}
+              onChangeText={(text) => handleChange('lastName', text)}
+              required
+            />
+
+            <CustomInput
+              label="Date of Birth"
+              placeholder="Choose a date"
+              isDatePicker
+              selectedDate={selectedDob}
+              onDateChange={handleDobChange}
+              required
+            />
+
+            <CustomInput
+              label="Email Address"
+              placeholder="Email address"
+              value={form.email}
+              onChangeText={(text) => handleChange('email', text)}
+              keyboardType="email-address"
+              required
+            />
+
+            <CustomInput
+              label="Password"
+              placeholder="Password"
+              value={form.password}
+              onChangeText={(text) => handleChange('password', text)}
+              secureTextEntry
+            />
+
+            <CustomInput
+              label="Fitness Goal"
+              placeholder="e.g. Lose weight"
+              value={form.fitnessGoal}
+              onChangeText={(text) => handleChange('fitnessGoal', text)}
+            />
+
+            <CustomInput
+              label="Fitness Level"
+              placeholder="Beginner/Intermediate/Advanced"
+              value={form.fitnessLevel}
+              onChangeText={(text) => handleChange('fitnessLevel', text)}
+            />
+
+            <CustomInput
+              label="Training Days"
+              placeholder="e.g. 3 days/week"
+              value={form.trainingDays}
+              onChangeText={(text) => handleChange('trainingDays', text)}
+            />
+
+            <CustomInput
+              label="Training Time"
+              placeholder="e.g. 1 hour/session"
+              value={form.trainingTime}
+              onChangeText={(text) => handleChange('trainingTime', text)}
+            />
+
+            <CustomInput
+              label="Diet"
+              placeholder="e.g. Vegetarian"
+              value={form.diet}
+              onChangeText={(text) => handleChange('diet', text)}
+            />
+
+            <CustomInput
+              label="Height"
+              placeholder="e.g. 168 cm"
+              value={form.height}
+              onChangeText={(text) => handleChange('height', text)}
+            />
+
+            <CustomInput
+              label="Weight"
+              placeholder="e.g. 60 kg"
+              value={form.weight}
+              onChangeText={(text) => handleChange('weight', text)}
+            />
+
+            <CustomInput
+              label="Water Intake Goal"
+              placeholder="e.g. 2L per day"
+              value={form.waterGoal}
+              onChangeText={(text) => handleChange('waterGoal', text)}
+            />
+
+            <CustomInput
+              label="Calories Intake Goal"
+              placeholder="e.g. 2000 kcal"
+              value={form.caloriesGoal}
+              onChangeText={(text) => handleChange('caloriesGoal', text)}
+            />
+          </View>
+
 
         {/* Logout button */}
         <View style={styles.logoutButtonWrapper}>
@@ -246,6 +336,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+
+  formContainer: {
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: 30,
+  },
+
   backButton: {
     position: "absolute",
     top: 16,
