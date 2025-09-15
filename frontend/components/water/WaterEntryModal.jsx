@@ -13,27 +13,72 @@ import {
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/Colors';
+import { Font, Type, TextVariants } from '../../constants/Font';
 import CustomButton from '../common/CustomButton';
 import CustomToast from '../common/CustomToast';
-import globalStyles from '../../styles/globalStyles';
+
+// Configuration constants
+const VALIDATION_CONFIG = {
+  amount: {
+    min: 50,
+    max: 5000
+  }
+};
+
+const ALERT_MESSAGES = {
+  exitConfirmation: {
+    title: 'Are you sure you want to exit?',
+    message: 'Your entered data will be lost.',
+    cancelText: 'Cancel',
+    confirmText: 'Exit'
+  }
+};
+
+// Local text styles using Font constants
+const textStyles = {
+  heading1: { fontSize: 28, ...Type.bold },
+  bodyMedium: { fontSize: 16, ...Type.bold },
+  bodySmall: { fontSize: 16, ...Type.regular },
+};
 
 // Modal for entering water intake data with time picker
-export default function WaterEntryModal({ visible, onClose, onSave }) {
+export default function WaterEntryModal({ 
+  visible, 
+  onClose, 
+  onSave,
+  validationConfig = VALIDATION_CONFIG 
+}) {
   const [amountValue, setAmountValue] = useState('');
   const [selectedTime, setSelectedTime] = useState(new Date());
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [validationErrors, setValidationErrors] = useState({});
 
-  // Validates water amount input with reasonable ranges
+  /**
+   * Clears validation errors for amount
+   */
+  const handleAmountChange = (value) => {
+    setAmountValue(value);
+    if (validationErrors.amount) {
+      setValidationErrors(prev => ({ ...prev, amount: null }));
+    }
+  };
+
+  /**
+   * Validates water amount input with reasonable ranges
+   */
   const validateAmountInput = (value) => {
     const amountNumber = parseFloat(value);
     if (!value) return 'Amount is required';
     if (isNaN(amountNumber)) return 'Please enter a valid number';
-    if (amountNumber < 50 || amountNumber > 5000) return 'Amount should be between 50-5000 ml';
+    if (amountNumber < validationConfig.amount.min || amountNumber > validationConfig.amount.max) {
+      return `Amount should be between ${validationConfig.amount.min}-${validationConfig.amount.max} ml`;
+    }
     return null;
   };
 
-  // Format time for display
+  /**
+   * Format time for display
+   */
   const formatTime = (date) => {
     return date.toLocaleTimeString('en-US', {
       hour: '2-digit',
@@ -42,7 +87,9 @@ export default function WaterEntryModal({ visible, onClose, onSave }) {
     });
   };
 
-  // Handle time picker changes
+  /**
+   * Handle time picker changes
+   */
   const handleTimeChange = (event, time) => {
     if (Platform.OS === 'android') {
       setShowTimePicker(false);
@@ -57,31 +104,46 @@ export default function WaterEntryModal({ visible, onClose, onSave }) {
     }
   };
 
-  // Handle time picker confirm (iOS)
+  /**
+   * Handle time picker confirm (iOS)
+   */
   const handleTimeConfirm = () => {
     setShowTimePicker(false);
   };
 
-  // Handle time picker cancel (iOS)
+  /**
+   * Handle time picker cancel (iOS)
+   */
   const handleTimeCancel = () => {
     setShowTimePicker(false);
   };
 
-  // Open time picker
+  /**
+   * Open time picker
+   */
   const openTimePicker = () => {
     setShowTimePicker(true);
   };
 
-  // Handles modal close with confirmation if user has entered data
+  /**
+   * Checks if user has entered any data
+   */
+  const hasUserData = () => {
+    return amountValue.trim();
+  };
+
+  /**
+   * Handles modal close with confirmation if user has entered data
+   */
   const requestCloseConfirmation = () => {
-    if (amountValue.trim()) {
+    if (hasUserData()) {
       Alert.alert(
-        'Are you sure you want to exit?',
-        'Your entered data will be lost.',
+        ALERT_MESSAGES.exitConfirmation.title,
+        ALERT_MESSAGES.exitConfirmation.message,
         [
-          { text: 'Cancel', style: 'cancel' },
+          { text: ALERT_MESSAGES.exitConfirmation.cancelText, style: 'cancel' },
           { 
-            text: 'Exit', 
+            text: ALERT_MESSAGES.exitConfirmation.confirmText, 
             style: 'destructive',
             onPress: () => closeModal()
           }
@@ -92,7 +154,9 @@ export default function WaterEntryModal({ visible, onClose, onSave }) {
     }
   };
 
-  // Closes modal and resets form state
+  /**
+   * Closes modal and resets form state
+   */
   const closeModal = () => {
     setAmountValue('');
     setSelectedTime(new Date());
@@ -100,13 +164,23 @@ export default function WaterEntryModal({ visible, onClose, onSave }) {
     onClose();
   };
 
-  // Validates and submits water entry data
-  const submitWaterEntry = () => {
+  /**
+   * Validates all form fields
+   */
+  const validateForm = () => {
+    const errors = {};
+    
     const amountError = validateAmountInput(amountValue);
+    if (amountError) errors.amount = amountError;
     
-    const currentValidationErrors = {};
-    if (amountError) currentValidationErrors.amount = amountError;
-    
+    return errors;
+  };
+
+  /**
+   * Validates and submits water entry data
+   */
+  const submitWaterEntry = () => {
+    const currentValidationErrors = validateForm();
     setValidationErrors(currentValidationErrors);
     
     if (Object.keys(currentValidationErrors).length === 0) {
@@ -148,52 +222,52 @@ export default function WaterEntryModal({ visible, onClose, onSave }) {
           <View style={styles.modalContent}>
             {/* Modal header with title and close button */}
             <View style={styles.modalHeaderSection}>
-              <Text style={[globalStyles.heading1, styles.modalTitleText]}>Log Water</Text>
+              <Text style={[textStyles.heading1, styles.modalTitleText]}>Log Water</Text>
               <TouchableOpacity onPress={requestCloseConfirmation} style={styles.closeButton}>
                 <Ionicons name="close" size={28} color="#666" />
               </TouchableOpacity>
             </View>
 
-            <Text style={[globalStyles.bodyMedium, styles.modalSubtitleText]}>
+            <Text style={[textStyles.bodyMedium, styles.modalSubtitleText]}>
               How much water did you drink today?
             </Text>
 
             {/* Water amount input section */}
             <View style={styles.inputSection}>
-              <Text style={[globalStyles.bodyMedium, styles.inputLabel]}>HOW MUCH WATER DID YOU DRINK (IN MILLILITRES)? *</Text>
+              <Text style={[textStyles.bodyMedium, styles.inputLabel]}>HOW MUCH WATER DID YOU DRINK (IN MILLILITRES)? *</Text>
               <View style={[styles.inputContainer, validationErrors.amount && styles.inputError]}>
                 <TextInput
-                  style={[globalStyles.bodyMedium, styles.textInput]}
+                  style={[textStyles.bodySmall, styles.textInput]}
                   placeholder="Amount"
                   placeholderTextColor="#A0A0A0"
                   value={amountValue}
-                  onChangeText={setAmountValue}
+                  onChangeText={handleAmountChange}
                   keyboardType="numeric"
                   returnKeyType="next"
                 />
               </View>
               {validationErrors.amount && (
-                <Text style={[globalStyles.bodySmall, styles.errorText]}>{validationErrors.amount}</Text>
+                <Text style={[textStyles.bodySmall, styles.errorText]}>{validationErrors.amount}</Text>
               )}
             </View>
 
             {/* Time picker section */}
             <View style={styles.inputSection}>
-              <Text style={[globalStyles.bodyMedium, styles.inputLabel]}>AND AT WHAT TIME? *</Text>
+              <Text style={[textStyles.bodyMedium, styles.inputLabel]}>AND AT WHAT TIME? *</Text>
               <TouchableOpacity 
                 style={[styles.inputContainer, styles.timePickerContainer]}
                 onPress={openTimePicker}
                 activeOpacity={0.7}
               >
                 <View style={styles.timeInputContainer}>
-                  <Text style={[globalStyles.bodyMedium, styles.timeDisplayText]}>
+                  <Text style={[textStyles.bodySmall, styles.timeDisplayText]}>
                     {formatTime(selectedTime)}
                   </Text>
                   <Ionicons name="chevron-forward" size={20} color="#A0A0A0" />
                 </View>
               </TouchableOpacity>
               {validationErrors.time && (
-                <Text style={[globalStyles.bodySmall, styles.errorText]}>{validationErrors.time}</Text>
+                <Text style={[textStyles.bodySmall, styles.errorText]}>{validationErrors.time}</Text>
               )}
             </View>
 
@@ -216,10 +290,10 @@ export default function WaterEntryModal({ visible, onClose, onSave }) {
             <View style={styles.timePickerModal}>
               <View style={styles.timePickerHeader}>
                 <TouchableOpacity onPress={handleTimeCancel} style={styles.timePickerButton}>
-                  <Text style={[globalStyles.bodyMedium, styles.timePickerButtonText]}>Cancel</Text>
+                  <Text style={[textStyles.bodyMedium, styles.timePickerButtonText]}>Cancel</Text>
                 </TouchableOpacity>
                 <TouchableOpacity onPress={handleTimeConfirm} style={styles.timePickerButton}>
-                  <Text style={[globalStyles.bodyMedium, styles.timePickerButtonText, styles.confirmButton]}>Done</Text>
+                  <Text style={[textStyles.bodyMedium, styles.timePickerButtonText, styles.confirmButton]}>Done</Text>
                 </TouchableOpacity>
               </View>
               <DateTimePicker

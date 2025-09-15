@@ -3,8 +3,14 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/Colors';
+import { Font, Type, TextVariants } from '../../constants/Font';
 import CustomToast from '../common/CustomToast';
-import globalStyles from '../../styles/globalStyles';
+
+// Local text styles using Font constants
+const textStyles = {
+  heading3: { fontSize: 20, ...Type.medium },
+  bodyMedium: { fontSize: 16, ...Type.regular },
+};
 
 // Component for displaying water intake entries with instant delete functionality
 const WaterDataCard = ({ 
@@ -21,7 +27,7 @@ const WaterDataCard = ({
       const hour24 = parseInt(hours);
       const hour12 = hour24 === 0 ? 12 : hour24 > 12 ? hour24 - 12 : hour24;
       const ampm = hour24 >= 12 ? 'pm' : 'am';
-      return `${hour12}:${minutes}${ampm}`;
+      return `${hour12}:${minutes} ${ampm}`;
     }
     
     if (entry.timestamp) {
@@ -31,7 +37,7 @@ const WaterDataCard = ({
       const ampm = hours >= 12 ? 'pm' : 'am';
       hours = hours % 12;
       hours = hours ? hours : 12;
-      return `${hours}:${minutes}${ampm}`;
+      return `${hours}:${minutes} ${ampm}`;
     }
     
     return timeString || 'Time not set';
@@ -49,10 +55,10 @@ const WaterDataCard = ({
     <View style={[styles.cardContainer, style]}>
       <View style={styles.contentContainer}>
         <View style={styles.textContent}>
-          <Text style={[globalStyles.heading3, styles.timeText]}>
+          <Text style={[textStyles.heading3, styles.timeText]}>
             {formatTime(entry.time)}
           </Text>
-          <Text style={[globalStyles.bodyMedium, styles.amountText]}>
+          <Text style={[textStyles.bodyMedium, styles.amountText]}>
             Amount: {entry.amount}mL
           </Text>
         </View>
@@ -63,6 +69,9 @@ const WaterDataCard = ({
             style={styles.deleteButton}
             hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
             activeOpacity={0.6}
+            accessibilityRole="button"
+            accessibilityLabel={`Delete ${entry.amount}mL water entry`}
+            accessibilityHint="Double tap to remove this water intake record"
           >
             <Ionicons name="trash-outline" size={24} color="#FF4444" />
           </TouchableOpacity>
@@ -79,7 +88,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginTop: 0,
     marginBottom: 16,
-    width: '150%',
+    width: '90%',
     maxWidth: 350,
     height: 70,
     shadowColor: '#000',

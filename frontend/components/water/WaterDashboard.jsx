@@ -2,12 +2,22 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, StatusBar } from 'react-native';
 import { Colors } from '../../constants/Colors';
+import { Font, Type, TextVariants } from '../../constants/Font';
 import CustomButton from '../common/CustomButton';
 import CustomButtonThree from '../common/CustomButtonThree';
 import WaterDataCard from '../water/WaterDataCard';
 import FloatingAIButton from '../../app/ai/FloatingAIButton';
 import BottomNav from '../navbar/BottomNav';
-import globalStyles from '../../styles/globalStyles';
+
+// Local text styles using Font constants
+const textStyles = {
+  heading1: { fontSize: 28, ...Type.bold },
+  heading2: { fontSize: 24, ...Type.bold },
+  heading3: { fontSize: 20, ...Type.medium },
+  heading4: { fontSize: 18, ...Type.medium },
+  bodyMedium: { fontSize: 16, ...Type.regular },
+  welcomeText: { fontSize: 24, ...Type.bold },
+};
 
 /**
  * WaterDashboard - Main dashboard component for tracking daily water intake
@@ -40,19 +50,19 @@ const WaterDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress, daily
     <SafeAreaView style={[styles.safeArea, { backgroundColor: Colors.dark.background }]}>
       <StatusBar barStyle="light-content" backgroundColor={Colors.dark.background} />
       
-      <View style={[globalStyles.container, { backgroundColor: Colors.dark.background }]}>
+      <View style={[styles.container, { backgroundColor: Colors.dark.background }]}>
         {/* Header with back navigation and title */}
         <View style={styles.header}>
           <View style={styles.backButtonContainer}>
             <CustomButtonThree onPress={onBackPress} />
           </View>
-          <Text style={[globalStyles.welcomeText, styles.title, { color: Colors.dark.textPrimary }]}>
+          <Text style={[textStyles.welcomeText, styles.title, { color: Colors.dark.textPrimary }]}>
             Water Log
           </Text>
         </View>
 
         {/* Section title for total water consumption */}
-        <Text style={[globalStyles.heading4, styles.totalWaterSectionTitle]}>TOTAL WATER DRUNK TODAY</Text>
+        <Text style={[textStyles.heading4, styles.totalWaterSectionTitle]}>TOTAL WATER DRUNK TODAY</Text>
 
         <ScrollView 
           style={styles.scrollContainer} 
@@ -63,9 +73,9 @@ const WaterDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress, daily
           <View style={styles.totalWaterCard}>
             <View style={styles.waterProgressContainer}>
               <View style={styles.waterAmountRow}>
-                <Text style={[globalStyles.bodyMedium, styles.waterLabel]}>Millilitres</Text>
-                <Text style={[globalStyles.heading2, styles.waterAmount]}>
-                  {totalWater} mL <Text style={[globalStyles.bodyMedium, styles.goalText]}>/ {dailyGoal}</Text>
+                <Text style={[textStyles.bodyMedium, styles.waterLabel]}>Millilitres</Text>
+                <Text style={[textStyles.heading2, styles.waterAmount]}>
+                  {totalWater} mL <Text style={[textStyles.bodyMedium, styles.goalText]}>/ {dailyGoal}</Text>
                 </Text>
               </View>
               
@@ -84,7 +94,7 @@ const WaterDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress, daily
 
           {/* Daily entries listing */}
           <View style={styles.entriesSection}>
-            <Text style={[globalStyles.heading4, styles.entriesSectionTitle]}>TODAY'S ENTRIES</Text>
+            <Text style={[textStyles.heading4, styles.entriesSectionTitle]}>TODAY'S ENTRIES</Text>
             
             <View style={styles.entriesContainer}>
               {todaysEntries.length > 0 ? (
@@ -99,10 +109,10 @@ const WaterDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress, daily
                 ))
               ) : (
                 <View style={styles.noEntriesContainer}>
-                  <Text style={[globalStyles.heading3, styles.noEntriesText]}>
+                  <Text style={[textStyles.heading3, styles.noEntriesText]}>
                     No water entries for today
                   </Text>
-                  <Text style={[globalStyles.bodyMedium, styles.noEntriesSubtext]}>
+                  <Text style={[textStyles.bodyMedium, styles.noEntriesSubtext]}>
                     Tap the button below to log your first entry!
                   </Text>
                 </View>
@@ -132,6 +142,10 @@ const WaterDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress, daily
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
+  },
+  container: {
+    flex: 1,
+    paddingHorizontal: 0,
   },
   header: {
     flexDirection: 'row',
@@ -168,7 +182,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 24,
     marginBottom: 30,
-    width: '150%',
+    width: '90%',
     maxWidth: 350,
     alignSelf: 'center',
     shadowColor: '#000',
