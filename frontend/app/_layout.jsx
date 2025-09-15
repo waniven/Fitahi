@@ -26,12 +26,9 @@ export default function RootLayout() {
 
   return (
     <AIProvider>
-<<<<<<< HEAD
       <Slot />
       <Toast />
-=======
-        <Slot />
->>>>>>> 68a93c8c (index)
+
     </AIProvider>
   );
 }

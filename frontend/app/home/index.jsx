@@ -1,20 +1,16 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import {Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View,Modal,TextInput,} from "react-native";
+import { Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Colors } from "../../constants/Colors";
 import FloatingAIButton from "../ai/FloatingAIButton";
 import FitahiLogo from "../../constants/FitahiLogo";
 import { Calendar } from "react-native-calendars";
 import Toast from "react-native-toast-message";
-import DateTimePicker from "@react-native-community/datetimepicker";
 import globalStyles from "../../styles/globalStyles";
-<<<<<<< HEAD
 import BottomNav from "@/components/navbar/BottomNav";
-=======
-import BottomNav from "@/components/navbar/Bottomnav";
->>>>>>> 68a93c8c (index)
+import ReminderModal from "@/components/reminders/ReminderModal";
 
 const { width } = Dimensions.get("window");
 
@@ -25,74 +21,80 @@ export default function Home() {
 
   // Premium banner for premium button
   const [showPremium, setShowPremium] = useState(true);
-  // Reminder state - will requir AP fetch
+  // Reminder state - will require API fetch
   const [reminders, setReminders] = useState([]);
   // Modal control
   const [modalVisible, setModalVisible] = useState(false);
-  // Date selected from calendar
-  const [selectedDate, setSelectedDate] = useState("");
-  // Current reminder being created/edited
-  const [currentReminder, setCurrentReminder] = useState({
-    id: "",
-    title: "",
-    notes: "",
-    date: "",
-    time: "",
-    repeat: "None",
-  });
+  // Date viewing and selection
+  const [viewingDate, setViewingDate] = useState(new Date().toISOString().split("T")[0]);
+  const [editingReminder, setEditingReminder] = useState(null);
 
-  // Controls for showing pickers
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showTimePicker, setShowTimePicker] = useState(false);
-  // Marked dates for the calendar (highlights reminder days)
+  // Enhanced marked dates with better visual indicators
   const markedDates = reminders.reduce((acc, r) => {
     acc[r.date] = { marked: true, dotColor: theme.tint };
     return acc;
-  }, {});
-  // Save or update a reminder
-  const saveReminder = () => {
-    if (!currentReminder.title) return; // prevent empty reminders
+  }, {
+    // Highlight today
+    [new Date().toISOString().split("T")[0]]: {
+      selected: true,
+      selectedColor: theme.tint + '40',
+    }
+  });
 
-    if (currentReminder.id) {
+  // Get reminders for the currently viewing date
+  const getRemindersForDate = (date) => {
+    return reminders.filter(r => r.date === date);
+  };
+
+  // Handle calendar day press - just for viewing
+  const handleDayPress = (day) => {
+    setViewingDate(day.dateString);
+  };
+
+  // Handle creating new reminder
+  const handleCreateReminder = () => {
+    setEditingReminder(null);
+    setModalVisible(true);
+  };
+
+  // Handle editing existing reminder
+  const handleEditReminder = (reminder) => {
+    setEditingReminder(reminder);
+    setModalVisible(true);
+  };
+
+  // Save or update a reminder
+  const handleSaveReminder = (reminderData) => {
+    if (reminderData.id && reminders.find(r => r.id === reminderData.id)) {
       // Update existing reminder
-      setReminders((prev) =>
-        prev.map((r) =>
-          r.id === currentReminder.id ? { ...r, ...currentReminder } : r
-        )
+      setReminders(prev =>
+        prev.map(r => r.id === reminderData.id ? reminderData : r)
       );
       Toast.show({
         type: "success",
         text1: "Reminder Updated",
-        text2: `${currentReminder.title}`,
+        text2: reminderData.title,
       });
     } else {
       // Add new reminder
-      const newReminder = {
-        ...currentReminder,
-        id: Date.now().toString(), // quick unique I - backend to do for ID
-        date: selectedDate, // ensures reminder ties to calendar date
-      };
-      setReminders((prev) => [...prev, newReminder]);
+      setReminders(prev => [...prev, reminderData]);
       Toast.show({
         type: "success",
         text1: "Reminder Added",
-        text2: `${currentReminder.title}`,
+        text2: reminderData.title,
       });
     }
-    setModalVisible(false); // close modal after action
   };
 
   // Delete reminder by ID
-  const deleteReminder = (id) => {
-    const deleted = reminders.find((r) => r.id === id);
-    setReminders((prev) => prev.filter((r) => r.id !== id));
-
+  const handleDeleteReminder = (id) => {
+    const deleted = reminders.find(r => r.id === id);
+    setReminders(prev => prev.filter(r => r.id !== id));
     Toast.show({
       type: "info",
       text1: "Reminder Deleted",
       text2: deleted?.title || "",
     });
-    setModalVisible(false);
   };
 
   return (
@@ -125,55 +127,81 @@ export default function Home() {
               selectedDayBackgroundColor: theme.tint,
               selectedDayTextColor: "#fff",
             }}
-            current={new Date().toISOString().split("T")[0]} // highlight today
+            current={new Date().toISOString().split("T")[0]}
             hideExtraDays
             firstDay={1}
             enableSwipeMonths
-            markedDates={markedDates} // dates with reminders show dots
-            onDayPress={(day) => {
-              // open modal when a day is clicked
-              setSelectedDate(day.dateString);
-              setCurrentReminder({
-                id: "",
-                title: "",
-                notes: "",
-                date: day.dateString,
-                time: "",
-                repeat: "None",
-              });
-              setModalVisible(true);
-            }}
+            markedDates={markedDates}
+            onDayPress={handleDayPress}
           />
 
-          {/* Reminders below calendar */}
-          <View style={styles.remindersContainer}>
-            <Text style={[globalStyles.cardText, { color: "#000", marginTop: 12 }]}>
-              Reminders
+          {/* Date Info Header */}
+          <View style={styles.dateHeader}>
+            <Text style={[globalStyles.cardText, { color: "#000", fontSize: 16 }]}>
+              {new Date(viewingDate).toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+              })}
             </Text>
-            {reminders
-              // Only show reminders for the selected date
-              .filter((r) => r.date === selectedDate)
-              // Limit to 3 reminders (closest first)
-              .slice(0, 3)
-              .map((r) => (
+            <TouchableOpacity
+              style={styles.addReminderButton}
+              onPress={handleCreateReminder}
+            >
+              <Ionicons name="add" size={20} color={theme.tint} />
+              <Text style={{ color: theme.tint, marginLeft: 4 }}>Add Reminder</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Reminders Display */}
+          <View style={styles.remindersContainer}>
+            {(() => {
+              const dayReminders = getRemindersForDate(viewingDate);
+
+              if (dayReminders.length === 0) {
+                return (
+                  <View style={styles.emptyState}>
+                    <Ionicons name="calendar-outline" size={32} color="#ccc" />
+                    <Text style={{ color: "#888", marginTop: 8, textAlign: 'center' }}>
+                      No reminders for this day
+                    </Text>
+                  </View>
+                );
+              }
+
+              return dayReminders.map((reminder) => (
                 <TouchableOpacity
-                  key={r.id}
+                  key={reminder.id}
                   style={styles.reminderItem}
-                  onPress={() => {
-                    // open modal for editing reminder
-                    setSelectedDate(r.date);
-                    setCurrentReminder(r);
-                    setModalVisible(true);
-                  }}
+                  onPress={() => handleEditReminder(reminder)}
                 >
-                  <Text style={[globalStyles.cardText, { color: "#000" }]}>
-                    {r.title} ({r.time || "No time"})
-                  </Text>
-                  {r.notes ? (
-                    <Text style={{ fontSize: 12, color: "#555" }}>{r.notes}</Text>
-                  ) : null}
+                  <View style={styles.reminderContent}>
+                    <View style={styles.reminderHeader}>
+                      <Text style={[globalStyles.cardText, { color: "#000", flex: 1 }]}>
+                        {reminder.title}
+                      </Text>
+                      <Text style={styles.reminderTime}>
+                        {reminder.time || "No time"}
+                      </Text>
+                    </View>
+                    
+                    {reminder.notes && (
+                      <Text style={styles.reminderNotes}>{reminder.notes}</Text>
+                    )}
+                    
+                    {reminder.repeat !== "None" && (
+                      <View style={styles.repeatBadge}>
+                        <Ionicons name="repeat" size={12} color={theme.tint} />
+                        <Text style={styles.repeatText}>{reminder.repeat}</Text>
+                      </View>
+                    )}
+                  </View>
+                  
+                  <Ionicons name="chevron-forward" size={16} color="#ccc" />
                 </TouchableOpacity>
-              ))}
+              ));
+            })()}
           </View>
         </View>
 
@@ -252,187 +280,15 @@ export default function Home() {
         </View>
       </ScrollView>
 
-      {/* Date Picker (drop-down style) */}
-      {showDatePicker && (
-        <DateTimePicker
-          value={
-            currentReminder.date
-              ? new Date(currentReminder.date)
-              : new Date()
-          }
-          mode="date"
-          display="default"
-          onChange={(event, selectedDateObj) => {
-            setShowDatePicker(false);
-            if (selectedDateObj) {
-              const formattedDate = selectedDateObj.toISOString().split("T")[0];
-              setCurrentReminder({ ...currentReminder, date: formattedDate });
-            }
-          }}
-        />
-      )}
-
-      {/* Time Picker (drop-down style) */}
-      {showTimePicker && (
-        <DateTimePicker
-          value={
-            currentReminder.time
-              ? new Date(`${currentReminder.date}T${currentReminder.time}`)
-              : new Date()
-          }
-          mode="time"
-          display="default"
-          onChange={(event, selectedTimeObj) => {
-            setShowTimePicker(false);
-            if (selectedTimeObj) {
-              const hours = selectedTimeObj.getHours().toString().padStart(2, "0");
-              const minutes = selectedTimeObj
-                .getMinutes()
-                .toString()
-                .padStart(2, "0");
-              const formattedTime = `${hours}:${minutes}`;
-              setCurrentReminder({ ...currentReminder, time: formattedTime });
-            }
-          }}
-        />
-      )}
-
-      {/* Reminder modal (Add/Edit) */}
-      <Modal
+      {/* Reminder Modal */}
+      <ReminderModal
         visible={modalVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalBackground}>
-          <View style={[styles.modalContent, { backgroundColor: "#fff" }]}>
-            <Text style={[globalStyles.cardText, { color: "#000", marginBottom: 10 }]}>
-              {currentReminder.id ? "Edit Reminder" : "Add Reminder"}
-            </Text>
-
-            {/* Title */}
-            <TextInput
-              placeholder="Title"
-              placeholderTextColor="#888"
-              style={[globalStyles.input, { color: "#000", borderColor: theme.tint }]}
-              value={currentReminder.title}
-              onChangeText={(text) =>
-                setCurrentReminder({ ...currentReminder, title: text })
-              }
-            />
-
-            {/* Notes */}
-            <TextInput
-              placeholder="Notes"
-              placeholderTextColor="#888"
-              style={[
-                globalStyles.input,
-                {
-                  color: "#000",
-                  borderColor: theme.tint,
-                  height: 80,
-                  textAlignVertical: "top",
-                },
-              ]}
-              multiline
-              value={currentReminder.notes}
-              onChangeText={(text) =>
-                setCurrentReminder({ ...currentReminder, notes: text })
-              }
-            />
-
-            {/* Date + Time */}
-            <View style={styles.dateTimeRow}>
-              {/* Date button */}
-              <TouchableOpacity
-                style={[styles.modalButton, { flex: 1, backgroundColor: "#eee" }]}
-                onPress={() => setShowDatePicker(true)}
-              >
-                <Ionicons name="calendar-outline" size={16} color="#000" />
-                <Text style={{ color: "#000", marginLeft: 6 }}>
-                  {currentReminder.date || selectedDate || "Pick Date"}
-                </Text>
-              </TouchableOpacity>
-
-              {/* Time button */}
-              <TouchableOpacity
-                style={[
-                  styles.modalButton,
-                  { flex: 1, backgroundColor: "#eee", marginLeft: 8 },
-                ]}
-                onPress={() => setShowTimePicker(true)}
-              >
-                <Ionicons name="time-outline" size={16} color="#000" />
-                <Text style={{ color: "#000", marginLeft: 6 }}>
-                  {currentReminder.time || "Pick Time"}
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Repeat option */}
-            <View style={{ marginBottom: 10 }}>
-              <Text style={{ color: "#000", marginBottom: 4 }}>Repeat</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                {["None", "Daily", "Weekly", "Monthly"].map((opt) => (
-                  <TouchableOpacity
-                    key={opt}
-                    style={[
-                      styles.modalButton,
-                      {
-                        backgroundColor:
-                          currentReminder.repeat === opt ? theme.tint : "#eee",
-                        marginRight: 7,
-                        paddingHorizontal: 16,
-                      },
-                    ]}
-                    onPress={() =>
-                      setCurrentReminder({ ...currentReminder, repeat: opt })
-                    }
-                  >
-                    <Text
-                      style={{
-                        color: currentReminder.repeat === opt ? "#fff" : "#000",
-                      }}
-                    >
-                      {opt}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
-
-            {/* Action buttons */}
-            <View style={styles.modalButtons}>
-              {currentReminder.id && (
-                <TouchableOpacity
-                  style={[styles.modalButton, { backgroundColor: "#FF4D4D" }]}
-                  onPress={() => deleteReminder(currentReminder.id)}
-                >
-                  <Text style={[globalStyles.cardText, { color: "#fff" }]}>
-                    Delete
-                  </Text>
-                </TouchableOpacity>
-              )}
-              <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: theme.tint }]}
-                onPress={saveReminder}
-              >
-                <Text style={[globalStyles.cardText, { color: "#fff" }]}>
-                  {currentReminder.id ? "Save" : "Add"}
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: "#888" }]}
-                onPress={() => setModalVisible(false)}
-              >
-                <Text style={[globalStyles.cardText, { color: "#fff" }]}>
-                  Cancel
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+        onClose={() => setModalVisible(false)}
+        onSave={handleSaveReminder}
+        onDelete={handleDeleteReminder}
+        reminder={editingReminder}
+        selectedDate={viewingDate}
+      />
 
       {/* Bottom navigation + AI button */}
       <BottomNav />
@@ -461,13 +317,78 @@ const styles = StyleSheet.create({
     marginVertical: 10,
     backgroundColor: "#fff",
   },
+
+  dateHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 16,
+    paddingBottom: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+  },
+
+  addReminderButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    backgroundColor: '#f0f8ff',
+  },
+
   remindersContainer: {
     marginTop: 8,
   },
+
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: 32,
+  },
+
   reminderItem: {
-    paddingVertical: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 4,
     borderBottomWidth: 1,
-    borderBottomColor: "#ddd",
+    borderBottomColor: '#f0f0f0',
+  },
+
+  reminderContent: {
+    flex: 1,
+  },
+
+  reminderHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+
+  reminderTime: {
+    fontSize: 12,
+    color: '#666',
+    backgroundColor: '#f5f5f5',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+
+  reminderNotes: {
+    fontSize: 12,
+    color: '#888',
+    marginBottom: 4,
+  },
+
+  repeatBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  repeatText: {
+    fontSize: 10,
+    color: '#4A90E2',
+    marginLeft: 2,
   },
 
   premiumCard: {
@@ -501,41 +422,5 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 6,
     elevation: 3,
-  },
-
-  modalBackground: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.6)",
-    paddingHorizontal: 20,
-  },
-  modalContent: {
-    width: "100%",
-    borderRadius: 16,
-    padding: 20,
-    shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    elevation: 6,
-  },
-  modalButtons: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 12,
-  },
-  modalButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
-    marginHorizontal: 4,
-  },
-  dateTimeRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginVertical: 10,
   },
 });

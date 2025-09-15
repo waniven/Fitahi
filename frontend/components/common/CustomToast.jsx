@@ -154,6 +154,38 @@ class CustomToast {
     );
   }
 
+  // Reminder creation success
+  static reminderSaved(reminderTitle) {
+    this.success(
+      'Reminder Added!',
+      `"${reminderTitle}" has been saved`
+    );
+  }
+
+  // Reminder update success
+  static reminderUpdated(reminderTitle) {
+    this.success(
+      'Reminder Updated!',
+      `"${reminderTitle}" has been modified`
+    );
+  }
+
+  // Reminder deletion confirmation
+  static reminderDeleted(reminderTitle) {
+    this.info(
+      'Reminder Deleted',
+      `"${reminderTitle}" has been removed`
+    );
+  }
+
+  // Reminder notification (when reminder triggers)
+  static reminderNotification(reminderTitle) {
+    this.warning(
+      'Reminder!',
+      reminderTitle
+    );
+  }
+
   // Flexible toast with custom styling options
   static custom({
     type = 'info',
