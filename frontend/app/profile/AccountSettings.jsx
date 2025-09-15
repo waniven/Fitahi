@@ -156,7 +156,7 @@ export default function AccountSettings() {
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={80}
+        keyboardVerticalOffset={1}
       >
         {/* Back button to go back to home page */}
         <TouchableOpacity
@@ -327,6 +327,8 @@ export default function AccountSettings() {
             </Text>
           </TouchableOpacity>
         </View>
+
+
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -425,7 +427,7 @@ const styles = StyleSheet.create({
 
   logoutButtonWrapper: {
     position: "absolute",
-    bottom: 95,
+    bottom: 110,
     left: 20,
     right: 20,
   },
