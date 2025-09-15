@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect, useLayoutEffect, useContext } from "react";
+import * as workoutService from "../../services/workoutService";
+import { loginTemp } from "../../services/api";
 import {
   Text,
   FlatList,
@@ -13,21 +15,20 @@ import WorkoutInput from "../../components/workouts/WorkoutInput";
 import ListCardItem from "@/components/ListCardItem";
 import { Colors } from "../../constants/Colors";
 import { Font } from "@/constants/Font";
-import { useContext, useLayoutEffect } from "react";
 import Fab from "@/components/FloatingActionButton";
 import CustomButtonThree from "../../components/common/CustomButtonThree";
 import { AIContext } from "../ai/AIContext";
 import { useRouter } from "expo-router";
 import BottomNav from "@/components/navbar/BottomNav";
+import LoadingProgress from "@/components/LoadingProgress";
 
 // CreateWorkout creates a workout which pops up a workout input and display the created workout
 function CreateWorkout({ navigation }) {
   const scheme = useColorScheme();
   const theme = Colors[scheme ?? "light"];
   const { toggleChat } = useContext(AIContext);
-  const router = useRouter();
 
-  //Back button to go back to Homepage
+  // Back button to go back to Homepage
   useLayoutEffect(() => {
     navigation.setOptions({
       headerLeft: () => (
@@ -62,55 +63,100 @@ function CreateWorkout({ navigation }) {
     });
   }, [navigation, theme, toggleChat]);
 
+  // states
   const [modalIsVisible, setModalIsVisible] = useState(false);
   const [workout, setWorkout] = useState([]);
   const [selectedWorkout, setSelectedWorkout] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadingProgress, setLoadingProgress] = useState(0);
 
-  const NAV_BAR_HEIGHT = 64; // Adjust to the actual nav height
-  const BOX_MAX_HEIGHT = Math.round(Dimensions.get("window").height * 0.7); // Box height cap
+  const NAV_BAR_HEIGHT = 64;
+  const BOX_MAX_HEIGHT = Math.round(Dimensions.get("window").height * 0.7);
 
   const isEmpty = workout.length === 0;
 
-  // startaddWorkoutName controls whether workout input box pops up
+  // fetching workouts when screen mounts - TO BE CHANGED LATER
+  useEffect(() => {
+    async function init() {
+      const loggedIn = await loginTemp();
+      if (!loggedIn) {
+        console.error("Could not log in, skipping fetch.");
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        // Example: simulate incremental progress while fetching
+        setLoadingProgress(0.3);
+        const data = await workoutService.getWorkouts();
+        setLoadingProgress(0.7);
+
+        setWorkout(data);
+        setLoadingProgress(1); // complete
+      } catch (err) {
+        console.error(
+          "Failed to fetch workouts:",
+          err.response?.data || err.message
+        );
+      } finally {
+        // wait a short tick so users see the bar finish
+        setTimeout(() => setIsLoading(false), 300);
+      }
+    }
+    init();
+  }, []);
+
+  // modal
   function startaddWorkoutName() {
     setModalIsVisible(true);
   }
 
-  // endaddWorkoutName turns off workout input box after creating a workout
   function endaddWorkoutName() {
     setModalIsVisible(false);
   }
 
-  // saveWorkout saves the created workout to the defined list
-  function saveWorkout(workout) {
-    if (selectedWorkout) {
-      // Edit mode → replace existing workout
-      setWorkout((current) =>
-        current.map((w) => (w.id === workout.id ? workout : w))
-      );
-    } else {
-      // Add mode → append
-      setWorkout((current) => [...current, workout]);
+  // create & update workout via backend
+  async function saveWorkout(workoutData) {
+    try {
+      let savedWorkout;
+      if (selectedWorkout) {
+        // update existing workout
+        savedWorkout = await workoutService.updateWorkout(
+          selectedWorkout._id,
+          workoutData
+        );
+        setWorkout((current) =>
+          current.map((w) => (w._id === savedWorkout._id ? savedWorkout : w))
+        );
+      } else {
+        // create new workout
+        savedWorkout = await workoutService.createWorkout(workoutData);
+        setWorkout((current) => [...current, savedWorkout]);
+      }
+      setSelectedWorkout(null);
+      endaddWorkoutName();
+    } catch (err) {
+      console.error("Failed to save workout:", err);
     }
-
-    setSelectedWorkout(null); // Reset after save
-    endaddWorkoutName();
   }
 
-  // deleteWorkoutHandler deletes a workout based on a supplied workout's id
-  function deleteWorkoutHandler(id) {
-    setWorkout((currentworkout) => {
-      return currentworkout.filter((workout) => workout.id !== id);
-    });
+  // delete workout via backend
+  async function deleteWorkoutHandler(id) {
+    try {
+      await workoutService.deleteWorkout(id);
+      setWorkout((current) => current.filter((w) => w._id !== id));
+    } catch (err) {
+      console.error("Failed to delete workout:", err);
+    }
   }
 
-  // startEditWorkout sets the current selected workout and open workout input to edit
+  // edit workout
   function startEditWorkout(item) {
     setSelectedWorkout(item);
     setModalIsVisible(true);
   }
 
-  // Render item: list all created workouts and allow to click on
+  // render each workout exercise item
   function renderItemData({ item }) {
     function startWorkoutSreen(item) {
       navigation.navigate("StartWorkoutScreen", { workoutDetail: item });
@@ -130,6 +176,7 @@ function CreateWorkout({ navigation }) {
     fontFamily: Font.semibold,
   };
 
+  // UI render
   return (
     <View style={[styles.screen, { backgroundColor: theme.background }]}>
       <View style={styles.content}>
@@ -138,21 +185,21 @@ function CreateWorkout({ navigation }) {
           workoutToEdit={selectedWorkout}
           onAddWorkout={saveWorkout}
           onCancel={() => {
-            setSelectedWorkout(null); // Reset if cancelled
+            setSelectedWorkout(null);
             endaddWorkoutName();
           }}
         />
 
-        {/* Invisible scrollable box shown only when there are workouts */}
+        {/* Workouts list */}
         {!isEmpty && (
           <View style={[styles.invisibleBox, { maxHeight: BOX_MAX_HEIGHT }]}>
             <FlatList
               data={workout}
-              keyExtractor={(item) => item.id}
+              keyExtractor={(item) => item._id} // unique id from backend
               renderItem={renderItemData}
               contentContainerStyle={[
                 styles.listContent,
-                { paddingBottom: NAV_BAR_HEIGHT + 120 }, // Room for FAB + nav
+                { paddingBottom: NAV_BAR_HEIGHT + 120 },
               ]}
               showsVerticalScrollIndicator
             />
@@ -162,22 +209,21 @@ function CreateWorkout({ navigation }) {
         {/* Spacer so content doesn't collide with FAB/nav */}
         <View style={{ height: NAV_BAR_HEIGHT + 28 }} />
 
-        {/* No workout created state: center of display with text above the + button */}
+        {/* No workout state */}
         {isEmpty ? (
           <View style={styles.fabContainerEmpty}>
             <Text style={[styles.emptyText, TextFont]}>
               Create your first workout
             </Text>
             <Fab
-              floating={false} // inline — not absolute
+              floating={false}
               onPress={startaddWorkoutName}
               color={theme.tint}
               iconColor={theme.textPrimary}
               accessibilityLabel="Create workout"
-            ></Fab>
+            />
           </View>
         ) : (
-          // Have Workouts: + button centered above the nav bar
           <Fab
             onPress={startaddWorkoutName}
             color={theme.tint}
@@ -188,6 +234,13 @@ function CreateWorkout({ navigation }) {
         )}
       </View>
 
+      {isLoading && (
+        <LoadingProgress
+          progress={loadingProgress}
+          message="Fetching workouts..."
+        />
+      )}
+
       {/* bottom navigation */}
       <BottomNav />
     </View>
@@ -197,14 +250,10 @@ function CreateWorkout({ navigation }) {
 export default CreateWorkout;
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, paddingTop: 12 }, // No horizontal padding here
-  content: { flex: 1, paddingHorizontal: 16 }, // New inner padding
-
-  // Invisible scrollable box (no border/background)
+  screen: { flex: 1, paddingTop: 12 },
+  content: { flex: 1, paddingHorizontal: 16 },
   invisibleBox: { overflow: "hidden" },
   listContent: { paddingHorizontal: 12, paddingVertical: 10, gap: 8 },
-
-  // No Workout: center of the entire screen
   fabContainerEmpty: {
     position: "absolute",
     left: 0,
@@ -212,14 +261,12 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 64,
     alignItems: "center",
-    justifyContent: "center", // Centers both text and button
+    justifyContent: "center",
     zIndex: 9999,
     ...(Platform.OS === "android" ? { elevation: 10 } : {}),
   },
   centerInner: { alignItems: "center", gap: 10 },
   emptyText: { fontSize: 24, margin: 20 },
-
-  // Bottom navigation
   bottomNav: {
     position: "absolute",
     left: 0,

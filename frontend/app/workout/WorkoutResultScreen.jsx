@@ -1,12 +1,5 @@
 import React from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  useColorScheme,
-  FlatList,
-} from "react-native";
+import { View, Text, StyleSheet, useColorScheme, FlatList } from "react-native";
 import { Colors } from "@/constants/Colors";
 import { Font } from "@/constants/Font";
 import PrimaryButton from "@/components/PrimaryButton";
@@ -66,7 +59,7 @@ export default function WorkoutResultScreen({ route, navigation }) {
           {fmtHMS(total)}
         </Text>
 
-        <Text style={[styles.star, { color: theme.tint }]}>★</Text>
+        <Text style={styles.star}>✨</Text>
         <Text
           style={[
             styles.keepItUp,

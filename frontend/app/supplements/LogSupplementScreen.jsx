@@ -506,7 +506,7 @@ function timeToMinutes(str) {
 }
 
 // Map 0..6 -> Mon..Sun labels
-const DAY_LABELS = ["M", "T", "W", "Th", "F", "Sa", "Su"];
+const DAY_LABELS = ["M", "T", "W", "T", "F", "S", "S"];
 
 /**
  * Turn an array of weekday indices into a label string.

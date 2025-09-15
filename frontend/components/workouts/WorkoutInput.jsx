@@ -1,14 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Colors } from "@/constants/Colors";
 import { Font } from "@/constants/Font";
-import Workout from "./models/Workout";
 import ModalCloseButton from "../ModalCloseButton";
 import PrimaryButton from "../PrimaryButton";
-import { useEffect } from "react";
-
-
 import ExerciseInput from "./ExerciseInput";
-
 import {
   View,
   TextInput,
@@ -22,81 +17,71 @@ import {
 
 const DAYS = ["M", "T", "W", "T", "F", "S", "S"];
 
-//WorkoutInput lets user fill out workout and exercises
 function WorkoutInput(props) {
   const scheme = useColorScheme();
   const theme = Colors[scheme ?? "light"];
-  const [enteredWorkoutText, setEnteredWorkoutText] = useState("");
+
+  const [enteredWorkoutName, setEnteredWorkoutName] = useState("");
   const [selectedWorkoutType, setWorkoutType] = useState("");
   const [selectedDays, setSelectedDays] = useState([]);
   const [showErrors, setShowErrors] = useState(false);
   const [workout, setWorkout] = useState(null);
   const [modalIsVisible, setModalIsVisible] = useState(false);
-  
 
   useEffect(() => {
     if (props.visible) {
       if (props.workoutToEdit) {
         // Editing mode
-        setEnteredWorkoutText(props.workoutToEdit.name || "");
-        setWorkoutType(props.workoutToEdit.type || "");
+        setEnteredWorkoutName(props.workoutToEdit.workoutName || "");
+        setWorkoutType(props.workoutToEdit.workoutType || "");
         setSelectedDays(props.workoutToEdit.selectedDays || []);
         setWorkout(props.workoutToEdit);
       } else {
-        // Adding mode, reset form
         resetForm();
       }
     }
   }, [props.visible, props.workoutToEdit]);
 
-  // startAddExercise pop ups a new input to enter exercises and save data into workout type
   function startAddExercise() {
-    // addExcersies();
     setModalIsVisible(true);
   }
 
-  // endAddExercise turns off Add Excersise Input
   function endAddExercise() {
     setModalIsVisible(false);
   }
 
-  // Reset form
   function resetForm() {
-    setEnteredWorkoutText("");
+    setEnteredWorkoutName("");
     setWorkoutType("");
     setSelectedDays([]);
     setShowErrors(false);
   }
 
-  // workoutInputHandler sets workout name
   function workoutInputHandler(enteredText) {
-    setEnteredWorkoutText(enteredText);
-  }
-  // workoutTypeInputHandler sets selected workout type
-  function workoutTypeInputHandler(enteredText) {
-    setWorkoutType(enteredText);
+    setEnteredWorkoutName(enteredText);
   }
 
-  // toggleDay sets selected days
+  function workoutTypeInputHandler(type) {
+    setWorkoutType(type);
+  }
+
   function toggleDay(idx) {
     setSelectedDays((prev) =>
       prev.includes(idx) ? prev.filter((i) => i !== idx) : [...prev, idx]
     );
   }
 
-  // addWorkoutHandler checks all fields are filled and saved a temporary workout
   function addWorkoutHandler() {
-    const isNameValid = enteredWorkoutText.trim().length > 0;
+    const isNameValid = enteredWorkoutName.trim().length > 0;
     const isTypeValid = !!selectedWorkoutType;
     const isDaysValid = selectedDays.length > 0;
 
-    // show highlights after 1st attempt
     setShowErrors(true);
     if (!isNameValid || !isTypeValid || !isDaysValid) {
       const missing = [];
       if (!isNameValid) missing.push("workout name");
       if (!isTypeValid) missing.push("workout type");
-      if (!isDaysValid) missing.push("workday days");
+      if (!isDaysValid) missing.push("workout days");
 
       Alert.alert(
         "Complete all fields",
@@ -105,66 +90,65 @@ function WorkoutInput(props) {
       return;
     }
 
-    // Build a draft object to pass into ExerciseInput
-    const draft = props.workoutToEdit
-      ? {
-          ...props.workoutToEdit,
-          name: enteredWorkoutText,
-          type: selectedWorkoutType,
-          selectedDays,
-        }
-      : new Workout(
-          Math.random().toString(),
-          enteredWorkoutText,
-          selectedWorkoutType,
-          selectedDays
-        );
-    setWorkout(draft);
-    setShowErrors(false);
+    // Build workout object with latest info
+    const draft = {
+      ...props.workoutToEdit,
+      workoutName: enteredWorkoutName.trim(),
+      workoutType: selectedWorkoutType,
+      selectedDays,
+      exercises: workout?.exercises || props.workoutToEdit?.exercises || [],
+    };
+
+    setWorkout(draft); // make sure the workout object always has name/type/days + existing exercises
     startAddExercise();
   }
 
-  // cancelAddWorkout let user cancel workout and go back to Workout Log
   function cancelAddWorkout() {
-    setEnteredWorkoutText("");
-    setWorkoutType("");
-    setSelectedDays([]);
-    setShowErrors(false);
-    props.onCancel();
     resetForm();
     props.onCancel?.();
   }
 
-  // onSaveExercises saves all exercises on the draft workout
-  function onSaveExercises(payload) {
-    // Merge exercises into the current draft (add or edit)
-    const base = workout ?? {};
-    const updatedWorkout = {
-      ...base,
-      name: enteredWorkoutText,
-      type: selectedWorkoutType,
-      selectedDays,
-      exercises: payload,
+  function onSaveExercises(exercisesPayload) {
+    if (!workout) return;
+
+    // Validation for exercise names
+    for (let i = 0; i < exercisesPayload.length; i++) {
+      const ex = exercisesPayload[i];
+      if (!ex.exerciseName || ex.exerciseName.trim() === "") {
+        alert(`Exercise #${i + 1} is missing a name.`);
+        return;
+      }
+    }
+
+    // Merge exercises and ensure correct mapping
+    const workoutToSend = {
+      ...workout, // includes workoutName, workoutType, selectedDays
+      exercises: exercisesPayload.map((ex) => ({
+        exerciseName: ex.exerciseName.trim(),
+        numOfSets: Number(ex.numOfSets) || 1,
+        numOfReps: Number(ex.numOfReps) || 1,
+        exerciseWeight: Number(ex.exerciseWeight) || 0,
+        exerciseDuration: Number(ex.exerciseDuration) || 0,
+        restTime: Number(ex.restTime) || 0,
+        imageUrl: ex.imageUrl || "",
+      })),
     };
 
-    setWorkout(updatedWorkout);
-    setShowErrors(false);
-    props.onAddWorkout(updatedWorkout); // <-- Use the updated object
-    setModalIsVisible(false); // Close ExerciseInput
-    resetForm(); // Clear WorkoutInput fields
-    props.onCancel?.(); // Close WorkoutInput modal
+    props.onAddWorkout(workoutToSend);
+
+    // Reset state
+    setWorkout(null);
+    setModalIsVisible(false);
+    resetForm();
+    props.onCancel?.();
   }
 
-  const TextFont = {
-    color: theme.background,
-  };
-
+  const TextFont = { color: theme.background };
   const isTypeInvalid = showErrors && !selectedWorkoutType;
-  const isNameInvalid = showErrors && enteredWorkoutText.trim().length === 0;
+  const isNameInvalid = showErrors && enteredWorkoutName.trim().length === 0;
   const isDayInvalid = showErrors && selectedDays.length === 0;
 
   return (
-    
     <Modal
       visible={props.visible}
       animationType="slide"
@@ -182,6 +166,7 @@ function WorkoutInput(props) {
           <Text style={[styles.text, TextFont, { fontFamily: Font.regular }]}>
             What will you be working on?
           </Text>
+
           <Text
             style={[styles.textTitle, TextFont, { fontFamily: Font.semibold }]}
           >
@@ -195,7 +180,7 @@ function WorkoutInput(props) {
             ]}
             placeholder="Workout name"
             onChangeText={workoutInputHandler}
-            value={enteredWorkoutText}
+            value={enteredWorkoutName}
           />
           {isNameInvalid && (
             <Text
@@ -216,7 +201,6 @@ function WorkoutInput(props) {
           >
             WORKOUT TYPE*
           </Text>
-
           <View
             style={[
               styles.fieldGroup,
@@ -245,10 +229,6 @@ function WorkoutInput(props) {
                   <TouchableOpacity
                     key={value}
                     onPress={() => workoutTypeInputHandler(value)}
-                    activeOpacity={0.8}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: active }}
-                    accessibilityLabel={`${label} workout`}
                     style={[
                       styles.typeBtn,
                       {
@@ -270,7 +250,6 @@ function WorkoutInput(props) {
                 );
               })}
             </View>
-
             {isTypeInvalid && (
               <Text
                 style={{
@@ -285,6 +264,7 @@ function WorkoutInput(props) {
               </Text>
             )}
           </View>
+
           <Text
             style={[
               styles.text,
@@ -294,8 +274,6 @@ function WorkoutInput(props) {
           >
             WHAT DAYS WILL YOU BE PERFORMING THIS WORKOUT ON? *
           </Text>
-
-          {/* DAYS GRID */}
           <View
             style={[
               styles.daysRow,
@@ -355,12 +333,11 @@ function WorkoutInput(props) {
 
           <ExerciseInput
             visible={modalIsVisible}
-            workout={workout} // When editing, contains existing exercises
+            workout={workout}
             onCancel={endAddExercise}
             onSave={onSaveExercises}
           />
 
-          {/* Buttons */}
           <PrimaryButton
             title="Next"
             onPress={addWorkoutHandler}
@@ -368,7 +345,6 @@ function WorkoutInput(props) {
             extraBottom={40}
             tabBarHeight={0}
             insetLR={14}
-            // Full width
             style={{ width: "100%" }}
           />
         </View>
@@ -380,21 +356,7 @@ function WorkoutInput(props) {
 export default WorkoutInput;
 
 const styles = StyleSheet.create({
-  pageContainer: {
-    flex: 1,
-    justifyContent: "center",
-    padding: 14,
-    borderBottomWidth: 1,
-    backgroundColor: "#151824",
-  },
-  emptyContainer: {
-    flex: 0.5,
-  },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: "flex-end", // Push content to bottom
-    
-  },
+  modalOverlay: { flex: 1, justifyContent: "flex-end" },
   modalContent: {
     height: "90%",
     borderTopLeftRadius: 20,
@@ -402,46 +364,9 @@ const styles = StyleSheet.create({
     padding: 14,
     paddingBottom: 120,
   },
-  header: {
-    fontSize: 22,
-    margin: 8,
-    paddingTop: 6,
-  },
-  text: {
-    fontSize: 14,
-    marginBottom: 30,
-    paddingLeft: 12,
-  },
-  textTitle: {
-    fontSize: 14,
-    marginBottom: 2,
-    paddingLeft: 12,
-  },
-  image: {
-    width: 100,
-    height: 100,
-    margin: 20,
-  },
-
-  pickerBox: {
-    borderWidth: 1,
-    borderColor: "#ffffffff",
-    backgroundColor: "#ffffffff",
-    color: "#0b0223ff",
-    borderRadius: 8,
-    width: "100%",
-    margin: 5,
-    height: 50,
-    justifyContent: "center",
-    paddingHorizontal: 6,
-    overflow: "hidden",
-    marginBottom: 25,
-  },
-  workoutType: {
-    color: "#666668ff",
-    fontSize: 14.5,
-    fontFamily: "Montserrat",
-  },
+  header: { fontSize: 22, margin: 8, paddingTop: 6 },
+  text: { fontSize: 14, marginBottom: 30, paddingLeft: 12 },
+  textTitle: { fontSize: 14, marginBottom: 2, paddingLeft: 12 },
   textInput: {
     borderWidth: 1,
     borderColor: "#ffffff",
@@ -453,7 +378,6 @@ const styles = StyleSheet.create({
     margin: 5,
     marginBottom: 25,
   },
-  // NEW: days grid styles
   daysRow: {
     flexDirection: "row",
     flexWrap: "wrap",
