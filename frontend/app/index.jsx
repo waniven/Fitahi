@@ -1,26 +1,41 @@
 // app/index.jsx
 import React, { useRef, useEffect } from "react";
 import { useRouter } from "expo-router";
-import {StyleSheet, Text, TouchableOpacity, View, Animated, Easing,} from "react-native";
+import {
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  Animated,
+  Easing,
+} from "react-native";
 import { Colors } from "../constants/Colors";
 import FitahiLogo from "../constants/FitahiLogo";
 import globalStyles from "../styles/globalStyles";
+import { loginTemp } from "../services/api";
 
 export default function Index() {
-
   const theme = Colors["dark"];
   const router = useRouter();
 
-
   // Animated values for splash page
-
   const svgFade = useRef(new Animated.Value(0)).current;
-  const svgTranslateY = useRef(new Animated.Value(-20)).current; // start slightly up
+  const svgTranslateY = useRef(new Animated.Value(-20)).current;
   const subtitleFade = useRef(new Animated.Value(0)).current;
-  const subtitleTranslateY = useRef(new Animated.Value(20)).current; // start slightly down
+  const subtitleTranslateY = useRef(new Animated.Value(20)).current;
   const buttonFade = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    // try temp login once when this screen mounts - TO BE CHANGED LATER
+    (async () => {
+      const ok = await loginTemp();
+      if (!ok) {
+        console.log("❌ Darwin auth failed — no token set");
+      } else {
+        console.log("✅ Darwin ready to chat");
+      }
+    })();
+
     // animations: logo subtitle buttons
     Animated.sequence([
       Animated.parallel([
@@ -62,7 +77,7 @@ export default function Index() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      {/*  Logo with fade + slide down*/}
+      {/* Logo */}
       <Animated.View
         style={{
           opacity: svgFade,
@@ -73,7 +88,7 @@ export default function Index() {
         <FitahiLogo width={320} height={140} fill="#FFFFFF" />
       </Animated.View>
 
-      {/* Subtitle with fade + slide up */}
+      {/* Subtitle */}
       <Animated.View
         style={{
           opacity: subtitleFade,
@@ -86,7 +101,7 @@ export default function Index() {
         </Text>
       </Animated.View>
 
-      {/* Buttons with fade in */}
+      {/* Buttons */}
       <Animated.View
         style={{ opacity: buttonFade, width: "100%", alignItems: "center" }}
       >
@@ -111,8 +126,6 @@ export default function Index() {
     </View>
   );
 }
-
-
 
 const styles = StyleSheet.create({
   container: {

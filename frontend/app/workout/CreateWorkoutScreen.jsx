@@ -74,7 +74,7 @@ function CreateWorkout({ navigation }) {
 
   const isEmpty = workout.length === 0;
 
-  // fetching workouts when screen mounts
+  // fetching workouts when screen mounts - TO BE CHANGED LATER
   useEffect(() => {
     async function init() {
       const loggedIn = await loginTemp();
