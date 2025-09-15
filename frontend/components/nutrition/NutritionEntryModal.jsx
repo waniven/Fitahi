@@ -1,5 +1,5 @@
 // components/nutrition/NutritionEntryModal.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -12,34 +12,125 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/Colors';
+import { Font, Type, TextVariants } from '../../constants/Font';
 import CustomButton from '../common/CustomButton';
+import CustomToast from '../common/CustomToast';
+
+// Configuration constants - move these to a config file
+const VALIDATION_CONFIG = {
+  foodName: {
+    minLength: 2,
+    maxLength: 100
+  },
+  nutrition: {
+    min: 0,
+    max: 10000
+  }
+};
+
+const DEFAULT_MEAL_TYPES = [
+  { id: 'breakfast', label: 'Breakfast' },
+  { id: 'lunch', label: 'Lunch' },
+  { id: 'dinner', label: 'Dinner' },
+  { id: 'snack', label: 'Snack' }
+];
+
+const NUTRITION_FIELDS = [
+  { key: 'calories', label: 'CALORIES', placeholder: 'Calories' },
+  { key: 'protein', label: 'PROTEIN', placeholder: 'Protein' },
+  { key: 'carbs', label: 'CARBS', placeholder: 'Carbs' },
+  { key: 'fat', label: 'FAT', placeholder: 'Fat' }
+];
+
+const MODAL_CONFIG = {
+  maxHeight: '90%',
+  reminderDelay: 30, // minutes
+};
+
+const ALERT_MESSAGES = {
+  exitConfirmation: {
+    title: 'Are you sure you want to exit?',
+    message: 'Your entered data will be lost.',
+    cancelText: 'Cancel',
+    confirmText: 'Exit'
+  }
+};
+
+// Local text styles using Font constants
+const textStyles = {
+  heading1: { fontSize: 28, ...Type.bold },
+  bodyMedium: { fontSize: 16, ...Type.bold },
+  bodySmall: { fontSize: 16, ...Type.regular },
+  caption: { fontSize: 12, ...Type.regular },
+};
 
 /**
  * NutritionEntryModal - Modal for entering food intake data
  * Shows food name, meal type, and nutritional information
  */
-export default function NutritionEntryModal({ visible, onClose, onSave }) {
+export default function NutritionEntryModal({ 
+  visible, 
+  onClose, 
+  onSave,
+  mealTypes = DEFAULT_MEAL_TYPES,
+  validationConfig = VALIDATION_CONFIG,
+  reminderDelay = MODAL_CONFIG.reminderDelay,
+  nutritionFields = NUTRITION_FIELDS
+}) {
   const [foodName, setFoodName] = useState('');
   const [selectedMealType, setSelectedMealType] = useState('');
-  const [calories, setCalories] = useState('');
-  const [protein, setProtein] = useState('');
-  const [carbs, setCarbs] = useState('');
-  const [fat, setFat] = useState('');
+  const [nutritionValues, setNutritionValues] = useState(() =>
+    Object.fromEntries(nutritionFields.map(field => [field.key, '']))
+  );
   const [validationErrors, setValidationErrors] = useState({});
 
-  const mealTypes = [
-    { id: 'breakfast', label: 'Breakfast' },
-    { id: 'lunch', label: 'Lunch' },
-    { id: 'dinner', label: 'Dinner' },
-    { id: 'snack', label: 'Snack' }
-  ];
+  // Update nutrition values when nutritionFields prop changes
+  useEffect(() => {
+    setNutritionValues(prev => {
+      const newValues = Object.fromEntries(nutritionFields.map(field => [field.key, '']));
+      // Preserve existing values if fields overlap
+      nutritionFields.forEach(field => {
+        if (prev[field.key] !== undefined) {
+          newValues[field.key] = prev[field.key];
+        }
+      });
+      return newValues;
+    });
+  }, [nutritionFields]);
+
+  /**
+   * Updates a nutrition field value
+   */
+  const updateNutritionValue = (field, value) => {
+    setNutritionValues(prev => ({ ...prev, [field]: value }));
+    
+    // Clear validation error for this field
+    if (validationErrors[field]) {
+      setValidationErrors(prev => ({ ...prev, [field]: null }));
+    }
+  };
+
+  /**
+   * Clears validation errors for food name
+   */
+  const handleFoodNameChange = (value) => {
+    setFoodName(value);
+    if (validationErrors.foodName) {
+      setValidationErrors(prev => ({ ...prev, foodName: null }));
+    }
+  };
 
   /**
    * Validates food name input
    */
   const validateFoodName = (value) => {
     if (!value?.trim()) return 'Food name is required';
-    if (value.trim().length < 2) return 'Food name must be at least 2 characters';
+    if (value.trim().length < validationConfig.foodName.minLength) {
+      return `Food name must be at least ${validationConfig.foodName.minLength} characters`;
+    }
+    if (value.trim().length > validationConfig.foodName.maxLength) {
+      return `Food name must be less than ${validationConfig.foodName.maxLength} characters`;
+    }
     return null;
   };
 
@@ -54,11 +145,13 @@ export default function NutritionEntryModal({ visible, onClose, onSave }) {
   /**
    * Validates numeric nutrition input
    */
-  const validateNutritionInput = (value, fieldName, min = 0, max = 10000) => {
+  const validateNutritionInput = (value, fieldName) => {
     if (!value?.trim()) return `${fieldName} is required`;
     const numValue = parseFloat(value);
     if (isNaN(numValue)) return `Please enter a valid number for ${fieldName.toLowerCase()}`;
-    if (numValue < min || numValue > max) return `${fieldName} should be between ${min}-${max}`;
+    if (numValue < validationConfig.nutrition.min || numValue > validationConfig.nutrition.max) {
+      return `${fieldName} should be between ${validationConfig.nutrition.min}-${validationConfig.nutrition.max}`;
+    }
     return null;
   };
 
@@ -77,20 +170,26 @@ export default function NutritionEntryModal({ visible, onClose, onSave }) {
   };
 
   /**
+   * Checks if user has entered any data
+   */
+  const hasUserData = () => {
+    return foodName.trim() || 
+           selectedMealType || 
+           Object.values(nutritionValues).some(value => value.trim());
+  };
+
+  /**
    * Handles modal close with confirmation if user has entered data
    */
   const requestCloseConfirmation = () => {
-    const hasData = foodName.trim() || selectedMealType || calories.trim() || 
-                   protein.trim() || carbs.trim() || fat.trim();
-    
-    if (hasData) {
+    if (hasUserData()) {
       Alert.alert(
-        'Are you sure you want to exit?',
-        'Your entered data will be lost.',
+        ALERT_MESSAGES.exitConfirmation.title,
+        ALERT_MESSAGES.exitConfirmation.message,
         [
-          { text: 'Cancel', style: 'cancel' },
+          { text: ALERT_MESSAGES.exitConfirmation.cancelText, style: 'cancel' },
           { 
-            text: 'Exit', 
+            text: ALERT_MESSAGES.exitConfirmation.confirmText, 
             style: 'destructive',
             onPress: () => closeModal()
           }
@@ -107,33 +206,36 @@ export default function NutritionEntryModal({ visible, onClose, onSave }) {
   const closeModal = () => {
     setFoodName('');
     setSelectedMealType('');
-    setCalories('');
-    setProtein('');
-    setCarbs('');
-    setFat('');
+    setNutritionValues(Object.fromEntries(nutritionFields.map(field => [field.key, ''])));
     setValidationErrors({});
     onClose();
+  };
+
+  /**
+   * Validates all form fields
+   */
+  const validateForm = () => {
+    const errors = {};
+    
+    const foodNameError = validateFoodName(foodName);
+    if (foodNameError) errors.foodName = foodNameError;
+    
+    const mealTypeError = validateMealType(selectedMealType);
+    if (mealTypeError) errors.mealType = mealTypeError;
+    
+    nutritionFields.forEach(field => {
+      const error = validateNutritionInput(nutritionValues[field.key], field.label);
+      if (error) errors[field.key] = error;
+    });
+    
+    return errors;
   };
 
   /**
    * Validates and submits nutrition entry data
    */
   const submitNutritionEntry = () => {
-    const foodNameError = validateFoodName(foodName);
-    const mealTypeError = validateMealType(selectedMealType);
-    const caloriesError = validateNutritionInput(calories, 'Calories');
-    const proteinError = validateNutritionInput(protein, 'Protein');
-    const carbsError = validateNutritionInput(carbs, 'Carbs');
-    const fatError = validateNutritionInput(fat, 'Fat');
-    
-    const currentValidationErrors = {};
-    if (foodNameError) currentValidationErrors.foodName = foodNameError;
-    if (mealTypeError) currentValidationErrors.mealType = mealTypeError;
-    if (caloriesError) currentValidationErrors.calories = caloriesError;
-    if (proteinError) currentValidationErrors.protein = proteinError;
-    if (carbsError) currentValidationErrors.carbs = carbsError;
-    if (fatError) currentValidationErrors.fat = fatError;
-    
+    const currentValidationErrors = validateForm();
     setValidationErrors(currentValidationErrors);
     
     if (Object.keys(currentValidationErrors).length === 0) {
@@ -141,19 +243,71 @@ export default function NutritionEntryModal({ visible, onClose, onSave }) {
         id: Date.now().toString(),
         foodName: foodName.trim(),
         mealType: selectedMealType,
-        calories: parseFloat(calories),
-        protein: parseFloat(protein),
-        carbs: parseFloat(carbs),
-        fat: parseFloat(fat),
+        ...Object.fromEntries(
+          nutritionFields.map(field => [field.key, parseFloat(nutritionValues[field.key])])
+        ),
         timestamp: new Date().toISOString(),
       };
+      
+      CustomToast.nutritionSaved(foodName.trim(), selectedMealType);
       
       if (onSave) {
         onSave(newNutritionEntry);
       }
       closeModal();
+    } else {
+      CustomToast.validationError();
     }
   };
+
+  /**
+   * Renders nutrition input fields in a grid layout
+   */
+  const renderNutritionGrid = () => {
+    const rows = [];
+    for (let i = 0; i < nutritionFields.length; i += 2) {
+      const leftField = nutritionFields[i];
+      const rightField = nutritionFields[i + 1];
+      
+      rows.push(
+        <View key={`row-${i}`} style={styles.nutritionRow}>
+          {renderNutritionField(leftField)}
+          {rightField && renderNutritionField(rightField)}
+        </View>
+      );
+    }
+    return rows;
+  };
+
+  /**
+   * Renders a single nutrition input field
+   */
+  const renderNutritionField = (field) => (
+    <View key={field.key} style={styles.nutritionColumn}>
+      <Text style={[textStyles.caption, styles.nutritionFieldLabel]}>
+        {field.label}
+      </Text>
+      <View style={[
+        styles.nutritionInputContainer, 
+        validationErrors[field.key] && styles.inputError
+      ]}>
+        <TextInput
+          style={[textStyles.bodySmall, styles.textInput]}
+          placeholder={field.placeholder}
+          placeholderTextColor="#A0A0A0"
+          value={nutritionValues[field.key] || ''}
+          onChangeText={(value) => updateNutritionValue(field.key, value)}
+          keyboardType="numeric"
+          returnKeyType={field.key === nutritionFields[nutritionFields.length - 1]?.key ? 'done' : 'next'}
+        />
+      </View>
+      {validationErrors[field.key] && (
+        <Text style={[textStyles.bodySmall, styles.errorText]}>
+          {validationErrors[field.key]}
+        </Text>
+      )}
+    </View>
+  );
 
   return (
     <Modal
@@ -180,37 +334,39 @@ export default function NutritionEntryModal({ visible, onClose, onSave }) {
             <View style={styles.modalContent}>
               {/* Modal header with title and close button */}
               <View style={styles.modalHeaderSection}>
-                <Text style={styles.modalTitleText}>Log Food</Text>
+                <Text style={[textStyles.heading1, styles.modalTitleText]}>Log Food</Text>
                 <TouchableOpacity onPress={requestCloseConfirmation} style={styles.closeButton}>
                   <Ionicons name="close" size={28} color="#666" />
                 </TouchableOpacity>
               </View>
 
-              <Text style={styles.modalSubtitleText}>
+              <Text style={[textStyles.bodyMedium, styles.modalSubtitleText]}>
                 What did you eat today?
               </Text>
 
               {/* Food name input section */}
               <View style={styles.inputSection}>
-                <Text style={styles.inputLabel}>FOOD NAME *</Text>
+                <Text style={[textStyles.bodyMedium, styles.inputLabel]}>FOOD NAME *</Text>
                 <View style={[styles.inputContainer, validationErrors.foodName && styles.inputError]}>
                   <TextInput
-                    style={styles.textInput}
+                    style={[textStyles.bodySmall, styles.textInput]}
                     placeholder="Name of food"
                     placeholderTextColor="#A0A0A0"
                     value={foodName}
-                    onChangeText={setFoodName}
+                    onChangeText={handleFoodNameChange}
                     returnKeyType="next"
                   />
                 </View>
                 {validationErrors.foodName && (
-                  <Text style={styles.errorText}>{validationErrors.foodName}</Text>
+                  <Text style={[textStyles.bodySmall, styles.errorText]}>
+                    {validationErrors.foodName}
+                  </Text>
                 )}
               </View>
 
               {/* Meal type selection section */}
               <View style={styles.inputSection}>
-                <Text style={styles.inputLabel}>YOU HAD THIS FOR . . . *</Text>
+                <Text style={[textStyles.bodyMedium, styles.inputLabel]}>YOU HAD THIS FOR . . . *</Text>
                 <View style={styles.mealTypeContainer}>
                   {mealTypes.map((meal) => (
                     <TouchableOpacity
@@ -222,6 +378,7 @@ export default function NutritionEntryModal({ visible, onClose, onSave }) {
                       onPress={() => handleMealTypeSelect(meal.id)}
                     >
                       <Text style={[
+                        textStyles.bodySmall,
                         styles.mealTypeButtonText,
                         selectedMealType === meal.id && styles.mealTypeButtonTextSelected
                       ]}>
@@ -231,92 +388,20 @@ export default function NutritionEntryModal({ visible, onClose, onSave }) {
                   ))}
                 </View>
                 {validationErrors.mealType && (
-                  <Text style={styles.errorText}>{validationErrors.mealType}</Text>
+                  <Text style={[textStyles.bodySmall, styles.errorText]}>
+                    {validationErrors.mealType}
+                  </Text>
                 )}
               </View>
 
               {/* Nutrition information section */}
               <View style={styles.inputSection}>
-                <Text style={styles.inputLabel}>HOW MUCH OF THE FOLLOWING WAS IN YOUR FOOD? *</Text>
+                <Text style={[textStyles.bodyMedium, styles.inputLabel]}>
+                  HOW MUCH OF THE FOLLOWING WAS IN YOUR FOOD? *
+                </Text>
                 
                 <View style={styles.nutritionGrid}>
-                  {/* Calories and Protein row */}
-                  <View style={styles.nutritionRow}>
-                    <View style={styles.nutritionColumn}>
-                      <Text style={styles.nutritionFieldLabel}>CALORIES</Text>
-                      <View style={[styles.nutritionInputContainer, validationErrors.calories && styles.inputError]}>
-                        <TextInput
-                          style={styles.textInput}
-                          placeholder="Calories"
-                          placeholderTextColor="#A0A0A0"
-                          value={calories}
-                          onChangeText={setCalories}
-                          keyboardType="numeric"
-                          returnKeyType="next"
-                        />
-                      </View>
-                      {validationErrors.calories && (
-                        <Text style={styles.errorText}>{validationErrors.calories}</Text>
-                      )}
-                    </View>
-                    
-                    <View style={styles.nutritionColumn}>
-                      <Text style={styles.nutritionFieldLabel}>PROTEIN</Text>
-                      <View style={[styles.nutritionInputContainer, validationErrors.protein && styles.inputError]}>
-                        <TextInput
-                          style={styles.textInput}
-                          placeholder="Protein"
-                          placeholderTextColor="#A0A0A0"
-                          value={protein}
-                          onChangeText={setProtein}
-                          keyboardType="numeric"
-                          returnKeyType="next"
-                        />
-                      </View>
-                      {validationErrors.protein && (
-                        <Text style={styles.errorText}>{validationErrors.protein}</Text>
-                      )}
-                    </View>
-                  </View>
-
-                  {/* Carbs and Fat row */}
-                  <View style={styles.nutritionRow}>
-                    <View style={styles.nutritionColumn}>
-                      <Text style={styles.nutritionFieldLabel}>CARBS</Text>
-                      <View style={[styles.nutritionInputContainer, validationErrors.carbs && styles.inputError]}>
-                        <TextInput
-                          style={styles.textInput}
-                          placeholder="Carbs"
-                          placeholderTextColor="#A0A0A0"
-                          value={carbs}
-                          onChangeText={setCarbs}
-                          keyboardType="numeric"
-                          returnKeyType="next"
-                        />
-                      </View>
-                      {validationErrors.carbs && (
-                        <Text style={styles.errorText}>{validationErrors.carbs}</Text>
-                      )}
-                    </View>
-                    
-                    <View style={styles.nutritionColumn}>
-                      <Text style={styles.nutritionFieldLabel}>FAT</Text>
-                      <View style={[styles.nutritionInputContainer, validationErrors.fat && styles.inputError]}>
-                        <TextInput
-                          style={styles.textInput}
-                          placeholder="Fat"
-                          placeholderTextColor="#A0A0A0"
-                          value={fat}
-                          onChangeText={setFat}
-                          keyboardType="numeric"
-                          returnKeyType="done"
-                        />
-                      </View>
-                      {validationErrors.fat && (
-                        <Text style={styles.errorText}>{validationErrors.fat}</Text>
-                      )}
-                    </View>
-                  </View>
+                  {renderNutritionGrid()}
                 </View>
               </View>
 
@@ -324,8 +409,8 @@ export default function NutritionEntryModal({ visible, onClose, onSave }) {
               <View style={styles.reminderSection}>
                 <View style={styles.reminderContainer}>
                   <Ionicons name="notifications" size={16} color="#4A90E2" style={styles.reminderIcon} />
-                  <Text style={styles.reminderText}>
-                    By default, you will be reminded to drink water 30 minutes after logging food.
+                  <Text style={[textStyles.bodySmall, styles.reminderText]}>
+                    By default, you will be reminded to drink water {reminderDelay} minutes after logging food.
                   </Text>
                 </View>
               </View>
@@ -383,10 +468,7 @@ const styles = StyleSheet.create({
   },
   
   modalTitleText: {
-    fontSize: 28,
-    fontWeight: 'bold',
     color: '#000',
-    fontFamily: 'Montserrat_700Bold',
   },
 
   closeButton: {
@@ -394,10 +476,8 @@ const styles = StyleSheet.create({
   },
   
   modalSubtitleText: {
-    fontSize: 16,
     color: '#666',
     marginBottom: 32,
-    fontFamily: 'Montserrat_400Regular',
   },
 
   inputSection: {
@@ -405,11 +485,8 @@ const styles = StyleSheet.create({
   },
 
   inputLabel: {
-    fontSize: 14,
-    fontWeight: 'bold',
     color: '#000',
     marginBottom: 8,
-    fontFamily: 'Montserrat_700Bold',
   },
 
   inputContainer: {
@@ -423,9 +500,7 @@ const styles = StyleSheet.create({
   },
 
   textInput: {
-    fontSize: 16,
     color: '#000',
-    fontFamily: 'Montserrat_400Regular',
     padding: 0,
     margin: 0,
     flex: 1,
@@ -455,10 +530,8 @@ const styles = StyleSheet.create({
   },
 
   mealTypeButtonText: {
-    fontSize: 16,
     fontWeight: '600',
     color: '#000',
-    fontFamily: 'Montserrat_600SemiBold',
   },
 
   mealTypeButtonTextSelected: {
@@ -479,11 +552,8 @@ const styles = StyleSheet.create({
   },
 
   nutritionFieldLabel: {
-    fontSize: 12,
-    fontWeight: 'bold',
     color: '#000',
     marginBottom: 8,
-    fontFamily: 'Montserrat_700Bold',
   },
 
   nutritionInputContainer: {
@@ -516,9 +586,7 @@ const styles = StyleSheet.create({
   },
 
   reminderText: {
-    fontSize: 14,
     color: '#4A90E2',
-    fontFamily: 'Montserrat_400Regular',
     flex: 1,
     lineHeight: 20,
   },
@@ -530,9 +598,7 @@ const styles = StyleSheet.create({
 
   errorText: {
     color: '#FF5252',
-    fontSize: 12,
     marginTop: 4,
-    fontFamily: 'Montserrat_400Regular',
   },
 
   submitButtonSection: {

@@ -1,13 +1,14 @@
+import React, { useState } from 'react';
+import { ScrollView, StyleSheet, Text, View, KeyboardAvoidingView, Platform } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View, KeyboardAvoidingView, Platform } from 'react-native'; import { Colors } from '../../constants/Colors';
+import { Colors } from '../../constants/Colors';
 import globalStyles from '../../styles/globalStyles';
 import CustomInput from '../../components/common/CustomInput';
 import CustomButton from '../../components/common/CustomButton';
+import CustomToast from '../../components/common/CustomToast';
 
-/**
- * Validation functions
- */
+// Validation functions
 const nameValidation = (name) => {
   if (!name || !name.trim()) return 'This field is required';
   if (name.trim().length < 2) return 'Name must be at least 2 characters';
@@ -42,10 +43,7 @@ const dateValidation = (date) => {
   return null;
 };
 
-/**
- * SignUp - User registration form component
- * Implements better validation that only shows errors after form submission attempt
- */
+// User registration form component with validation and toast notifications
 export default function SignUp() {
   const router = useRouter();
   const theme = Colors["dark"];
@@ -54,7 +52,6 @@ export default function SignUp() {
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
-    dateOfBirth: '',
     email: '',
     password: '',
   });
@@ -63,11 +60,7 @@ export default function SignUp() {
   const [errors, setErrors] = useState({});
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 
-  /**
-   * Updates form data for a specific field
-   * @param {string} field - Field name to update
-   * @param {string} value - New value for the field
-   */
+  // Updates form data for a specific field
   const updateField = (field, value) => {
     setFormData(prev => ({
       ...prev,
@@ -75,10 +68,7 @@ export default function SignUp() {
     }));
 
     // Only clear errors if user has already attempted to submit
-    // This prevents premature error clearing
     if (hasAttemptedSubmit && errors[field]) {
-      // Re-validate this specific field if user has attempted submit
-      // and the field now passes validation
       let fieldError = null;
 
       switch (field) {
@@ -103,14 +93,10 @@ export default function SignUp() {
     }
   };
 
-  /**
-   * Handles date selection with validation
-   * @param {Date} date - Selected date
-   */
+  // Handles date selection with validation
   const handleDateChange = (date) => {
     setSelectedDate(date);
 
-    // Only clear date error if user has attempted submit and date is now valid
     if (hasAttemptedSubmit && errors.dateOfBirth) {
       const dateError = dateValidation(date);
       if (!dateError) {
@@ -122,14 +108,10 @@ export default function SignUp() {
     }
   };
 
-  /**
-   * Validates all form fields
-   * @returns {boolean} True if form is valid, false otherwise
-   */
+  // Validates all form fields
   const validateForm = () => {
     const newErrors = {};
 
-    // Validate all fields
     const firstNameError = nameValidation(formData.firstName);
     if (firstNameError) {
       newErrors.firstName = firstNameError;
@@ -159,154 +141,118 @@ export default function SignUp() {
     return Object.keys(newErrors).length === 0;
   };
 
-  /**
-   * Handles form submission
-   */
+  // Handles form submission with toast notifications
   const handleContinue = () => {
-    // Mark that user has attempted to submit
     setHasAttemptedSubmit(true);
 
     if (validateForm()) {
+      CustomToast.success("Welcome to Fitahi!", "Account created successfully");
       console.log('Form data:', {
         ...formData,
         dateOfBirth: selectedDate
       });
       router.push('/profile/quiz');
     } else {
-      // Optionally scroll to first error or show a general error message
-      console.log('Form has validation errors');
+      CustomToast.validationError("Please fix the errors below");
     }
   };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <ScrollView
-        style={[styles.container, { backgroundColor: theme.background }]}
-        contentContainerStyle={styles.contentContainer}
-        showsVerticalScrollIndicator={false}
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 60 : 0}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={[styles.title, globalStyles.welcomeText, { color: theme.textPrimary }]}>
+        <ScrollView
+          contentContainerStyle={styles.contentContainer}
+          showsVerticalScrollIndicator={false}
+        >
+          <Text style={[globalStyles.welcomeText, { color: "#00A2FF", fontSize: 28, textAlign: "center" }]}>
             We're happy to have you!
           </Text>
-          <Text style={[styles.subtitle, globalStyles.cardText, { color: theme.textSecondary }]}>
+          <Text style={[globalStyles.cardText, { color: "#00A2FF", fontSize: 16, marginBottom: 30, textAlign: "center"}]}>
             Now let's set up your profile.
           </Text>
-        </View>
 
-        {/* Form Fields */}
-        <View style={styles.formContainer}>
-          <CustomInput
-            label="First Name"
-            placeholder="First Name"
-            value={formData.firstName}
-            onChangeText={(text) => updateField('firstName', text)}
-            errorMessage={errors.firstName}
-            required
-          />
+          <View style={styles.formContainer}>
+            <CustomInput
+              label="First Name"
+              placeholder="First Name"
+              value={formData.firstName}
+              onChangeText={(text) => updateField('firstName', text)}
+              errorMessage={errors.firstName}
+              required
+            />
 
-          <CustomInput
-            label="Last Name"
-            placeholder="Last Name"
-            value={formData.lastName}
-            onChangeText={(text) => updateField('lastName', text)}
-            errorMessage={errors.lastName}
-            required
-          />
+            <CustomInput
+              label="Last Name"
+              placeholder="Last Name"
+              value={formData.lastName}
+              onChangeText={(text) => updateField('lastName', text)}
+              errorMessage={errors.lastName}
+              required
+            />
 
-          <CustomInput
-            label="Date of Birth"
-            placeholder="Choose a date"
-            isDatePicker={true}
-            selectedDate={selectedDate}
-            onDateChange={handleDateChange}
-            errorMessage={errors.dateOfBirth}
-            required
-          />
+            <CustomInput
+              label="Date of Birth"
+              placeholder="Choose a date"
+              isDatePicker={true}
+              selectedDate={selectedDate}
+              onDateChange={handleDateChange}
+              errorMessage={errors.dateOfBirth}
+              required
+            />
 
-          <CustomInput
-            label="Email Address"
-            placeholder="Email address"
-            value={formData.email}
-            onChangeText={(text) => updateField('email', text)}
-            keyboardType="email-address"
-            errorMessage={errors.email}
-            required
-          />
+            <CustomInput
+              label="Email Address"
+              placeholder="Email address"
+              value={formData.email}
+              onChangeText={(text) => updateField('email', text)}
+              keyboardType="email-address"
+              errorMessage={errors.email}
+              required
+            />
 
-          <CustomInput
-            label="Password"
-            placeholder="Password"
-            value={formData.password}
-            onChangeText={(text) => updateField('password', text)}
-            secureTextEntry
-            errorMessage={errors.password}
-            required
-          />
-        </View>
+            <CustomInput
+              label="Password"
+              placeholder="Password"
+              value={formData.password}
+              onChangeText={(text) => updateField('password', text)}
+              secureTextEntry
+              errorMessage={errors.password}
+              required
+            />
+          </View>
 
-        {/* Continue Button */}
-        <View style={styles.buttonContainer}>
-          <CustomButton
-            title="Continue"
-            onPress={handleContinue}
-            size="large"
-            style={styles.continueButton}
-          />
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+          <View style={{ width: "100%", alignItems: "center", marginTop: 20 }}>
+            <CustomButton
+              title="Continue"
+              onPress={handleContinue}
+              size="large"
+              style={{ width: 370, paddingVertical: 18, borderRadius: 30 }}
+            />
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  container: { 
+    flex: 1 
   },
-
+  
   contentContainer: {
     paddingHorizontal: 20,
-    paddingTop: 60,
+    paddingTop: 80, 
     paddingBottom: 40,
-    alignItems: 'center',
+    alignItems: "center",
   },
-
-  header: {
-    alignItems: 'center',
-    marginBottom: 40,
-    paddingHorizontal: 20,
-  },
-
-  title: {
-    fontSize: 24,
-    textAlign: 'center',
-    marginBottom: 8,
-    lineHeight: 32,
-  },
-
-  subtitle: {
-    fontSize: 16,
-    textAlign: 'center',
-    lineHeight: 24,
-  },
-
-  formContainer: {
-    width: '100%',
-    alignItems: 'center',
-    marginBottom: 30,
-  },
-
-  buttonContainer: {
-    width: '100%',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-  },
-
-  continueButton: {
-    width: 370,
+  
+  formContainer: { 
+    width: "100%", 
+    alignItems: "center" 
   },
 });

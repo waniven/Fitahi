@@ -1,13 +1,12 @@
 // components/nutrition/NutritionDataCard.jsx
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { Font, Type, TextVariants } from '../../constants/Font';
+import CustomToast from '../common/CustomToast';
 
-/**
- * NutritionDataCard - Displays nutrition entry with exact layout specifications
- * Container: responsive width with maxWidth 350, meal/time on left, nutrition badges on right in 2x2 grid
- * Positioned to match calories bar alignment
- */
+// Displays nutrition entry with meal/time on left, nutrition badges on right in 2x2 grid
+// Positioned to match calories bar alignment
 const NutritionDataCard = ({ 
   entry,
   onDelete,
@@ -17,9 +16,7 @@ const NutritionDataCard = ({
 }) => {
   const { foodName, mealType, calories, protein, carbs, fat, timestamp } = entry;
 
-  /**
-   * Formats timestamp to display time
-   */
+  // Formats timestamp to display time in 24-hour format
   const formatTime = (timestamp) => {
     const date = new Date(timestamp);
     return date.toLocaleTimeString('en-US', {
@@ -29,63 +26,44 @@ const NutritionDataCard = ({
     });
   };
 
-  /**
-   * Capitalizes first letter of meal type
-   */
+  // Capitalizes first letter of meal type
   const formatMealType = (mealType) => {
     return mealType.charAt(0).toUpperCase() + mealType.slice(1);
   };
 
-  /**
-   * Handles delete confirmation and execution
-   */
+  // Handles delete with toast notification
   const handleDelete = () => {
-    Alert.alert(
-      'Delete Entry',
-      `Are you sure you want to delete this ${mealType} entry?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Delete', 
-          style: 'destructive',
-          onPress: () => onDelete && onDelete(entry.id)
-        }
-      ]
-    );
+    CustomToast.nutritionDeleted(foodName);
+    onDelete && onDelete(entry.id);
   };
 
   return (
     <View style={[styles.container, style]} {...props}>
-      {/* Left side: Meal type and time */}
       <View style={styles.leftSection}>
         <Text style={styles.mealTypeText}>{formatMealType(mealType)}</Text>
         <Text style={styles.timeText}>{formatTime(timestamp)}</Text>
       </View>
 
-      {/* Right side: Nutrition badges in 2x2 grid */}
       <View style={styles.rightSection}>
-        {/* Top row */}
         <View style={styles.nutritionRow}>
           <View style={[styles.nutritionBadge, styles.caloriesBadge]}>
             <Text style={styles.badgeText}>Calories: {calories} kcal</Text>
           </View>
           <View style={[styles.nutritionBadge, styles.proteinBadge]}>
-            <Text style={styles.badgeText}>Protein: {protein} kcal</Text>
+            <Text style={styles.badgeText}>Protein: {protein} g</Text>
           </View>
         </View>
 
-        {/* Bottom row */}
         <View style={styles.nutritionRow}>
           <View style={[styles.nutritionBadge, styles.fatBadge]}>
-            <Text style={styles.badgeText}>Fat: {fat} kcal</Text>
+            <Text style={styles.badgeText}>Fat: {fat} g</Text>
           </View>
           <View style={[styles.nutritionBadge, styles.carbsBadge]}>
-            <Text style={styles.badgeText}>Carbs: {carbs} kcal</Text>
+            <Text style={styles.badgeText}>Carbs: {carbs} g</Text>
           </View>
         </View>
       </View>
 
-      {/* Delete button (optional) */}
       {showDeleteButton && (
         <TouchableOpacity 
           style={styles.deleteButton}
@@ -101,15 +79,15 @@ const NutritionDataCard = ({
 
 const styles = StyleSheet.create({
   container: {
-    width: '110%',              // Use full available width
+    width: '110%',
     height: 80,
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 12,
     marginVertical: 6,
-    marginHorizontal: 0,        // Remove horizontal margins
-    alignSelf: 'center',        // Center the card like calories bar
-    maxWidth: 350,              // Same max width as calories bar
+    marginHorizontal: 0,
+    alignSelf: 'center',
+    maxWidth: 350,
     flexDirection: 'row',
     alignItems: 'center',
     shadowColor: '#000',
@@ -132,22 +110,21 @@ const styles = StyleSheet.create({
 
   mealTypeText: {
     fontSize: 16,
-    fontWeight: 'bold',
     color: '#4A90E2',
-    fontFamily: 'Montserrat_700Bold',
     marginBottom: 2,
+    ...Type.bold,
   },
 
   timeText: {
     fontSize: 14,
     color: '#4A90E2',
-    fontFamily: 'Montserrat_400Regular',
+    ...Type.regular,
   },
 
   rightSection: {
     flex: 1,
     justifyContent: 'space-between',
-    paddingRight: 24, // Add padding to make room for delete button
+    paddingRight: 24,
   },
 
   nutritionRow: {
@@ -167,27 +144,26 @@ const styles = StyleSheet.create({
   },
 
   caloriesBadge: {
-    backgroundColor: '#FF5A5A', // Red
+    backgroundColor: '#FF5A5A',
   },
 
   proteinBadge: {
-    backgroundColor: '#4ECDC4', // Teal
+    backgroundColor: '#4ECDC4',
   },
 
   fatBadge: {
-    backgroundColor: '#45B7D1', // Blue
+    backgroundColor: '#45B7D1',
   },
 
   carbsBadge: {
-    backgroundColor: '#FFA726', // Orange
+    backgroundColor: '#FFA726',
   },
 
   badgeText: {
     color: '#FFFFFF',
     fontSize: 10,
-    fontWeight: '600',
-    fontFamily: 'Montserrat_600SemiBold',
     textAlign: 'center',
+    ...Type.semibold,
   },
 
   deleteButton: {
@@ -210,5 +186,4 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
 });
-
 export default NutritionDataCard;

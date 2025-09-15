@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import LogScreen from '../../components/common/LogScreen';
 import NutritionEntryModal from '../../components/nutrition/NutritionEntryModal';
 import NutritionDashboard from '../../components/nutrition/NutritionDashboard';
+import { sampleEntries } from '../../components/common/SampleData';
 
 /**
  * Nutrition - Food intake logging screen
@@ -14,8 +15,9 @@ import NutritionDashboard from '../../components/nutrition/NutritionDashboard';
 const Nutrition = () => {
   const router = useRouter();
   const [modalVisible, setModalVisible] = useState(false);
-  const [nutritionEntries, setNutritionEntries] = useState([]);
   const [showDashboard, setShowDashboard] = useState(false);
+  const [nutritionEntries, setNutritionEntries] = useState(sampleEntries.nutritionEntries);
+
 
   const handleBackPress = () => {
     if (showDashboard) {

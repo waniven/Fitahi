@@ -4,6 +4,8 @@ import { useRouter } from 'expo-router';
 import LogScreen from '../../components/common/LogScreen';
 import WaterEntryModal from '../../components/water/WaterEntryModal';
 import WaterDashboard from '../../components/water/WaterDashboard';
+import { sampleEntries } from '../../components/common/SampleData';
+
 
 /**
  * Water - Water intake logging screen
@@ -12,9 +14,9 @@ import WaterDashboard from '../../components/water/WaterDashboard';
  */
 
 const Water = () => {
+  const [waterEntries, setWaterEntries] = useState(sampleEntries.waterEntries);
   const router = useRouter();
   const [modalVisible, setModalVisible] = useState(false);
-  const [waterEntries, setWaterEntries] = useState([]);
   const [showDashboard, setShowDashboard] = useState(false);
 
   const handleBackPress = () => {

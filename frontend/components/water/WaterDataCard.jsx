@@ -3,11 +3,16 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/Colors';
+import { Font, Type, TextVariants } from '../../constants/Font';
+import CustomToast from '../common/CustomToast';
 
-/**
- * WaterDataCard - Component for displaying water intake entries
- * Clean card with soft corners and instant delete (no confirmation)
- */
+// Local text styles using Font constants
+const textStyles = {
+  heading3: { fontSize: 20, ...Type.medium },
+  bodyMedium: { fontSize: 16, ...Type.regular },
+};
+
+// Component for displaying water intake entries with instant delete functionality
 const WaterDataCard = ({ 
   entry, 
   onDelete, 
@@ -15,16 +20,14 @@ const WaterDataCard = ({
   style 
 }) => {
   
-  /**
-   * Format time to 12-hour format with am/pm
-   */
+  // Format time to 12-hour format with am/pm
   const formatTime = (timeString) => {
     if (timeString && timeString.includes(':')) {
       const [hours, minutes] = timeString.split(':');
       const hour24 = parseInt(hours);
       const hour12 = hour24 === 0 ? 12 : hour24 > 12 ? hour24 - 12 : hour24;
       const ampm = hour24 >= 12 ? 'pm' : 'am';
-      return `${hour12}:${minutes}${ampm}`;
+      return `${hour12}:${minutes} ${ampm}`;
     }
     
     if (entry.timestamp) {
@@ -34,17 +37,15 @@ const WaterDataCard = ({
       const ampm = hours >= 12 ? 'pm' : 'am';
       hours = hours % 12;
       hours = hours ? hours : 12;
-      return `${hours}:${minutes}${ampm}`;
+      return `${hours}:${minutes} ${ampm}`;
     }
     
     return timeString || 'Time not set';
   };
 
-  /**
-   * Handle instant delete - no confirmation
-   */
+  // Handle instant delete with toast notification
   const handleDelete = () => {
-    console.log('Instantly deleting entry:', entry.id);
+    CustomToast.waterDeleted(entry.amount);
     if (onDelete) {
       onDelete(entry.id);
     }
@@ -54,10 +55,10 @@ const WaterDataCard = ({
     <View style={[styles.cardContainer, style]}>
       <View style={styles.contentContainer}>
         <View style={styles.textContent}>
-          <Text style={styles.timeText}>
+          <Text style={[textStyles.heading3, styles.timeText]}>
             {formatTime(entry.time)}
           </Text>
-          <Text style={styles.amountText}>
+          <Text style={[textStyles.bodyMedium, styles.amountText]}>
             Amount: {entry.amount}mL
           </Text>
         </View>
@@ -68,6 +69,9 @@ const WaterDataCard = ({
             style={styles.deleteButton}
             hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
             activeOpacity={0.6}
+            accessibilityRole="button"
+            accessibilityLabel={`Delete ${entry.amount}mL water entry`}
+            accessibilityHint="Double tap to remove this water intake record"
           >
             <Ionicons name="trash-outline" size={24} color="#FF4444" />
           </TouchableOpacity>
@@ -84,8 +88,8 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginTop: 0,
     marginBottom: 16,
-    width: '150%', // Use full available width instead of fixed 374px
-    maxWidth: 350, // Maximum width to prevent it from being too wide
+    width: '90%',
+    maxWidth: 350,
     height: 70,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -94,7 +98,6 @@ const styles = StyleSheet.create({
     elevation: 4,
     alignSelf: 'center',
   },
-
   contentContainer: {
     flex: 1,
     flexDirection: 'row',
@@ -103,12 +106,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
   },
-
   textContent: {
     flex: 1,
     justifyContent: 'center',
   },
-
   deleteButton: {
     width: 44,
     height: 44,
@@ -118,19 +119,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginLeft: 16,
   },
-
   timeText: {
-    fontSize: 18,
-    fontWeight: 'bold',
     color: Colors.light.primary,
-    fontFamily: 'Montserrat_700Bold',
     marginBottom: 2,
   },
-
   amountText: {
-    fontSize: 14,
     color: '#666',
-    fontFamily: 'Montserrat_400Regular',
   },
 });
 

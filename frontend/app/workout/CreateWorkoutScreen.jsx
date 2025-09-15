@@ -18,7 +18,8 @@ import { Font } from "@/constants/Font";
 import Fab from "@/components/FloatingActionButton";
 import CustomButtonThree from "../../components/common/CustomButtonThree";
 import { AIContext } from "../ai/AIContext";
-import BottomNav from "@/components/navbar/Bottomnav";
+import { useRouter } from "expo-router";
+import BottomNav from "@/components/navbar/BottomNav";
 import LoadingProgress from "@/components/LoadingProgress";
 
 // CreateWorkout creates a workout which pops up a workout input and display the created workout
