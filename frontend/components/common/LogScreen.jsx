@@ -106,19 +106,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-<<<<<<< Updated upstream
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingTop: 40,
-    paddingBottom: 40,
-    position: 'relative',
-=======
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     position: "relative",
->>>>>>> Stashed changes
   },
   backButtonContainer: {
     position: "absolute",
