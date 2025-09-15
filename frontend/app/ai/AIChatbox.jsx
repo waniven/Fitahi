@@ -12,10 +12,11 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Alert,
 } from "react-native";
 import { Colors } from "../../constants/Colors";
-import globalStyles from "../../styles/globalStyles";
 import * as messageService from "../../services/messageService";
+import globalStyles from "../../styles/globalStyles";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -34,9 +35,9 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
   const [historyVisible, setHistoryVisible] = useState(false);
   const [conversations, setConversations] = useState([]);
   const [activeConvo, setActiveConvo] = useState(null);
-  const [showScrollDown, setShowScrollDown] = useState(false);
 
   const flatListRef = useRef(null);
+  const typingController = useRef({ cancelled: false });
 
   const translateY = useRef(new Animated.Value(0)).current;
   const panResponder = useRef(
@@ -76,10 +77,16 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
 
     setInput("");
     setLoading(true);
+    typingController.current = { cancelled: false };
 
     try {
       const { userMessage, aiMessage, conversationId } =
         await messageService.sendMessage(clean, activeConvo?._id);
+
+      if (typingController.current.cancelled) {
+        return; // stop if convo was deleted mid-reply
+      }
+
       setActiveConvo({ ...activeConvo, _id: conversationId });
 
       const safeUserMsg = {
@@ -94,13 +101,19 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
       setChatMessages((prev) => [...prev, safeUserMsg, safeAiMsg]);
       setMessages((prev) => [...prev, safeUserMsg, safeAiMsg]);
     } catch (err) {
-      const errMsg = {
-        id: Date.now().toString(),
-        text: "Darwin is unavailable right now.",
-        fromAI: true,
-      };
-      setChatMessages((prev) => [...prev, errMsg]);
-      setMessages((prev) => [...prev, errMsg]);
+      let description = "Something went wrong. Please try again later.";
+      if (err.response?.status === 500) {
+        description = "Darwin's server is having issues (500). Try again soon.";
+      } else if (err.response?.status === 401) {
+        description = "Your session expired (401). Please log in again.";
+      } else if (err.response?.status === 503) {
+        description =
+          "Darwin is currently overloaded! (503) Please try again later.";
+      } else if (err.message?.includes("Network")) {
+        description = "No internet connection. Check your network and retry.";
+      }
+
+      Alert.alert("Darwin Unavailable", description);
     } finally {
       setLoading(false);
     }
@@ -141,9 +154,11 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
       setConversations((prev) => prev.filter((c) => c._id !== convoId));
 
       if (activeConvo?._id === convoId) {
+        typingController.current.cancelled = true;
         setActiveConvo(null);
         setChatMessages([]);
         setMessages([]);
+        setLoading(false);
       }
     } catch (err) {
       console.error("Failed to delete conversation:", err);
@@ -208,33 +223,7 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
             onContentSizeChange={() =>
               flatListRef.current?.scrollToEnd({ animated: true })
             }
-            onScroll={(e) => {
-              const offsetY = e.nativeEvent.contentOffset.y;
-              const contentHeight = e.nativeEvent.contentSize.height;
-              const layoutHeight = e.nativeEvent.layoutMeasurement.height;
-              const isAtBottom = offsetY + layoutHeight >= contentHeight - 50;
-              setShowScrollDown(!isAtBottom);
-            }}
-            scrollEventThrottle={100}
           />
-
-          {showScrollDown && (
-            <TouchableOpacity
-              style={[styles.scrollButton, { backgroundColor: theme.tint }]}
-              onPress={() =>
-                flatListRef.current?.scrollToEnd({ animated: true })
-              }
-            >
-              <Text
-                style={[
-                  globalStyles.textBold,
-                  { color: theme.background, fontSize: 16 },
-                ]}
-              >
-                ↓
-              </Text>
-            </TouchableOpacity>
-          )}
 
           {loading && (
             <Text
@@ -417,14 +406,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     height: 40,
     marginLeft: 8,
-  },
-  scrollButton: {
-    position: "absolute",
-    right: 16,
-    bottom: INPUT_ROW_HEIGHT + 60,
-    padding: 10,
-    borderRadius: 20,
-    elevation: 4,
   },
   modalOverlay: {
     flex: 1,
