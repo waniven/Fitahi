@@ -20,6 +20,7 @@ export default function AccountSettings() {
   const [selectedDob, setSelectedDob] = useState(null); //for date picker
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
+  const [errors, setErrors] = useState({});
 
   const toYmd = (d) => (d ? new Date(d).toISOString().slice(0, 10) : "");
   const fromYmd = (s) => (s ? new Date(s) : null);
@@ -80,10 +81,10 @@ export default function AccountSettings() {
   
   // Validate inputs
   const validateForm = () => {
-    let newErrors = {};
+    const newErrors = {};
 
     if (!/^[A-Za-z]+$/.test(form.firstName.trim())) {
-      newErrors.firstName = "First name must contain only letters.";  // first name must only contain letter no numbers etc
+      newErrors.firstName = "First name must contain only letters.";  //first name must only contain letter no numbers etc
     }
     if (!/^[A-Za-z]+$/.test(form.lastName.trim())) {
       newErrors.lastName = "Last name must contain only letters.";  //last name only contains letters
@@ -92,7 +93,7 @@ export default function AccountSettings() {
       newErrors.email = "Invalid email format.";  //email must be valid
     }
     if (form.password.length > 0 && form.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters.";  //password to be at least 6 characters
+      newErrors.password = "Password must be at least 6 characters."; //password to be at least 6 characters
     }
     if (form.height && !/^\d+(\s?cm)?$/.test(form.height.trim())) {
       newErrors.height = "Height must be a number (e.g. 170 cm)."; //height in cm
@@ -105,6 +106,7 @@ export default function AccountSettings() {
     }
 
     console.log(newErrors)
+    setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
@@ -251,6 +253,7 @@ export default function AccountSettings() {
               placeholder="First Name"
               value={form.firstName}
               onChangeText={(text) => handleChange('firstName', text)}
+              errorMessage={errors.firstName}
               required
             />
 
@@ -259,6 +262,7 @@ export default function AccountSettings() {
               placeholder="Last Name"
               value={form.lastName}
               onChangeText={(text) => handleChange('lastName', text)}
+              errorMessage={errors.lastName}
               required
             />
 
@@ -277,6 +281,7 @@ export default function AccountSettings() {
               value={form.email}
               onChangeText={(text) => handleChange('email', text)}
               keyboardType="email-address"
+              errorMessage={errors.email}
               required
             />
 
@@ -285,6 +290,7 @@ export default function AccountSettings() {
               placeholder="Password"
               value={form.password}
               onChangeText={(text) => handleChange('password', text)}
+              errorMessage={errors.password}
               secureTextEntry
             />
 
