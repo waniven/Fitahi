@@ -103,12 +103,10 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
     } catch (err) {
       let description = "Something went wrong. Please try again later.";
       if (err.response?.status === 500) {
-        description = "Darwin's server is having issues (500). Try again soon.";
+        description =
+          "Darwin is having issues or may be overloaded! Try again soon.";
       } else if (err.response?.status === 401) {
         description = "Your session expired (401). Please log in again.";
-      } else if (err.response?.status === 503) {
-        description =
-          "Darwin is currently overloaded! (503) Please try again later.";
       } else if (err.message?.includes("Network")) {
         description = "No internet connection. Check your network and retry.";
       }

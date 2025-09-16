@@ -1,6 +1,5 @@
 import { useState, useEffect, useLayoutEffect, useContext } from "react";
 import * as workoutService from "../../services/workoutService";
-import { loginTemp } from "../../services/api";
 import {
   Text,
   FlatList,
@@ -74,18 +73,11 @@ function CreateWorkout({ navigation }) {
 
   const isEmpty = workout.length === 0;
 
-  // fetching workouts when screen mounts - TO BE CHANGED LATER
+  // fetching workouts when screen mounts
   useEffect(() => {
     async function init() {
-      const loggedIn = await loginTemp();
-      if (!loggedIn) {
-        console.error("Could not log in, skipping fetch.");
-        setIsLoading(false);
-        return;
-      }
-
       try {
-        // Example: simulate incremental progress while fetching
+        // simulate incremental progress while fetching
         setLoadingProgress(0.3);
         const data = await workoutService.getWorkouts();
         setLoadingProgress(0.7);
