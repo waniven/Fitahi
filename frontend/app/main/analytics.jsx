@@ -10,9 +10,9 @@ import AnalyticsDashboard from '../../components/analytics/AnalyticsDashboard';
  * Uses the reusable LogScreen component with analytics-specific configuration
  * Shows dashboard when entries exist from other features, otherwise shows initial log screen
  */
-const Analytics = () => {
+const Analytics = ({ navigation }) => { // Add navigation prop here
   const router = useRouter();
-  const [showDashboard, setShowDashboard] = useState(true); // Start with true since we have sample data
+  const [showDashboard, setShowDashboard] = useState(true);
   const [analyticsData, setAnalyticsData] = useState(getAnalyticsData());
 
   // Check for data on component mount
@@ -43,6 +43,7 @@ const Analytics = () => {
   if (showDashboard && analyticsData.totalEntries >= 2) {
     return (
       <AnalyticsDashboard
+        navigation={navigation} // Pass navigation prop
         data={analyticsData}
         onBackPress={handleBackPress}
         onRefresh={handleRefreshAnalytics}
@@ -56,7 +57,7 @@ const Analytics = () => {
       title="Your Analytics"
       subtitle="Make some logs and come back to get overviews!"
       showBackButton={true}
-      showAddButton={false} // No add button for analytics
+      showAddButton={false}
       onBackPress={handleBackPress}
       titleColor="#FFFFFF"
       subtitleColor="#CCCCCC"
@@ -65,4 +66,3 @@ const Analytics = () => {
 };
 
 export default Analytics;
-
