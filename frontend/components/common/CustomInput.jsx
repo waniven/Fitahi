@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { TextInput, View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Colors } from '../../constants/Colors';
+import { Font } from '@/constants/Font';
 
 /**
  * CustomInput - Reusable input component with validation and date picker support
@@ -104,7 +105,7 @@ const CustomInput = ({
   return (
     <View style={[styles.container, style]}>
       {label && (
-        <Text style={styles.label}>
+        <Text style={[styles.label, {fontFamily: Font.semibold}]}>
           {label.toUpperCase()}
           {required && <Text style={styles.required}> *</Text>}
         </Text>
@@ -125,7 +126,7 @@ const CustomInput = ({
           <View style={styles.datePickerContainer}>
             <Text style={[
               styles.dateText,
-              { color: selectedDate ? '#151924' : '#999999' }
+              { color: selectedDate ? '#151924' : '#999999', fontFamily: Font.regular }
             ]}>
               {selectedDate ? formatDate(selectedDate) : placeholder}
             </Text>
@@ -133,7 +134,7 @@ const CustomInput = ({
           </View>
         ) : (
           <TextInput
-            style={[styles.input, inputStyle]}
+            style={[styles.input, inputStyle, {fontFamily: Font.regular}]}
             placeholder={placeholder}
             placeholderTextColor="#999999"
             value={value}
@@ -212,7 +213,7 @@ const CustomInput = ({
       )}
       
       {hasError && (
-        <Text style={styles.errorText}>
+        <Text style={[styles.errorText, {fontFamily: Font.regular}]}>
           {displayError}
         </Text>
       )}
@@ -249,7 +250,7 @@ const styles = StyleSheet.create({
   },
   
   input: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#151924',
     height: '100%',
     padding: 0,
@@ -263,7 +264,7 @@ const styles = StyleSheet.create({
   },
   
   dateText: {
-    fontSize: 16,
+    fontSize: 14,
     flex: 1,
   },
   

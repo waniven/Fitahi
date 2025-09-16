@@ -1,17 +1,16 @@
 // app/index.jsx
 import React, { useRef, useEffect } from "react";
 import { useRouter } from "expo-router";
-import {StyleSheet, Text, View, Animated, Easing,} from "react-native";
+import { StyleSheet, Text, View, Animated, Easing, useColorScheme } from "react-native";
 import { Colors } from "../constants/Colors";
 import FitahiLogo from "../constants/FitahiLogo";
 import CustomButton from "../components/common/CustomButton";
 import globalStyles from "../styles/globalStyles";
 
 export default function Index() {
-
-  const theme = Colors["dark"];
+  const scheme = useColorScheme();
+  const theme = Colors[scheme ?? "light"];
   const router = useRouter();
-
 
   // Animated values for splash page
 
@@ -110,8 +109,6 @@ export default function Index() {
     </View>
   );
 }
-
-
 
 const styles = StyleSheet.create({
   container: {

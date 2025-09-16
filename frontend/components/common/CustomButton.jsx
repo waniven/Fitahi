@@ -1,6 +1,7 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { Colors } from '../../constants/Colors';
+import { Font } from '@/constants/Font';
 
 /**
  * CustomButton - A reusable button component with multiple variants and sizes
@@ -65,7 +66,7 @@ const CustomButton = ({
    * @returns {Array} Array of style objects to be applied to the button text
    */
   const getTextStyles = () => {
-    const baseStyle = [styles.text];
+    const baseStyle = [styles.text,{fontFamily: Font.bold}];
     
     // Apply size-specific text styles
     if (size === 'small') {
@@ -142,7 +143,7 @@ const styles = StyleSheet.create({
   
   // Button color variants
   buttonPrimary: {
-    backgroundColor: Colors.light.primary, // Electric blue - main CTA color
+    backgroundColor: Colors.dark.tint, // Electric blue - main CTA color
   },
   buttonSecondary: {
     backgroundColor: Colors.light.backgroundAlt, // Blue background with border

@@ -118,7 +118,6 @@ export default function Home() {
   // Quick log cards data
   const quickLogCards = [
     { title: "Your Analytics", icon: "📊", color: theme.tint, onPress: () => router.push("/main/analytics") },
-    { title: "Your Reminders", icon: "🔔", color: theme.tint, onPress: () => router.push("/main/reminders") },
     { title: "Workout Log", icon: "🏋️", color: theme.tint, onPress: () => router.push("/main/workouts") },
     { title: "Nutrition Log", icon: "🍎", color: theme.tint, onPress: () => router.push("/main/nutrition") },
     { title: "Supplement Log", icon: "💊", color: theme.tint, onPress: () => router.push("/main/supplements") },
