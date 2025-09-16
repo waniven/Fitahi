@@ -1,34 +1,29 @@
 // components/common/LogScreen.jsx
-import React from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  SafeAreaView, 
-  StatusBar,
-  TouchableOpacity,
-} from 'react-native';
-import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import CustomButtonTwo from './CustomButtonTwo';
-import CustomButtonThree from './CustomButtonThree';  // Remove '/common'
-import FloatingAIButton from '../../app/ai/FloatingAIButton';  // Correct path
-import { Colors } from '../../constants/Colors';
-import globalStyles from '../../styles/globalStyles';
+import React from "react";
+import { View, Text, StyleSheet, StatusBar, Platform } from "react-native";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
+import CustomButtonTwo from "./CustomButtonTwo";
+import CustomButtonThree from "./CustomButtonThree";
+import FloatingAIButton from "../../app/ai/FloatingAIButton";
+import BottomNav from "../navbar/BottomNav";
+import { Colors } from "../../constants/Colors";
+import globalStyles from "../../styles/globalStyles";
+import { Font } from "@/constants/Font";
 
 /**
- * LogScreen - Reusable screen component with customizable layout
- * Features a dark background with header, customizable content, action buttons,
- * bottom navigation, and floating AI button for consistency across log screens
+ * LogScreen - Reusable screen template with consistent layout and navigation
+ * Provides standardized header, content area, and navigation components
  */
-
 const LogScreen = ({
-  title = '',
-  subtitle = '',
+  title = "",
+  subtitle = "",
   showBackButton = true,
   showAddButton = true,
-  onBackPress = () => console.log('Back pressed'),
-  onAddPress = () => console.log('Add pressed'),
+  onBackPress = () => console.log("Back pressed"),
+  onAddPress = () => console.log("Add pressed"),
   children,
   containerStyle,
   titleStyle,
@@ -37,48 +32,59 @@ const LogScreen = ({
   titleColor = Colors.dark.textPrimary,
   subtitleColor = Colors.dark.textPrimary,
 }) => {
-  const router = useRouter();
-  const theme = Colors["dark"];
+  const insets = useSafeAreaInsets();
+  const topPad = Math.max(
+    insets.top,
+    Platform.OS === "android" ? StatusBar.currentHeight ?? 0 : 0
+  );
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor }]}>
-      {/* Status bar configuration for dark theme */}
+    <SafeAreaView edges={['top', 'bottom']} style={[styles.safeArea, { backgroundColor }]}>
       <StatusBar barStyle="light-content" backgroundColor={backgroundColor} />
-      
+
       <View style={[globalStyles.container, { backgroundColor }, containerStyle]}>
-        {/* Header Section */}
-        <View style={styles.header}>
-          {/* Back button positioned on the left */}
+        {/* Header section with optional back button and title */}
+        <View style={[styles.header, { paddingTop: topPad -30}]}>
           {showBackButton && (
-            <View style={styles.backButtonContainer}>
+            <View style={[styles.backButtonContainer, { top: topPad - 30 }]}>
               <CustomButtonThree onPress={onBackPress} />
             </View>
           )}
-          
-          {/* Centered title */}
+
           {title && (
-            <Text style={[styles.title, globalStyles.welcomeText, { color: titleColor }, titleStyle]}>
+            <Text
+              style={[
+                styles.title,
+                globalStyles.welcomeText,
+                { color: titleColor, fontSize: 20, fontFamily: Font.semibold },
+                titleStyle,
+                
+              ]}
+            >
               {title}
             </Text>
           )}
         </View>
 
-        {/* Main content area */}
+        {/* Main content area with default or custom content */}
         <View style={styles.content}>
           {children ? (
-            // Render custom content if provided
             children
           ) : (
-            // Default content layout
             <>
-              {/* Centered subtitle */}
               {subtitle && (
-                <Text style={[styles.subtitle, globalStyles.cardText, { color: subtitleColor }, subtitleStyle]}>
+                <Text
+                  style={[
+                    styles.subtitle,
+                    globalStyles.cardText,
+                    { color: subtitleColor, fontSize: 24 },
+                    subtitleStyle,
+                  ]}
+                >
                   {subtitle}
                 </Text>
               )}
-              
-              {/* Centered add button */}
+
               {showAddButton && (
                 <View style={styles.addButtonContainer}>
                   <CustomButtonTwo onPress={onAddPress} />
@@ -89,30 +95,7 @@ const LogScreen = ({
         </View>
       </View>
 
-      {/* Bottom Navigation */}
-      <View style={[globalStyles.bottomNav, { backgroundColor: "#fff" }]}>
-        <TouchableOpacity style={globalStyles.navItem} onPress={() => router.push("/home/index")}>
-          <Ionicons name="home-outline" size={26} color={theme.tint} />
-          <Text style={[globalStyles.navText, { color: theme.tint }]}>Home</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={globalStyles.navItem} onPress={() => router.push("/main/analytics")}>
-          <Ionicons name="stats-chart-outline" size={26} color={theme.tint} />
-          <Text style={[globalStyles.navText, { color: theme.tint }]}>Analytics</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={globalStyles.navItem} onPress={() => router.push("/main/supplements")}>
-          <Ionicons name="medkit-outline" size={26} color={theme.tint} />
-          <Text style={[globalStyles.navText, { color: theme.tint }]}>Supplements</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={globalStyles.navItem} onPress={() => router.push("/profile/AccountSettings")}>
-          <Ionicons name="settings-outline" size={26} color={theme.tint} />
-          <Text style={[globalStyles.navText, { color: theme.tint }]}>Settings</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Floating AI Button */}
+      <BottomNav />
       <FloatingAIButton />
     </SafeAreaView>
   );
@@ -123,37 +106,34 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingTop: 20,
-    paddingBottom: 40,
-    position: 'relative',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    position: "relative",
   },
   backButtonContainer: {
-    position: 'absolute',
+    position: "absolute",
     left: 0,
-    top: 20,
+    top: 40,
   },
   title: {
     fontSize: 20,
-    textAlign: 'center',
+    textAlign: "center",
   },
   content: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: -80,
-    paddingBottom: 100, // Add padding to account for bottom navigation
+    justifyContent: "center",
+    alignItems: "center",
+    paddingBottom: 100,
   },
   subtitle: {
     fontSize: 25,
-    textAlign: 'center',
-    marginBottom: 50,
+    textAlign: "center",
+    marginBottom: 30,
     lineHeight: 30,
   },
   addButtonContainer: {
-    marginTop: 20,
+    marginTop: 0,
   },
 });
 

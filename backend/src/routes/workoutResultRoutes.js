@@ -26,8 +26,17 @@ router.post('/', auth, async (req, res, next) => {
             dateCompleted: new Date(),
         });
 
-        // return created result
-        return res.status(201).json(result);
+        // transform response for frontend
+        const response = {
+            id: result._id.toString(),
+            totalTimeSpent: result.totalTimeSpent,
+            completedExercises: result.completedExercises,
+            dateCompleted: result.dateCompleted.toISOString(),
+            workout_id: result.workout_id.toString(),
+        };
+
+        // return response
+        return res.status(201).json(response);
     } catch (err) {
         // pass to global error handler in server.js
         next(err);
@@ -45,8 +54,21 @@ router.get('/', auth, async (req, res, next) => {
             .sort({ dateCompleted: -1 })
             .populate('workout_id', 'workoutName workoutType');
 
-        // return array
-        return res.json(results);
+        // transform each result
+        const transformed = results.map(r => ({
+            id: r._id.toString(),
+            totalTimeSpent: r.totalTimeSpent,
+            completedExercises: r.completedExercises,
+            dateCompleted: r.dateCompleted.toISOString(),
+            workout_id: {
+                id: r.workout_id._id.toString(),
+                name: r.workout_id.workoutName, // renamed for frontend
+                type: r.workout_id.workoutType,
+            }
+        }));
+
+        // return transformed
+        return res.json(transformed);
     } catch (err) {
         next(err);
     }
@@ -70,7 +92,21 @@ router.get('/:id', auth, async (req, res, next) => {
         // if result not found, return 404
         if (!result) return res.status(404).json({ error: 'WorkoutResult not found' });
 
-        return res.json(result); // return single result
+        // transform response for frontend
+        const response = {
+            id: result._id.toString(),
+            totalTimeSpent: result.totalTimeSpent,
+            completedExercises: result.completedExercises,
+            dateCompleted: result.dateCompleted.toISOString(),
+            workout_id: {
+                id: result.workout_id._id.toString(),
+                name: result.workout_id.workoutName, // renamed for frontend
+                type: result.workout_id.workoutType,
+            }
+        };
+
+        // return response
+        return res.json(response);
     } catch (err) {
         next(err);
     }

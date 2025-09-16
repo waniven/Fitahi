@@ -8,7 +8,7 @@
   "include": [
     "**/*.js",
     "**/*.jsx"
-  ],
+, "components/nutrtition/NutrtitionDataCard"  ],
   "exclude": [
     "node_modules",
     "babel.config.js",

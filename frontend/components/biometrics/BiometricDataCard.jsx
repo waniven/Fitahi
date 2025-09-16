@@ -3,46 +3,56 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/Colors';
+import { Font, Type, TextVariants } from '../../constants/Font';
+import CustomToast from '../common/CustomToast';
 
-/**
- * BiometricDataCard - Reusable component for displaying biometric data
- * Features BMI calculation, weight/height display, and timestamp
- */
+// Configuration constants
+const BMI_RANGES = {
+  underweight: { min: 0, max: 18.5, text: 'Underweight', color: '#4FC3F7' },
+  normal: { min: 18.5, max: 25, text: 'Normal', color: '#66BB6A' },
+  overweight: { min: 25, max: 30, text: 'Overweight', color: '#FFB74D' },
+  obese: { min: 30, max: 100, text: 'Obese', color: '#EF5350' }
+};
+
+// Local text styles using Font constants
+const textStyles = {
+  bodyMedium: { fontSize: 16, ...Type.regular },
+  bodySmall: { fontSize: 16, ...Type.regular },
+  weightValue: { fontSize: 32, ...Type.bold },
+  bmiStatus: { fontSize: 16, ...Type.bold },
+};
+
+// Reusable component for displaying biometric data with BMI calculation and weight display
 const BiometricDataCard = ({ 
   entry, 
   age = 25, 
   onDelete, 
   showDeleteButton = true,
-  style 
+  style,
+  bmiRanges = BMI_RANGES
 }) => {
   
-  /**
-   * Calculate BMI from height and weight
-   */
+  // Calculate BMI from height and weight
   const calculateBMI = (weightKg, heightCm) => {
     const heightM = heightCm / 100;
     const bmi = weightKg / (heightM * heightM);
     return Math.round(bmi * 10) / 10;
   };
 
-  /**
-   * Determine BMI status category with color coding
-   */
+  // Determine BMI status category with color coding
   const getBMIStatus = (bmi) => {
-    if (bmi < 18.5) {
-      return { text: 'Underweight', color: '#4FC3F7' };
-    } else if (bmi >= 18.5 && bmi < 25) {
-      return { text: 'Normal', color: '#66BB6A' };
-    } else if (bmi >= 25 && bmi < 30) {
-      return { text: 'Overweight', color: '#FFB74D' };
+    if (bmi < bmiRanges.underweight.max) {
+      return { text: bmiRanges.underweight.text, color: bmiRanges.underweight.color };
+    } else if (bmi >= bmiRanges.normal.min && bmi < bmiRanges.normal.max) {
+      return { text: bmiRanges.normal.text, color: bmiRanges.normal.color };
+    } else if (bmi >= bmiRanges.overweight.min && bmi < bmiRanges.overweight.max) {
+      return { text: bmiRanges.overweight.text, color: bmiRanges.overweight.color };
     } else {
-      return { text: 'Obese', color: '#EF5350' };
+      return { text: bmiRanges.obese.text, color: bmiRanges.obese.color };
     }
   };
 
-  /**
-   * Format timestamp to display date and time like "08 Aug, 07:00am"
-   */
+  // Format timestamp to display date and time like "08 Aug, 07:00am"
   const formatTimestamp = (timestamp) => {
     const date = new Date(timestamp);
     const day = date.getDate().toString().padStart(2, '0');
@@ -51,9 +61,16 @@ const BiometricDataCard = ({
     const minutes = date.getMinutes().toString().padStart(2, '0');
     const ampm = hours >= 12 ? 'pm' : 'am';
     hours = hours % 12;
-    hours = hours ? hours : 12; // 0 should be 12
+    hours = hours ? hours : 12;
     
     return `${day} ${month}, ${hours.toString().padStart(2, '0')}:${minutes}${ampm}`;
+  };
+
+  // Handle delete with toast notification
+  const handleDelete = () => {
+    const weight = entry.weight.toFixed(1);
+    CustomToast.info('Measurement Removed', `${weight}kg entry deleted from your log`);
+    onDelete(entry.id);
   };
 
   const bmi = calculateBMI(entry.weight, entry.height);
@@ -61,20 +78,17 @@ const BiometricDataCard = ({
 
   return (
     <View style={[styles.cardContainer, style]}>
-      {/* Blue accent bar positioned inside the card */}
       <View style={styles.accentBar} />
       
-      {/* Main content area */}
       <View style={styles.contentContainer}>
-        {/* Timestamp in top right */}
         <View style={styles.headerRow}>
           <View style={styles.spacer} />
-          <Text style={styles.timestamp}>
+          <Text style={[textStyles.bodySmall, styles.timestamp]}>
             {formatTimestamp(entry.timestamp)}
           </Text>
           {showDeleteButton && onDelete && (
             <TouchableOpacity 
-              onPress={() => onDelete(entry.id)}
+              onPress={handleDelete}
               style={styles.deleteButton}
             >
               <Ionicons name="trash-outline" size={18} color="#999" />
@@ -82,23 +96,22 @@ const BiometricDataCard = ({
           )}
         </View>
 
-        {/* Weight display */}
         <View style={styles.weightSection}>
-          <Text style={styles.weightValue}>{entry.weight.toFixed(2)}</Text>
-          <Text style={styles.weightUnit}>kg</Text>
+          <Text style={[textStyles.weightValue, styles.weightValue]}>
+            {entry.weight.toFixed(2)}
+          </Text>
+          <Text style={[textStyles.bodyMedium, styles.weightUnit]}>kg</Text>
         </View>
 
-        {/* BMI status */}
         <View style={styles.bmiSection}>
-          <Text style={[styles.bmiStatus, { color: bmiStatus.color }]}>
+          <Text style={[textStyles.bmiStatus, styles.bmiStatus, { color: bmiStatus.color }]}>
             {bmiStatus.text}
           </Text>
-          <Text style={styles.bmiValue}> (BMI {bmi})</Text>
+          <Text style={[textStyles.bodyMedium, styles.bmiValue]}> (BMI {bmi})</Text>
         </View>
 
-        {/* Height and Age row */}
         <View style={styles.detailsRow}>
-          <Text style={styles.detailText}>
+          <Text style={[textStyles.bodySmall, styles.detailText]}>
             Height: {entry.height.toFixed(1)} cm | Age: {age}
           </Text>
         </View>
@@ -114,8 +127,8 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginTop: 40,
     marginBottom: 16,
-    width: 357, // Restore original width
-    height: 118, // Restore original height
+    width: 357,
+    height: 118,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -128,7 +141,7 @@ const styles = StyleSheet.create({
   accentBar: {
     position: 'absolute',
     left: 20,
-    top: (118 - 103) / 2, // Perfectly center vertically: (card height - bar height) / 2
+    top: (118 - 103) / 2,
     width: 8,
     height: 103,
     backgroundColor: Colors.light.primary,
@@ -138,7 +151,7 @@ const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
     padding: 16,
-    paddingLeft: 44, // Space for accent bar (20px margin + 8px bar + 16px spacing)
+    paddingLeft: 44,
     paddingTop: 8,
     paddingRight: 16,
   },
@@ -156,9 +169,7 @@ const styles = StyleSheet.create({
   },
 
   timestamp: {
-    fontSize: 14,
     color: '#666',
-    fontFamily: 'Montserrat_400Regular',
     textAlign: 'right',
   },
 
@@ -170,53 +181,42 @@ const styles = StyleSheet.create({
   weightSection: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    marginBottom: 2, // Reduced to make room for height/age
+    marginBottom: 2,
     marginTop: -17,
   },
 
   weightValue: {
-    fontSize: 32, // Back to original size
-    fontWeight: 'bold',
     color: Colors.light.primary,
-    fontFamily: 'Montserrat_700Bold',
     lineHeight: 36,
   },
 
   weightUnit: {
-    fontSize: 16,
     color: '#666',
     marginLeft: 4,
-    fontFamily: 'Montserrat_400Regular',
   },
 
   bmiSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 2, // Reduced to make room for height/age
+    marginBottom: 2,
     flexWrap: 'wrap',
   },
 
   bmiStatus: {
-    fontSize: 16,
-    fontWeight: '600',
-    fontFamily: 'Montserrat_700Bold',
+    // Color will be set dynamically based on BMI range
   },
 
   bmiValue: {
-    fontSize: 16,
     color: '#666',
-    fontFamily: 'Montserrat_400Regular',
   },
 
   detailsRow: {
     marginTop: 2,
-    justifyContent: 'flex-end', // Position at bottom
+    justifyContent: 'flex-end',
   },
 
   detailText: {
-    fontSize: 14,
     color: '#333',
-    fontFamily: 'Montserrat_400Regular',
   },
 });
 

@@ -11,6 +11,7 @@ import { getMe, updateMe } from "@/services/userService";
 import { logout } from "@/services/authService";
 import { router } from "expo-router";
 import CustomInput from '../../components/common/CustomInput';
+import Toast from 'react-native-toast-message'; 
 
 export default function AccountSettings() {
   const theme = Colors["dark"];
@@ -50,6 +51,7 @@ export default function AccountSettings() {
         const me = await getMe(); //get user info from backend
         if (!alive) return;
 
+
         const dobStr = toYmd(me.dateofbirth);
 
         setForm((prev) => ({
@@ -76,6 +78,40 @@ export default function AccountSettings() {
     })();
     return () => { alive = false; };
   }, []);
+  
+  // Validate inputs
+  const validateForm = () => {
+    let newErrors = {};
+
+    if (!/^[A-Za-z]+$/.test(form.firstName.trim())) {
+      newErrors.firstName = "First name must contain only letters.";  // first name must only contain letter no numbers etc
+    }
+    if (!/^[A-Za-z]+$/.test(form.lastName.trim())) {
+      newErrors.lastName = "Last name must contain only letters.";  //last name only contains letters
+    }
+    if (!/^\d{2}[\/-]\d{2}[\/-]\d{4}$/.test(form.dob.trim())) {
+      newErrors.dob = "Use DD/MM/YYYY format.";  //date format day/month/year
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
+      newErrors.email = "Invalid email format.";  //email must be valid
+    }
+    if (form.password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters.";  //password to be at least 6 characters
+    }
+    if (form.height && !/^\d+(\s?cm)?$/.test(form.height.trim())) {
+      newErrors.height = "Height must be a number (e.g. 170 cm)."; //height in cm
+    }
+    if (form.weight && !/^\d+(\s?kg)?$/.test(form.weight.trim())) {
+      newErrors.weight = "Weight must be a number (e.g. 65 kg).";  //weight in kgs
+    }
+    if (form.waterGoal && !/^\d+(\.\d+)?L$/i.test(form.waterGoal.trim())) {
+      newErrors.waterGoal = "Water goal must be like '2L' or '2.5L'.";  //water in L
+    }
+  
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
 
   // Pick profile image from gallery
   const pickImage = async () => {
@@ -111,10 +147,31 @@ export default function AccountSettings() {
   //Save chances to backend 
   const handleSave = async () => {
     try {
-      const firstname = form.firstName.trim();
-      const lastname = form.lastName.trim();
-      const email = form.email.trim().toLowerCase();
-      const dateofbirth = form.dob; 
+      
+      if(!validateForm()){
+      // Show toast if validation fails
+      Toast.show({
+        type: 'error',
+        text1: 'Validation Error',
+        text2: 'Please fix the errors before saving.',
+        position: 'top', //Show toast from the top
+        visibilityTime: 5000, //disappears after 5 seconds
+        autoHide: true,
+      });
+      return; //if requirements not met return error
+    }
+
+    console.log("Saved form data:", form);
+
+    // Show success toast when info saved
+    Toast.show({
+      type: 'success',
+      text1: 'Saved!',
+      text2: 'Your information has been updated.',
+      position: 'top', // Show toast from the top
+      visibilityTime: 5000, // notification disappears after 5 seconds
+      autoHide: true,
+    });
 
       //Build data URL if we have base64
       const pfp = profileImage?.base64
@@ -330,9 +387,14 @@ export default function AccountSettings() {
 
 
       </KeyboardAvoidingView>
+
+      {/* Toast for notifications */}
+      <Toast /> 
     </SafeAreaView>
   );
 }
+
+
 
 const styles = StyleSheet.create({
   container: {
@@ -451,4 +513,10 @@ const styles = StyleSheet.create({
     marginVertical: 16,
     position: "relative",
   },
+  errorText: {
+  color: "red",
+  fontSize: 12,
+  marginTop: 4,
+  fontFamily: "Montserrat",
+},
 });

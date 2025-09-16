@@ -3,6 +3,7 @@ import { Slot } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import AIProvider from './ai/AIContext';
+import Toast from 'react-native-toast-message';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -26,6 +27,9 @@ export default function RootLayout() {
   return (
     <AIProvider>
       <Slot />
+      <Toast />
+
     </AIProvider>
   );
 }
+

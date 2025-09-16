@@ -1,17 +1,7 @@
-// app/home/index.jsx
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import {
-  Dimensions,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-  Modal,
-  TextInput,
-} from "react-native";
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Colors } from "../../constants/Colors";
 import FloatingAIButton from "../ai/FloatingAIButton";
@@ -19,96 +9,145 @@ import FitahiLogo from "../../constants/FitahiLogo";
 import { Calendar } from "react-native-calendars";
 import Toast from "react-native-toast-message";
 import globalStyles from "../../styles/globalStyles";
-import BottomNav from "../../components/navbar/Bottomnav";
-
-const { width } = Dimensions.get("window");
+import BottomNav from "@/components/navbar/BottomNav";
+import ReminderModal from "@/components/reminders/ReminderModal";
+import LogCards from "@/components/logcards/LogCards";
 
 export default function Home() {
   const theme = Colors["dark"];
   const router = useRouter();
-  const cardWidth = (width - 60) / 2; // Two cards per row with spacing
 
+  // Premium banner for premium button
   const [showPremium, setShowPremium] = useState(true);
-  const [reminders, setReminders] = useState([]); // All reminders
+  // Reminder state - will require API fetch
+  const [reminders, setReminders] = useState([]);
+  // Modal control
   const [modalVisible, setModalVisible] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(""); // Selected calendar date
-  const [currentReminder, setCurrentReminder] = useState({ id: "", text: "" }); // Editing or adding reminders
+  // Date viewing and selection
+  const [viewingDate, setViewingDate] = useState(new Date().toISOString().split("T")[0]);
+  const [editingReminder, setEditingReminder] = useState(null);
 
-  // Marked dates for the calendar
+  // Today's date formatted
+  const formattedToday = new Date().toISOString().split("T")[0];
+
+  // Enhanced marked dates with better visual indicators
   const markedDates = reminders.reduce((acc, r) => {
-    acc[r.date] = { marked: true, dotColor: theme.tint }; // Blue dot for reminders on calender
+    acc[r.date] = { marked: true, dotColor: theme.tint };
     return acc;
-  }, {});
+  }, {
+    // Highlight today
+    [formattedToday]: {
+      selected: true,
+      selectedColor: theme.tint + '40',
+    }
+  });
+
+  // Get reminders for the currently viewing date
+  const getRemindersForDate = (date) => {
+    return reminders.filter(r => r.date === date);
+  };
+
+  // Handle calendar day press - just for viewing and prevent selecting past dates
+  const handleDayPress = (day) => {
+    const today = new Date();
+    const selected = new Date(day.dateString);
+    if(selected < new Date(formattedToday)) return;
+
+    setViewingDate(day.dateString);
+  };
+
+  // Handle creating new reminder
+  const handleCreateReminder = () => {
+    setEditingReminder(null);
+    setModalVisible(true);
+  };
+
+  // Handle editing existing reminder
+  const handleEditReminder = (reminder) => {
+    setEditingReminder(reminder);
+    setModalVisible(true);
+  };
 
   // Save or update a reminder
-  const saveReminder = () => {
-    if (!currentReminder.text) return;
+  const handleSaveReminder = (reminderData) => {
+    const now = new Date();
+    const selected = new Date(reminderData.date + 'T' + (reminderData.time || '00:00'));
 
-    if (currentReminder.id) {
+    // Prevent past reminders
+    if (selected < now){
+      Toast.show({
+        type: 'error',
+        text1: 'Invalid Reminder',
+        text2: 'Cannot set a reminder in the past',
+      });
+      return;
+    }
+
+    if (reminderData.id && reminders.find(r => r.id === reminderData.id)) {
       // Update existing reminder
-      setReminders((prev) =>
-        prev.map((r) =>
-          r.id === currentReminder.id ? { ...r, text: currentReminder.text } : r
-        )
+      setReminders(prev =>
+        prev.map(r => r.id === reminderData.id ? reminderData : r)
       );
       Toast.show({
         type: "success",
         text1: "Reminder Updated",
-        text2: `${currentReminder.text}`,
+        text2: reminderData.title,
       });
     } else {
       // Add new reminder
-      const newReminder = {
-        id: Date.now().toString(),
-        date: selectedDate,
-        text: currentReminder.text,
-      };
-      setReminders((prev) => [...prev, newReminder]);
+      setReminders(prev => [...prev, reminderData]);
       Toast.show({
         type: "success",
         text1: "Reminder Added",
-        text2: `${currentReminder.text}`,
+        text2: reminderData.title,
       });
     }
-    setModalVisible(false);
   };
 
-  // Delete a reminder
-  const deleteReminder = (id) => {
-    const deleted = reminders.find((r) => r.id === id);
-    setReminders((prev) => prev.filter((r) => r.id !== id));
-
+  // Delete reminder by ID
+  const handleDeleteReminder = (id) => {
+    const deleted = reminders.find(r => r.id === id);
+    setReminders(prev => prev.filter(r => r.id !== id));
     Toast.show({
       type: "info",
       text1: "Reminder Deleted",
-      text2: `${deleted.text}`,
+      text2: deleted?.title || "",
     });
-    setModalVisible(false);
   };
 
+  // Quick log cards data
+  const quickLogCards = [
+    { title: "Your Analytics", icon: "📊", color: theme.tint, onPress: () => router.push("/main/analytics") },
+    { title: "Your Reminders", icon: "🔔", color: theme.tint, onPress: () => router.push("/main/reminders") },
+    { title: "Workout Log", icon: "🏋️", color: theme.tint, onPress: () => router.push("/main/workouts") },
+    { title: "Nutrition Log", icon: "🍎", color: theme.tint, onPress: () => router.push("/main/nutrition") },
+    { title: "Supplement Log", icon: "💊", color: theme.tint, onPress: () => router.push("/main/supplements") },
+    { title: "Water Log", icon: "💧", color: theme.tint, onPress: () => router.push("/main/water") },
+    { title: "Gym Finder", icon: "🗺️", color: theme.tint, onPress: () => router.push("/main/gymsFinder") },
+    { title: "Biometrics Log", icon: "📏", color: theme.tint, onPress: () => router.push("/main/biometrics") },
+  ];
+
   return (
-    <SafeAreaView
-      style={[styles.container, { backgroundColor: theme.background }]}
-    >
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       <ScrollView contentContainerStyle={{ flexGrow: 1, paddingBottom: 140 }}>
-        {/* logo */}
+        {/* Logo */}
         <View style={styles.logoContainer}>
           <FitahiLogo width={320} height={140} fill="#FFFFFF" />
         </View>
 
-        {/*calendars and reminders */}
+        {/* Calendar + Reminders */}
         <View style={[styles.widgetCard, { backgroundColor: "#fff" }]}>
           <Calendar
             style={{ borderRadius: 16, backgroundColor: "#fff" }}
             theme={{
-              backgroundColor: "#fff", // calender background
-              calendarBackground: "#fff", // Calendar container
-              textSectionTitleColor: "#000", // Weekday headers black
+              backgroundColor: "#fff",
+              calendarBackground: "#fff",
+              textSectionTitleColor: "#000",
               todayTextColor: "#000",
-              todayBackgroundColor: theme.tint, // highight current day
+              todayBackgroundColor: theme.tint,
               dayTextColor: "#000",
               monthTextColor: "#000",
-              arrowColor: theme.tint, // Navigation arrows
+              arrowColor: theme.tint,
               textDisabledColor: "#999",
               textDayFontSize: 14,
               textMonthFontSize: 16,
@@ -116,299 +155,202 @@ export default function Home() {
               selectedDayBackgroundColor: theme.tint,
               selectedDayTextColor: "#fff",
             }}
-            current={new Date().toISOString().split("T")[0]}
-            hideExtraDays={true}
+            current={viewingDate}           // Dynamic current month
+            hideExtraDays
             firstDay={1}
-            enableSwipeMonths={true}
+            enableSwipeMonths={true}        // Scrollable months
             markedDates={markedDates}
-            onDayPress={(day) => {
-              setSelectedDate(day.dateString);
-              setCurrentReminder({ id: "", text: "" });
-              setModalVisible(true);
-            }}
+            minDate={formattedToday}        // Prevent selecting past dates
+            onDayPress={handleDayPress}
           />
 
-          {/* Reminders next to calender*/}
-          <View style={styles.remindersContainer}>
-            <Text style={[globalStyles.cardText, { color: "#000" }]}>
-              Reminders
+          {/* Date Info Header */}
+          <View style={styles.dateHeader}>
+            <Text style={[globalStyles.cardText, { color: "#000", fontSize: 16, flex: 1 }]}>
+              {new Date(viewingDate).toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+              })}
             </Text>
-            {reminders
-              .filter((r) => r.date === selectedDate)
-              .map((r) => (
-                <TouchableOpacity
-                  key={r.id}
-                  style={styles.reminderItem}
-                  onPress={() => {
-                    setSelectedDate(r.date);
-                    setCurrentReminder({ id: r.id, text: r.text });
-                    setModalVisible(true);
-                  }}
-                >
-                  <Text style={[globalStyles.cardText, { color: "#000" }]}>
-                    {r.text} ({r.date})
-                  </Text>
+            <TouchableOpacity style={styles.addReminderButton} onPress={handleCreateReminder}>
+              <Ionicons name="add" size={16} color={theme.tint} />
+              <Text style={styles.addReminderText}>Add reminder</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Reminders Display */}
+          <View style={styles.remindersContainer}>
+            {(() => {
+              const dayReminders = getRemindersForDate(viewingDate);
+              if (dayReminders.length === 0) {
+                return (
+                  <View style={styles.emptyState}>
+                    <Ionicons name="calendar-outline" size={32} color="#ccc" />
+                    <Text style={{ color: "#888", marginTop: 8, textAlign: 'center' }}>
+                      No reminders for this day
+                    </Text>
+                  </View>
+                );
+              }
+              return dayReminders.slice(0, 3).map((reminder) => (
+                <TouchableOpacity key={reminder.id} style={styles.reminderItem} onPress={() => handleEditReminder(reminder)}>
+                  <View style={styles.reminderContent}>
+                    <View style={styles.reminderHeader}>
+                      <Text style={[globalStyles.cardText, { color: "#000", flex: 1 }]}>{reminder.title}</Text>
+                      <Text style={styles.reminderTime}>{reminder.time || "No time"}</Text>
+                    </View>
+                    {reminder.notes && <Text style={styles.reminderNotes}>{reminder.notes}</Text>}
+                    {reminder.repeat !== "None" && (
+                      <View style={styles.repeatBadge}>
+                        <Ionicons name="repeat" size={12} color={theme.tint} />
+                        <Text style={styles.repeatText}>{reminder.repeat}</Text>
+                      </View>
+                    )}
+                  </View>
+                  <Ionicons name="chevron-forward" size={16} color="#ccc" />
                 </TouchableOpacity>
-              ))}
+              ));
+            })()}
           </View>
         </View>
 
-        {/* premium card */}
+        {/* Premium card */}
         {showPremium && (
           <View style={[styles.premiumCard, { backgroundColor: "#fff" }]}>
             <Ionicons name="diamond-outline" size={20} color={theme.tint} />
-            <Text style={[globalStyles.premiumText, { color: theme.tint }]}>
-              Premium Membership
-            </Text>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setShowPremium(false)}
-            >
+            <Text style={[globalStyles.premiumText, { color: theme.tint }]}>Premium Membership</Text>
+            <TouchableOpacity style={styles.closeButton} onPress={() => setShowPremium(false)}>
               <Text style={{ color: theme.tint, fontWeight: "700" }}>✕</Text>
             </TouchableOpacity>
           </View>
         )}
 
-        {/* quick log cards */}
-        <View style={styles.row}>
-          <TouchableOpacity
-            style={[styles.card, { width: cardWidth, backgroundColor: "#fff" }]}
-            onPress={() => router.push("/main/analytics")}
-          >
-            <Text style={[globalStyles.cardText, { color: theme.tint }]}>
-              📊 Your Analytics
-            </Text>
-          </TouchableOpacity>
+        {/* Quick log cards */}
+        <LogCards cards={quickLogCards} />
 
-          <TouchableOpacity
-            style={[styles.card, { width: cardWidth, backgroundColor: "#fff" }]}
-            onPress={() => router.push("/main/reminders")}
-          >
-            <Text style={[globalStyles.cardText, { color: theme.tint }]}>
-              🔔 Your Reminders
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.row}>
-          <TouchableOpacity
-            style={[styles.card, { width: cardWidth, backgroundColor: "#fff" }]}
-            onPress={() => router.push("/main/workouts")}
-          >
-            <Text style={[globalStyles.cardText, { color: theme.tint }]}>
-              🏋️ Workout Log
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.card, { width: cardWidth, backgroundColor: "#fff" }]}
-            onPress={() => router.push("/main/nutrition")}
-          >
-            <Text style={[globalStyles.cardText, { color: theme.tint }]}>
-              🍎 Nutrition Log
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.row}>
-          <TouchableOpacity
-            style={[styles.card, { width: cardWidth, backgroundColor: "#fff" }]}
-            onPress={() => router.push("/main/supplements")}
-          >
-            <Text style={[globalStyles.cardText, { color: theme.tint }]}>
-              💊 Supplement Log
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.card, { width: cardWidth, backgroundColor: "#fff" }]}
-            onPress={() => router.push("/main/water")}
-          >
-            <Text style={[globalStyles.cardText, { color: theme.tint }]}>
-              💧 Water Log
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.row}>
-          <TouchableOpacity
-            style={[styles.card, { width: cardWidth, backgroundColor: "#fff" }]}
-            onPress={() => router.push("/main/gymfinder")}
-          >
-            <Text style={[globalStyles.cardText, { color: theme.tint }]}>
-              🗺️ Gym Finder
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.card, { width: cardWidth, backgroundColor: "#fff" }]}
-            onPress={() => router.push("/main/biometrics")}
-          >
-            <Text style={[globalStyles.cardText, { color: theme.tint }]}>
-              📏 Biometrics Log
-            </Text>
-          </TouchableOpacity>
-        </View>
       </ScrollView>
 
-      {/* bottom navigation */}
-      <BottomNav />
+      {/* Reminder Modal */}
+      <ReminderModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        onSave={handleSaveReminder}
+        onDelete={handleDeleteReminder}
+        reminder={editingReminder}
+        selectedDate={viewingDate}
+      />
 
-      {/* floating ai button */}
+      {/* Bottom navigation + AI button */}
+      <BottomNav />
       <FloatingAIButton />
 
-      {/* reminder modal */}
-      <Modal
-        visible={modalVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalBackground}>
-          <View style={[styles.modalContent, { backgroundColor: "#fff" }]}>
-            <Text style={[globalStyles.cardText, { color: "#000" }]}>
-              {currentReminder.id ? "Edit Reminder" : "Add Reminder"}
-            </Text>
-            <TextInput
-              placeholder="Reminder text"
-              placeholderTextColor="#888"
-              style={[
-                globalStyles.input,
-                { color: "#000", borderColor: theme.tint },
-              ]}
-              value={currentReminder.text}
-              onChangeText={(text) =>
-                setCurrentReminder({ ...currentReminder, text })
-              }
-            />
-
-            <View style={styles.modalButtons}>
-              {currentReminder.id && (
-                <TouchableOpacity
-                  style={[styles.modalButton, { backgroundColor: "#FF4D4D" }]}
-                  onPress={() => deleteReminder(currentReminder.id)}
-                >
-                  <Text style={[globalStyles.cardText, { color: "#fff" }]}>
-                    Delete
-                  </Text>
-                </TouchableOpacity>
-              )}
-              <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: theme.tint }]}
-                onPress={saveReminder}
-              >
-                <Text style={[globalStyles.cardText, { color: "#fff" }]}>
-                  Save
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: "#888" }]}
-                onPress={() => setModalVisible(false)}
-              >
-                <Text style={[globalStyles.cardText, { color: "#fff" }]}>
-                  Cancel
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
+      {/* Global toast notifications */}
       <Toast />
     </SafeAreaView>
   );
 }
 
+// Styles
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-
-  // Logo
-  logoContainer: {
-    alignItems: "center",
-    marginVertical: 10,
-    marginTop: 70,
+  container: { 
+    flex: 1 
   },
-
-  // Calendar + Reminders Card
-  widgetCard: {
-    borderRadius: 16,
-    padding: 12,
-    marginHorizontal: 20,
-    marginVertical: 10,
-    flexDirection: "row",
-    backgroundColor: "#fff",
+  logoContainer: { 
+    alignItems: "center", 
+    marginVertical: 10, 
+    marginTop: 70 
   },
-  remindersContainer: {
-    flex: 1,
-    marginTop: 0,
+  widgetCard: { 
+    borderRadius: 16, 
+    padding: 12, 
+    marginHorizontal: 20, 
+    marginVertical: 10, 
+    backgroundColor: "#fff" 
   },
-  reminderItem: {
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: "#444",
+  remindersContainer: { 
+    marginTop: 8 
   },
-
-  // Premium card
-  premiumCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 16,
+  emptyState: { 
+    alignItems: 'center', 
+    paddingVertical: 32 
+  },
+  reminderItem: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    paddingVertical: 12, 
+    paddingHorizontal: 4, 
+    borderBottomWidth: 1, 
+    borderBottomColor: '#f0f0f0' 
+  },
+  reminderContent: { 
+    flex: 1 
+  },
+  reminderHeader: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    marginBottom: 4 
+  },
+  reminderTime: { 
+    fontSize: 12, 
+    color: '#666', 
+    backgroundColor: '#f5f5f5', 
+    paddingHorizontal: 8, 
+    paddingVertical: 2, 
+    borderRadius: 8 
+  },
+  reminderNotes: { 
+    fontSize: 12, 
+    color: '#888', 
+    marginBottom: 4 
+  },
+  repeatBadge: { 
+    flexDirection: 'row', 
+    alignItems: 'center' 
+  },
+  repeatText: { 
+    fontSize: 10, 
+    color: '#4A90E2', 
+    marginLeft: 2 
+  },
+  premiumCard: { 
+    flexDirection: "row", 
+    alignItems: "center", 
+    padding: 16, 
+    borderRadius: 12, 
+    marginHorizontal: 20, 
+    marginBottom: 16, 
+    shadowColor: "#f3ededff", 
+    shadowOpacity: 0.1, 
+    shadowRadius: 6, 
+    elevation: 4, 
+    marginTop: 30 
+  },
+  closeButton: { 
+    marginLeft: "auto" 
+  },
+  dateHeader: { 
+    flexDirection: 'row',
+    justifyContent: 'flex-start', 
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingTop: 16,
+    paddingBottom: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+  }, 
+  addReminderText: {
+    marginLeft: 4,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  addReminderButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 4,
+    paddingHorizontal: 6,
     borderRadius: 12,
-    marginHorizontal: 20,
-    marginBottom: 16,
-    shadowColor: "#f3ededff",
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 4,
-    marginTop: 30,
-  },
-  closeButton: {
-    marginLeft: "auto",
-  },
-
-  // Quick log button grid
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    marginBottom: 16,
-  },
-  card: {
-    borderRadius: 16,
-    padding: 20,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 3,
-  },
-
-  // Modal
-  modalBackground: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.6)",
-    paddingHorizontal: 20,
-  },
-  modalContent: {
-    width: "100%",
-    borderRadius: 16,
-    padding: 20,
-    shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    elevation: 6,
-  },
-  modalButtons: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  modalButton: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: "center",
-    marginHorizontal: 4,
+    backgroundColor: '#f0f8ff',
   },
 });
