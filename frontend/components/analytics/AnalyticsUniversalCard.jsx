@@ -11,6 +11,7 @@ const AnalyticsUniversalCard = ({
   entry, 
   type, // 'water', 'workout', or 'biometric'
   onDelete, 
+  onPress, // New prop for handling card press
   showDeleteButton = false,
   style,
   ...props
@@ -69,6 +70,11 @@ const AnalyticsUniversalCard = ({
     onDelete && onDelete(entry.id);
   };
 
+  // Handle card press
+  const handlePress = () => {
+    onPress && onPress(entry);
+  };
+
   // Get the main value and unit based on type
   const getMainDisplay = () => {
     if (type === 'water') {
@@ -113,8 +119,9 @@ const AnalyticsUniversalCard = ({
 
   const mainDisplay = getMainDisplay();
 
-  return (
-    <View style={[styles.cardContainer, style]} {...props}>
+  // Wrap in TouchableOpacity if onPress is provided
+  const CardContent = (
+    <>
       <View style={[styles.accentBar, { backgroundColor: mainDisplay.color }]} />
       
       <View style={styles.contentContainer}>
@@ -154,6 +161,25 @@ const AnalyticsUniversalCard = ({
           </Text>
         </View>
       </View>
+    </>
+  );
+
+  if (onPress) {
+    return (
+      <TouchableOpacity 
+        style={[styles.cardContainer, style]} 
+        onPress={handlePress}
+        activeOpacity={0.7}
+        {...props}
+      >
+        {CardContent}
+      </TouchableOpacity>
+    );
+  }
+
+  return (
+    <View style={[styles.cardContainer, style]} {...props}>
+      {CardContent}
     </View>
   );
 };

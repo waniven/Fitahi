@@ -1,3 +1,4 @@
+// app/analytics/WorkoutAnalyticsScreen.jsx
 import React from 'react';
 import { ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -14,6 +15,17 @@ export default function WorkoutAnalyticsScreen() {
 
   const handleDelete = (id) => {
     console.log('Delete workout entry:', id);
+  };
+
+  const handleWorkoutPress = (workoutEntry) => {
+    // Navigate to workout result screen with the workout data
+    router.push({
+      pathname: '/analytics/WorkoutResult',
+      params: {
+        workoutData: JSON.stringify(workoutEntry),
+        returnTo: 'analytics'
+      }
+    });
   };
 
   return (
@@ -33,6 +45,7 @@ export default function WorkoutAnalyticsScreen() {
             entry={entry}
             type="workout"
             onDelete={handleDelete}
+            onPress={handleWorkoutPress} // Add click handler
             showDeleteButton={false}
           />
         ))}
