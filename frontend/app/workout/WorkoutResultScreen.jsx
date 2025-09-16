@@ -14,7 +14,7 @@ export default function WorkoutResultScreen({ route, navigation }) {
   const result = route?.params?.result;
   const workout = route?.params?.workout;
 
-  const workoutName = workout?.name ?? "Workout";
+  const workoutName = workout?.workoutName ?? "Workout";
   const total = result?.totalTimeSpent ?? 0;
   const completed = Array.isArray(result?.completedExercises)
     ? result.completedExercises

@@ -1,6 +1,5 @@
 import { useState, useEffect, useLayoutEffect, useContext } from "react";
 import * as workoutService from "../../services/workoutService";
-import { loginTemp } from "../../services/api";
 import {
   Text,
   FlatList,
@@ -18,7 +17,6 @@ import { Font } from "@/constants/Font";
 import Fab from "@/components/FloatingActionButton";
 import CustomButtonThree from "../../components/common/CustomButtonThree";
 import { AIContext } from "../ai/AIContext";
-import { useRouter } from "expo-router";
 import BottomNav from "@/components/navbar/BottomNav";
 import LoadingProgress from "@/components/LoadingProgress";
 
@@ -75,18 +73,11 @@ function CreateWorkout({ navigation }) {
 
   const isEmpty = workout.length === 0;
 
-  // fetching workouts when screen mounts - TO BE CHANGED LATER
+  // fetching workouts when screen mounts
   useEffect(() => {
     async function init() {
-      const loggedIn = await loginTemp();
-      if (!loggedIn) {
-        console.error("Could not log in, skipping fetch.");
-        setIsLoading(false);
-        return;
-      }
-
       try {
-        // Example: simulate incremental progress while fetching
+        // simulate incremental progress while fetching
         setLoadingProgress(0.3);
         const data = await workoutService.getWorkouts();
         setLoadingProgress(0.7);
@@ -267,20 +258,4 @@ const styles = StyleSheet.create({
   },
   centerInner: { alignItems: "center", gap: 10 },
   emptyText: { fontSize: 24, margin: 20 },
-  bottomNav: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
-    flexDirection: "row",
-    justifyContent: "space-around",
-    paddingVertical: 12,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    zIndex: 1000,
-    ...(Platform.OS === "android" ? { elevation: 20 } : {}),
-  },
-  navItem: {
-    alignItems: "center",
-  },
 });

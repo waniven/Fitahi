@@ -538,16 +538,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderWidth: 1,
   },
-  reminderWrap: {
-    alignItems: "center",
-    marginTop: 8,
-    marginBottom: 150,
-    paddingHorizontal: 16,
-  },
+  
   reminderText: {
     fontSize: 12,
     textAlign: "center",
     opacity: 0.8,
+    flex: 1,
+    lineHeight: 20,
   },
   reminderSection: {
     marginBottom: 20,
@@ -568,8 +565,4 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 
-  reminderText: {
-    flex: 1,
-    lineHeight: 20,
-  },
 });

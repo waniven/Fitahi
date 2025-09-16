@@ -1,5 +1,6 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { StatusBar } from "expo-status-bar";
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColorScheme } from "react-native";
 import { Colors } from "@/constants/Colors";
 import { Font } from "@/constants/Font";
@@ -12,11 +13,12 @@ const Stack = createNativeStackNavigator();
 
 
 export default function SupplementsMainScreen() {
+  const insets = useSafeAreaInsets();
   const theme = Colors[useColorScheme() ?? "light"];
-
+  const topPad = Math.max(insets.top, 24);
   return (
     <>
-      <StatusBar style="light" />
+      <StatusBar style="light" translucent={false} />
       <Stack.Navigator
         screenOptions={{
           headerStyle: {
@@ -25,6 +27,8 @@ export default function SupplementsMainScreen() {
             borderBottomWidth: 1,
             shadowColor: "#fff",
             elevation: 4,
+            paddingTop: topPad,
+            height: 56 + topPad,
           },
           headerTintColor: theme.textPrimary,
           headerTitleAlign: "center",
@@ -38,21 +42,7 @@ export default function SupplementsMainScreen() {
           component={LogSupplements}
           options={{ title: "Supplement Log" }}
         />
-        {/* <Stack.Screen
-          name="StartWorkoutScreen"
-          component={StartWorkoutScreen}
-          options={({ route }) => ({
-            title:
-              route?.params?.workoutDetail?.name ??
-              route?.params?.workout?.name ??
-              "Start Workout",
-          })}
-        />
-        <Stack.Screen
-          name="WorkoutResult"
-          component={WorkoutResultScreen}
-          options={{ title: "" }}
-        /> */}
+        
       </Stack.Navigator>
     </>
   );

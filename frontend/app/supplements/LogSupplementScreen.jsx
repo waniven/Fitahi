@@ -34,7 +34,6 @@ function LogSupplements({ navigation }) {
       else router.replace("/home/index");
     };
     navigation.setOptions({
-      
       headerLeft: () => (
         <CustomButtonThree onPress={() => navigation.goBack()} />
       ),
@@ -578,7 +577,6 @@ const styles = StyleSheet.create({
     zIndex: 1000,
     ...(Platform.OS === "android" ? { elevation: 20 } : {}),
   },
-  navItem: { alignItems: "center" },
 
   // TODAY card
   todayCard: {
