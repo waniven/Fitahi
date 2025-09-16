@@ -18,7 +18,6 @@ import { Font } from "@/constants/Font";
 import Fab from "@/components/FloatingActionButton";
 import CustomButtonThree from "../../components/common/CustomButtonThree";
 import { AIContext } from "../ai/AIContext";
-import { useRouter } from "expo-router";
 import BottomNav from "@/components/navbar/BottomNav";
 import LoadingProgress from "@/components/LoadingProgress";
 
@@ -267,20 +266,4 @@ const styles = StyleSheet.create({
   },
   centerInner: { alignItems: "center", gap: 10 },
   emptyText: { fontSize: 24, margin: 20 },
-  bottomNav: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
-    flexDirection: "row",
-    justifyContent: "space-around",
-    paddingVertical: 12,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    zIndex: 1000,
-    ...(Platform.OS === "android" ? { elevation: 20 } : {}),
-  },
-  navItem: {
-    alignItems: "center",
-  },
 });

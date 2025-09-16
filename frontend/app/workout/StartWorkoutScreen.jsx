@@ -402,14 +402,7 @@ const styles = StyleSheet.create({
     gap: 12,
     justifyContent: "center",
   },
-  circleBtn: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    borderWidth: 2,
-    alignItems: "center",
-    justifyContent: "center",
-  },
+  
   nextBtn: {
     paddingVertical: 14,
     paddingHorizontal: 24,
@@ -418,14 +411,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
 
-  endBtn: {
-    marginTop: 24,
-    alignSelf: "center",
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingVertical: 12,
-    paddingHorizontal: 18,
-  },
   runBtn: {
     paddingVertical: 12,
     paddingHorizontal: 24,
