@@ -6,6 +6,8 @@ import { Colors } from '../../constants/Colors';
 import globalStyles from '../../styles/globalStyles';
 import CustomInput from '../../components/common/CustomInput';
 import CustomButton from '../../components/common/CustomButton';
+import { signup } from '@/services/userService';
+import { login } from '@/services/authService';
 import CustomToast from '../../components/common/CustomToast';
 
 // Validation functions
@@ -47,6 +49,8 @@ const dateValidation = (date) => {
 export default function SignUp() {
   const router = useRouter();
   const theme = Colors["dark"];
+  
+  
 
   // Form state
   const [formData, setFormData] = useState({
@@ -56,8 +60,10 @@ export default function SignUp() {
     password: '',
   });
 
+  const [busy, setBusy] = useState(false); 
   const [selectedDate, setSelectedDate] = useState(null);
   const [errors, setErrors] = useState({});
+  const [formError, setFormError] = useState("");
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 
   // Updates form data for a specific field
@@ -141,17 +147,43 @@ export default function SignUp() {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Handles form submission with toast notifications
-  const handleContinue = () => {
+  /**
+   * Handles form submission with toast notifications
+   */
+  const handleContinue = async () => {
     setHasAttemptedSubmit(true);
-
+    
     if (validateForm()) {
       CustomToast.success("Welcome to Fitahi!", "Account created successfully");
       console.log('Form data:', {
         ...formData,
         dateOfBirth: selectedDate
       });
-      router.push('/profile/quiz');
+
+    const firstname = formData.firstName.trim();
+    const lastname = formData.lastName.trim();
+    const email = formData.email.trim().toLowerCase();
+    const password = formData.password; 
+    const dateofbirth = selectedDate;
+
+    console.log('Payload:', { firstname, lastname, email, dateofbirth });
+
+      try {
+        setBusy(true);
+        await signup ({ firstname, lastname, email, dateofbirth, password });
+        //login after creating user
+        await login(email, password);
+        router.push('/profile/quiz');
+      } catch (err) {
+        const status = err?.response?.status;
+        const serverMsg = err?.response?.data?.error;
+        const msg = serverMsg || `Sign up failed${status ? ` (${status})` : ""}`;
+        setFormError(msg);
+        console.log(msg);
+        if (!serverMsg) console.log("SIGNUP ERROR:", { status, data: err?.response?.data, message: err?.message, code: err?.code });
+      } finally {
+        setBusy(false);
+      }
     } else {
       CustomToast.validationError("Please fix the errors below");
     }
@@ -254,5 +286,11 @@ const styles = StyleSheet.create({
   formContainer: { 
     width: "100%", 
     alignItems: "center" 
+  },
+
+  errorText: { 
+    color: "#FF4D4D", 
+    fontSize: 14, 
+    marginTop: 10 
   },
 });

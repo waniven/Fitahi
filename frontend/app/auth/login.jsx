@@ -8,15 +8,16 @@ import CustomInput from "../../components/common/CustomInput";
 import CustomButton from "../../components/common/CustomButton";
 import CustomToast from "../../components/common/CustomToast";
 import globalStyles from "../../styles/globalStyles"; 
+import { login } from "../../services/authService";
 
 export default function Login() {
   const router = useRouter();
   const theme = Colors["dark"];
-  
-  // Form state
+
+  //for state
   const [formData, setFormData] = useState({ email: "", password: "" });
-  const [errors, setErrors] = useState({});
-  const [hasAttemptedLogin, setHasAttemptedLogin] = useState(false);
+  const [error, setError] = useState(""); //error message for validation
+  const [busy, setBusy] = useState(false);
 
   // Email validation function
   const validateEmail = (email) => {
@@ -52,13 +53,17 @@ export default function Login() {
     }
   };
 
-  // Validate all form fields
-  const validateForm = () => {
-    const newErrors = {};
-    
-    const emailError = validateEmail(formData.email);
-    if (emailError) {
-      newErrors.email = emailError;
+
+  //validation and navigation
+  const handleLogin = async () => {
+    const email = formData.email.trim();
+    const password = formData.password;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!formData.email || !emailRegex.test(formData.email)) {
+      setError("Please enter a valid email");
+      return;
+
     }
     
     const passwordError = validatePassword(formData.password);
@@ -70,25 +75,20 @@ export default function Login() {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Handle login with validation and toast notifications
-  const handleLogin = () => {
-    setHasAttemptedLogin(true);
-    
-    if (validateForm()) {
-      // Success case
+    try {
+      setBusy(true);
+      await login(email, password);
       CustomToast.success("Welcome Back!", "Login successful");
-      router.push("/home");
-    } else {
-      // Show validation error toast
-      if (errors.email && errors.password) {
-        CustomToast.error("Login Failed", "Please check your email and password");
-      } else if (errors.email) {
-        CustomToast.error("Invalid Email", "Please enter a valid email address");
-      } else if (errors.password) {
-        CustomToast.error("Login Failed", "Password is required");
-      } else {
-        CustomToast.error("Login Failed", "Please check your credentials");
-      }
+      router.replace("/home");
+    } catch (err) {
+        const status = err?.response?.status;
+        const serverMsg = err?.response?.data?.error;
+        const msg = serverMsg || `Login failed${status ? ` (${status})` : ""}`;
+        setError(msg);
+        CustomToast.error(msg);
+        if (!serverMsg) console.log("LOGIN ERROR:", { status, data: err?.response?.data, message: err?.message, code: err?.code });
+    } finally {
+      setBusy(false);
     }
   };
 

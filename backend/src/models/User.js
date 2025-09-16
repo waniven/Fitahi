@@ -8,7 +8,8 @@ const userSchema = new Schema(
         lastname: {type: String, required: true, trim: true},
         email: { type: String, required: true, unique: true, trim: true, lowercase: true },
         dateofbirth: { type: Date, required: true },
-        password:  { type: String, required: true, select: false } //select: false dose not return the password by defualt quaries
+        password:  { type: String, required: true, select: false }, //select: false dose not return the password by defualt quaries
+        pfp: { type: String, required: false, default: null } //profile picture in base64
     },
     { timestamps: true } //will automatically add a timestamp
 )

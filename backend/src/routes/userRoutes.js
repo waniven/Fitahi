@@ -9,7 +9,7 @@ const router = express.Router();
 const isValidId= (id) => mongoose.Types.ObjectId.isValid(id);
 
 /*
- * POST /api/users
+ * POST /api/users/
  * Create a user
  * body: { name, email, dateofbirth, password }
 */
@@ -42,12 +42,12 @@ router.post('/', async (req, res, next) => {
 
 
 /**
- * PATCH /api/users/:id
+ * PATCH /api/users/me
  * Update a user (partial)
- * body: { name, email, dateofbirth, password }
+ * body: { name, email, dateofbirth, password, pfp }
  * auth needed
  */
-router.patch('/:id', auth, async (req, res, next) => {
+router.patch('/me', auth, async (req, res, next) => {
     try{
         //id from users session
         const id = req.user.id;
@@ -61,6 +61,7 @@ router.patch('/:id', auth, async (req, res, next) => {
         if (typeof req.body.email === 'string') updates.email = req.body.email;
         if (typeof req.body.dateofbirth === 'string') updates.dateofbirth = req.body.dateofbirth;
         if (typeof req.body.password === 'string') updates.password = req.body.password;
+        if (typeof req.body.pfp === 'string') updates.pfp = req.body.pfp;
 
         //check if whitelist object is empty, if so dont update anything
         if(Object.keys(updates).length === 0) {
@@ -92,10 +93,10 @@ router.patch('/:id', auth, async (req, res, next) => {
 });
 
 /**
- * DELETE /api/users/:id
+ * DELETE /api/users/me
  * Delete a user
  */
-router.delete('/:id', auth, async (req, res, next) => {
+router.delete('/me', auth, async (req, res, next) => {
     try{
         //id from users session
         const id = req.user.id; 
