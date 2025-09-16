@@ -180,8 +180,8 @@ const BiometricsDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress }
           <Svg width={chartWidth} height={chartHeight}>
             <Defs>
               <LinearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                <Stop offset="0%" stopColor={Colors.light.primary} stopOpacity="0.9" />
-                <Stop offset="100%" stopColor={Colors.light.primary} stopOpacity="1" />
+                <Stop offset="0%" stopColor={'#4F9AFF'} stopOpacity="0.9" />
+                <Stop offset="100%" stopColor={'#4F9AFF'} stopOpacity="1" />
               </LinearGradient>
             </Defs>
 
@@ -250,7 +250,7 @@ const BiometricsDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress }
                 cy={point.y}
                 r="8"
                 fill="#ffffff"
-                stroke={Colors.light.primary}
+                stroke={'#4F9AFF'}
                 strokeWidth="4"
               />
             ))}
@@ -555,7 +555,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   bmiCard: {
-    backgroundColor: Colors.light.primary,
+    backgroundColor: '#4F9AFF',
     borderRadius: 16,
     padding: 24,
     marginBottom: 20,
@@ -575,7 +575,7 @@ const styles = StyleSheet.create({
   },
   comparisonCard: {
     flex: 1,
-    backgroundColor: Colors.light.primary,
+    backgroundColor: '#4F9AFF',
     borderRadius: 16,
     padding: 20,
   },
@@ -620,7 +620,7 @@ const styles = StyleSheet.create({
     marginLeft: 2,
   },
   toggleButtonActive: {
-    backgroundColor: Colors.light.primary,
+    backgroundColor: "#4F9AFF",
   },
   toggleButtonText: {
     color: '#666',
@@ -687,7 +687,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: Colors.light.primary,
+    backgroundColor: "#4F9AFF",
     marginRight: 8,
   },
   legendText: {
@@ -716,7 +716,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 15,
     borderLeftWidth: 4,
-    borderLeftColor: Colors.light.primary,
+    borderLeftColor: '#4F9AFF',
   },
   latestEntryTitle: {
     color: '#333',
@@ -764,7 +764,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   popupContainer: {
-    backgroundColor: Colors.light.primary,
+    backgroundColor: '#4F9AFF',
     borderRadius: 20,
     padding: 24,
     width: 300,

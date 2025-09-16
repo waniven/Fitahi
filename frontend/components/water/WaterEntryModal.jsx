@@ -278,6 +278,7 @@ export default function WaterEntryModal({
                 onPress={submitWaterEntry}
                 variant="primary"
                 size="large"
+                rounded={true}
                 style={styles.logWaterButton}
               />
             </View>

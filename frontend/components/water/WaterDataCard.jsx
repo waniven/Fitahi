@@ -73,7 +73,7 @@ const WaterDataCard = ({
             accessibilityLabel={`Delete ${entry.amount}mL water entry`}
             accessibilityHint="Double tap to remove this water intake record"
           >
-            <Ionicons name="trash-outline" size={24} color="#FF4444" />
+            <Ionicons name="trash-outline" size={24} color="#666" />
           </TouchableOpacity>
         )}
       </View>
@@ -114,13 +114,12 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#FFEBEE',
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: 16,
   },
   timeText: {
-    color: Colors.light.primary,
+    color: '#4F9AFF',
     marginBottom: 2,
   },
   amountText: {

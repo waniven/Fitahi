@@ -165,7 +165,7 @@ function fmtHMS(seconds) {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    padding: 20,
+    padding: 50,
   },
   topSection: {
     alignItems: "center",
