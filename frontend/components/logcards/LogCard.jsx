@@ -1,6 +1,7 @@
 // components/logcards/LogCard.jsx
 import React from "react";
 import { TouchableOpacity, Text, StyleSheet, View } from "react-native";
+import { Font } from "@/constants/Font";
 
 export default function LogCard({ title, icon, color, width, onPress }) {
   return (
@@ -21,7 +22,7 @@ export default function LogCard({ title, icon, color, width, onPress }) {
           {icon}
         </Text>
         <Text
-          style={[styles.title, { color }]}
+          style={[styles.title, { color, fontFamily: Font.semibold }]}
           numberOfLines={2} // prevent text from being cut off
           adjustsFontSizeToFit //  shrink font slightly if too long
           minimumFontScale={0.8} 
