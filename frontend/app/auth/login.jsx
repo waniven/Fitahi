@@ -16,21 +16,21 @@ export default function Login() {
 
   //for state
   const [formData, setFormData] = useState({ email: "", password: "" });
-  const [error, setError] = useState(""); //error message for validation
   const [busy, setBusy] = useState(false);
+  const [hasAttemptedLogin, setHasAttemptedLogin] = useState(false);
 
   // Email validation function
   const validateEmail = (email) => {
     if (!email || !email.trim()) return 'Email is required';
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email.trim())) return 'Please enter a valid email address';
-    return null;
+    return email.trim();
   };
 
   // Password validation function
   const validatePassword = (password) => {
     if (!password || !password.trim()) return 'Password is required';
-    return null;
+    return password;
   };
 
   // Update form field and clear errors if user has attempted login
@@ -48,7 +48,7 @@ export default function Login() {
       }
       
       if (!fieldError) {
-        setErrors(prev => ({ ...prev, [field]: null }));
+        CustomToast.error(prev => ({ ...prev, [field]: null }));
       }
     }
   };
@@ -56,24 +56,8 @@ export default function Login() {
 
   //validation and navigation
   const handleLogin = async () => {
-    const email = formData.email.trim();
-    const password = formData.password;
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    if (!formData.email || !emailRegex.test(formData.email)) {
-      setError("Please enter a valid email");
-      return;
-
-    }
-    
-    const passwordError = validatePassword(formData.password);
-    if (passwordError) {
-      newErrors.password = passwordError;
-    }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+    const email = validateEmail(formData.email);
+    const password = validatePassword(formData.password);
 
     try {
       setBusy(true);
@@ -84,13 +68,12 @@ export default function Login() {
         const status = err?.response?.status;
         const serverMsg = err?.response?.data?.error;
         const msg = serverMsg || `Login failed${status ? ` (${status})` : ""}`;
-        setError(msg);
         CustomToast.error(msg);
         if (!serverMsg) console.log("LOGIN ERROR:", { status, data: err?.response?.data, message: err?.message, code: err?.code });
     } finally {
       setBusy(false);
     }
-  };
+  }
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
@@ -121,7 +104,6 @@ export default function Login() {
               value={formData.email}
               onChangeText={(text) => updateField("email", text)}
               keyboardType="email-address"
-              errorMessage={errors.email}
               required
             />
 
@@ -131,7 +113,6 @@ export default function Login() {
               value={formData.password}
               onChangeText={(text) => updateField("password", text)}
               secureTextEntry
-              errorMessage={errors.password}
               required
             />
           </View>
