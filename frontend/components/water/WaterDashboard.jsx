@@ -204,7 +204,7 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   waterAmount: {
-    color: Colors.light.primary,
+    color: '#4F9AFF',
   },
   goalText: {
     color: '#666',
@@ -219,7 +219,7 @@ const styles = StyleSheet.create({
   },
   progressBar: {
     height: '100%',
-    backgroundColor: Colors.light.primary,
+    backgroundColor: '#4F9AFF',
     borderRadius: 6,
     position: 'absolute',
     left: 0,

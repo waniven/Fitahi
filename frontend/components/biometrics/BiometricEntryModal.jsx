@@ -258,6 +258,7 @@ export default function BiometricEntryModal({
                 onPress={submitBiometricEntry}
                 variant="primary"
                 size="large"
+                rounded={true}
                 style={styles.addEntryButton}
               />
             </View>

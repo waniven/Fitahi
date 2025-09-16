@@ -144,7 +144,7 @@ const styles = StyleSheet.create({
     top: (118 - 103) / 2,
     width: 8,
     height: 103,
-    backgroundColor: Colors.light.primary,
+    backgroundColor: '#4F9AFF',
     borderRadius: 4,
   },
 
@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
   },
 
   weightValue: {
-    color: Colors.light.primary,
+    color: '#4F9AFF',
     lineHeight: 36,
   },
 

@@ -13,7 +13,7 @@ import { Colors } from '../../constants/Colors';
 const CustomButtonTwo = ({
   onPress,
   size = 78,
-  backgroundColor = Colors.light.primary,
+  backgroundColor = '#4F9AFF',
   iconColor = Colors.light.background,
   style,
   disabled = false,

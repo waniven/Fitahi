@@ -122,7 +122,7 @@ const AnalyticsUniversalCard = ({
   // Wrap in TouchableOpacity if onPress is provided
   const CardContent = (
     <>
-      <View style={[styles.accentBar, { backgroundColor: mainDisplay.color }]} />
+      <View style={[styles.accentBar, { backgroundColor: '#4F9AFF', }]} />
       
       <View style={styles.contentContainer}>
         <View style={styles.headerRow}>
@@ -141,7 +141,7 @@ const AnalyticsUniversalCard = ({
         </View>
 
         <View style={styles.mainSection}>
-          <Text style={[styles.mainValue, { color: mainDisplay.color }]}>
+          <Text style={[styles.mainValue, { color: '#4F9AFF' }]}>
             {mainDisplay.value}
           </Text>
           {mainDisplay.unit && (
@@ -150,7 +150,7 @@ const AnalyticsUniversalCard = ({
         </View>
 
         <View style={styles.subtitleSection}>
-          <Text style={[styles.subtitle, { color: mainDisplay.color }]}>
+          <Text style={[styles.subtitle, { color: '#4F9AFF' }]}>
             {mainDisplay.subtitle}
           </Text>
         </View>

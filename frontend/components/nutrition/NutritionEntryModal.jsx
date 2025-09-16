@@ -422,6 +422,7 @@ export default function NutritionEntryModal({
                   onPress={submitNutritionEntry}
                   variant="primary"
                   size="large"
+                  rounded={true}
                   style={styles.logFoodButton}
                 />
               </View>
@@ -525,8 +526,8 @@ const styles = StyleSheet.create({
   },
 
   mealTypeButtonSelected: {
-    backgroundColor: Colors.light.primary,
-    borderColor: Colors.light.primary,
+    backgroundColor: '#4F9AFF',
+    borderColor: '#4F9AFF',
   },
 
   mealTypeButtonText: {
