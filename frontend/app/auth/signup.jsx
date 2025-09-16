@@ -49,8 +49,6 @@ const dateValidation = (date) => {
 export default function SignUp() {
   const router = useRouter();
   const theme = Colors["dark"];
-  
-  
 
   // Form state
   const [formData, setFormData] = useState({
@@ -154,7 +152,6 @@ export default function SignUp() {
     setHasAttemptedSubmit(true);
     
     if (validateForm()) {
-      CustomToast.success("Welcome to Fitahi!", "Account created successfully");
       console.log('Form data:', {
         ...formData,
         dateOfBirth: selectedDate
@@ -173,12 +170,13 @@ export default function SignUp() {
         await signup ({ firstname, lastname, email, dateofbirth, password });
         //login after creating user
         await login(email, password);
+        CustomToast.success("Welcome to Fitahi!", "Account created successfully");
         router.push('/profile/quiz');
       } catch (err) {
         const status = err?.response?.status;
         const serverMsg = err?.response?.data?.error;
         const msg = serverMsg || `Sign up failed${status ? ` (${status})` : ""}`;
-        setFormError(msg);
+        CustomToast.error(msg);
         console.log(msg);
         if (!serverMsg) console.log("SIGNUP ERROR:", { status, data: err?.response?.data, message: err?.message, code: err?.code });
       } finally {

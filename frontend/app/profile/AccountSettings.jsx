@@ -16,7 +16,7 @@ import Toast from 'react-native-toast-message';
 export default function AccountSettings() {
   const theme = Colors["dark"];
   const navigation = useNavigation();
-  const [profileImage, setProfileImage] = useState(null); // State for profile image
+  const [profileImage, setProfileImage] = useState(null); //State for profile image
   const [selectedDob, setSelectedDob] = useState(null); //for date picker
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
@@ -50,7 +50,6 @@ export default function AccountSettings() {
         setLoading(true);
         const me = await getMe(); //get user info from backend
         if (!alive) return;
-
 
         const dobStr = toYmd(me.dateofbirth);
 
@@ -89,13 +88,10 @@ export default function AccountSettings() {
     if (!/^[A-Za-z]+$/.test(form.lastName.trim())) {
       newErrors.lastName = "Last name must contain only letters.";  //last name only contains letters
     }
-    if (!/^\d{2}[\/-]\d{2}[\/-]\d{4}$/.test(form.dob.trim())) {
-      newErrors.dob = "Use DD/MM/YYYY format.";  //date format day/month/year
-    }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
       newErrors.email = "Invalid email format.";  //email must be valid
     }
-    if (form.password.length < 6) {
+    if (form.password.length > 0 && form.password.length < 6) {
       newErrors.password = "Password must be at least 6 characters.";  //password to be at least 6 characters
     }
     if (form.height && !/^\d+(\s?cm)?$/.test(form.height.trim())) {
@@ -107,11 +103,10 @@ export default function AccountSettings() {
     if (form.waterGoal && !/^\d+(\.\d+)?L$/i.test(form.waterGoal.trim())) {
       newErrors.waterGoal = "Water goal must be like '2L' or '2.5L'.";  //water in L
     }
-  
-    setErrors(newErrors);
+
+    console.log(newErrors)
     return Object.keys(newErrors).length === 0;
   };
-
 
   // Pick profile image from gallery
   const pickImage = async () => {
@@ -146,9 +141,7 @@ export default function AccountSettings() {
 
   //Save chances to backend 
   const handleSave = async () => {
-    try {
-      
-      if(!validateForm()){
+    if(!validateForm()){
       // Show toast if validation fails
       Toast.show({
         type: 'error',
@@ -161,23 +154,18 @@ export default function AccountSettings() {
       return; //if requirements not met return error
     }
 
-    console.log("Saved form data:", form);
-
-    // Show success toast when info saved
-    Toast.show({
-      type: 'success',
-      text1: 'Saved!',
-      text2: 'Your information has been updated.',
-      position: 'top', // Show toast from the top
-      visibilityTime: 5000, // notification disappears after 5 seconds
-      autoHide: true,
-    });
+    try {
+      const firstname = form.firstName.trim();
+      const lastname = form.lastName.trim();
+      const email = form.email.trim().toLowerCase();
+      const dateofbirth = form.dob; 
 
       //Build data URL if we have base64
       const pfp = profileImage?.base64
         ? `data:${profileImage.mime};base64,${profileImage.base64}`
         : undefined;
 
+      //updates the user in the DB via API
       await updateMe({
         firstname,
         lastname,
@@ -189,10 +177,18 @@ export default function AccountSettings() {
         ...(pfp ? { pfp } : {}),
       });
 
-      alert("Information updated!"); //should change to toast 
+      // Show success toast when info saved
+      Toast.show({
+        type: 'success',
+        text1: 'Saved!',
+        text2: 'Your information has been updated.',
+        position: 'top', // Show toast from the top
+        visibilityTime: 5000, // notification disappears after 5 seconds
+        autoHide: true,
+      });
     } catch (e) {
       const msg = e?.response?.data?.error || "Update failed";
-      alert(msg);
+      console.log(msg);
     }
   };
 
