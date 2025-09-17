@@ -3,17 +3,25 @@ const Water = require('../models/Water');
 const validateId = require('../helpers/validateId');
 const auth = require('../middleware/auth');
 const router = express.Router();
+
 /**
  * POST /api/water
  * create new water log
  */
 router.post('/', auth, async (req, res, next) => {
     try {
-        //Create and add new water log
-        const water = new Water.create({
+        const { time, ammount } = req.body;
+
+        //check if ammount is a number
+        if (ammount === undefined || Number.isNaN(Number(ammount))){
+            return res.status(400).json({ error: 'amount is required and must be a number' });
+        }
+
+        //create water entry
+        const water = await Water.create({
             userId: req.user.id,
-            time: req.body.time, 
-            amount: req.body.amount,
+            time: time,
+            amount: Number(amount),
         });
 
         //return new water log
@@ -30,14 +38,18 @@ router.post('/', auth, async (req, res, next) => {
  */
 router.patch('/:id', auth, async (req, res, next) => {
     try {
+        //load and check if id is valid
         const { id } = req.params;
-
-        //check if id is valid
         validateId(id);
+
+        //check if ammount is a number
+        if (req.body.ammount === undefined || Number.isNaN(Number(req.body.ammount))){
+            return res.status(400).json({ error: 'amount is required and must be a number' });
+        }
 
         //allow only whitelisted fields
         const updates = {};
-        if (req.body.amount !== undefined) updates.amount = req.body.amount;
+        if (req.body.ammount !== undefined) updates.ammount = req.body.ammount;
         if (req.body.time !== undefined) updates.time = req.body.time;
 
 
