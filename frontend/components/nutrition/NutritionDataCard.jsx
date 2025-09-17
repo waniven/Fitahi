@@ -1,18 +1,20 @@
 // components/nutrition/NutritionDataCard.jsx
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Font, Type, TextVariants } from '../../constants/Font';
 import CustomToast from '../common/CustomToast';
 
+const screenWidth = Dimensions.get('window').width;
+
 // Displays nutrition entry with meal/time on left, nutrition badges on right in 2x2 grid
 // Positioned to match calories bar alignment
-const NutritionDataCard = ({ 
+const NutritionDataCard = ({
   entry,
   onDelete,
   showDeleteButton = false,
   style,
-  ...props 
+  ...props
 }) => {
   const { foodName, mealType, calories, protein, carbs, fat, timestamp } = entry;
 
@@ -22,7 +24,7 @@ const NutritionDataCard = ({
     return date.toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit',
-      hour12: false
+      hour12: true  // Change to true for 12-hour format with AM/PM
     });
   };
 
@@ -45,27 +47,33 @@ const NutritionDataCard = ({
       </View>
 
       <View style={styles.rightSection}>
-        <View style={styles.nutritionRow}>
-          <View style={[styles.nutritionBadge, styles.caloriesBadge]}>
-            <Text style={styles.badgeText}>Calories: {calories} kcal</Text>
+        <View style={styles.nutritionGrid}>
+          <View style={styles.nutritionRow}>
+            <View style={[styles.nutritionBadge, styles.caloriesBadge]}>
+              <Text style={styles.badgeLabel}>Calories</Text>
+              <Text style={styles.badgeValue}>{calories} kcal</Text>
+            </View>
+            <View style={[styles.nutritionBadge, styles.proteinBadge]}>
+              <Text style={styles.badgeLabel}>Protein</Text>
+              <Text style={styles.badgeValue}>{protein} g</Text>
+            </View>
           </View>
-          <View style={[styles.nutritionBadge, styles.proteinBadge]}>
-            <Text style={styles.badgeText}>Protein: {protein} g</Text>
-          </View>
-        </View>
 
-        <View style={styles.nutritionRow}>
-          <View style={[styles.nutritionBadge, styles.fatBadge]}>
-            <Text style={styles.badgeText}>Fat: {fat} g</Text>
-          </View>
-          <View style={[styles.nutritionBadge, styles.carbsBadge]}>
-            <Text style={styles.badgeText}>Carbs: {carbs} g</Text>
+          <View style={styles.nutritionRow}>
+            <View style={[styles.nutritionBadge, styles.fatBadge]}>
+              <Text style={styles.badgeLabel}>Fat</Text>
+              <Text style={styles.badgeValue}>{fat} g</Text>
+            </View>
+            <View style={[styles.nutritionBadge, styles.carbsBadge]}>
+              <Text style={styles.badgeLabel}>Carbs</Text>
+              <Text style={styles.badgeValue}>{carbs} g</Text>
+            </View>
           </View>
         </View>
       </View>
 
       {showDeleteButton && (
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.deleteButton}
           onPress={handleDelete}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -79,7 +87,7 @@ const NutritionDataCard = ({
 
 const styles = StyleSheet.create({
   container: {
-    width: '110%',
+    width: Math.min(screenWidth * 0.98, 340), // Increased percentage from 0.95 to 0.98, max width 340
     height: 80,
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
@@ -87,7 +95,6 @@ const styles = StyleSheet.create({
     marginVertical: 6,
     marginHorizontal: 0,
     alignSelf: 'center',
-    maxWidth: 350,
     flexDirection: 'row',
     alignItems: 'center',
     shadowColor: '#000',
@@ -104,12 +111,11 @@ const styles = StyleSheet.create({
   leftSection: {
     justifyContent: 'center',
     marginRight: 12,
-    minWidth: 70,
-    maxWidth: 90,
+    width: 80, // Fixed width instead of min/max to prevent shifting
   },
 
   mealTypeText: {
-    fontSize: 16,
+    fontSize: 14, // Reduced from 16 to fit "Breakfast" on one line
     color: '#4A90E2',
     marginBottom: 2,
     ...Type.bold,
@@ -122,25 +128,34 @@ const styles = StyleSheet.create({
   },
 
   rightSection: {
+    position: 'absolute', // Fixed positioning
+    right: 42, // Moved from 12 to 42 to make room for delete button
+    top: 8, // Moved up from 12 to 8 to lift badges higher
+    bottom: 16, // Increased from 12 to 16 to create more bottom spacing
+    width: 200, // Fixed width for consistent badge positioning
+    justifyContent: 'center',
+  },
+
+  nutritionGrid: {
     flex: 1,
     justifyContent: 'space-between',
-    paddingRight: 24,
   },
 
   nutritionRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center', // Changed from space-between to center
     marginBottom: 4,
+    gap: 10, // Added gap for consistent spacing between centered badges
   },
 
   nutritionBadge: {
-    borderRadius: 16,
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    flex: 0.49,
+    borderRadius: 12,
+    paddingVertical: 6,
+    paddingHorizontal: 4,
+    width: 90, // Fixed width for all badges
+    height: 32, // Fixed height for all badges
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 24,
   },
 
   caloriesBadge: {
@@ -159,11 +174,21 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFA726',
   },
 
-  badgeText: {
+  badgeLabel: {
+    color: '#FFFFFF',
+    fontSize: 9,
+    textAlign: 'center',
+    ...Type.medium,
+    lineHeight: 10,
+    marginBottom: 1,
+  },
+
+  badgeValue: {
     color: '#FFFFFF',
     fontSize: 10,
     textAlign: 'center',
-    ...Type.semibold,
+    ...Type.bold,
+    lineHeight: 11,
   },
 
   deleteButton: {
@@ -173,16 +198,11 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
+    backgroundColor: '#F5F5F5',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    // Removed all shadow properties
   },
 });
+
 export default NutritionDataCard;
