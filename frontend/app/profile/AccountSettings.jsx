@@ -1,12 +1,12 @@
 // profile/AccountSettings.jsx
 import React, { useState } from "react";
-import {StyleSheet, Text, TextInput, TouchableOpacity, View, KeyboardAvoidingView, Platform, ScrollView, Image,} from "react-native";
-import { SafeAreaView } from 'react-native-safe-area-context';
+import {StyleSheet, Text, TextInput, TouchableOpacity, View, KeyboardAvoidingView, Platform, ScrollView, Image} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Colors } from "../../constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
-import * as ImagePicker from "expo-image-picker"; 
+import * as ImagePicker from "expo-image-picker";
 import { useNavigation } from "@react-navigation/native";
-import Toast from 'react-native-toast-message'; 
+import Toast from "react-native-toast-message";
 
 export default function AccountSettings() {
   const theme = Colors["dark"];
@@ -46,44 +46,43 @@ export default function AccountSettings() {
     let newErrors = {};
 
     if (!/^[A-Za-z]+$/.test(form.firstName.trim())) {
-      newErrors.firstName = "First name must contain only letters.";  // first name must only contain letter no numbers etc
+      newErrors.firstName = "First name must contain only letters."; // first name must only contain letter no numbers etc
     }
     if (!/^[A-Za-z]+$/.test(form.lastName.trim())) {
-      newErrors.lastName = "Last name must contain only letters.";  //last name only contains letters
+      newErrors.lastName = "Last name must contain only letters."; //last name only contains letters
     }
     if (!/^\d{2}[\/-]\d{2}[\/-]\d{4}$/.test(form.dob.trim())) {
-      newErrors.dob = "Use DD/MM/YYYY format.";  //date format day/month/year
+      newErrors.dob = "Use DD/MM/YYYY format."; //date format day/month/year
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
-      newErrors.email = "Invalid email format.";  //email must be valid
+      newErrors.email = "Invalid email format."; //email must be valid
     }
     if (form.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters.";  //password to be at least 6 characters
+      newErrors.password = "Password must be at least 6 characters."; //password to be at least 6 characters
     }
     if (form.height && !/^\d+(\s?cm)?$/.test(form.height.trim())) {
       newErrors.height = "Height must be a number (e.g. 170 cm)."; //height in cm
     }
     if (form.weight && !/^\d+(\s?kg)?$/.test(form.weight.trim())) {
-      newErrors.weight = "Weight must be a number (e.g. 65 kg).";  //weight in kgs
+      newErrors.weight = "Weight must be a number (e.g. 65 kg)."; //weight in kgs
     }
     if (form.waterGoal && !/^\d+(\.\d+)?L$/i.test(form.waterGoal.trim())) {
-      newErrors.waterGoal = "Water goal must be like '2L' or '2.5L'.";  //water in L
+      newErrors.waterGoal = "Water goal must be like '2L' or '2.5L'."; //water in L
     }
-  
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-
   // Save form data (placeholder)
   const handleSave = () => {
-    if(!validateForm()){
+    if (!validateForm()) {
       // Show toast if validation fails
       Toast.show({
-        type: 'error',
-        text1: 'Validation Error',
-        text2: 'Please fix the errors before saving.',
-        position: 'top', //Show toast from the top
+        type: "error",
+        text1: "Validation Error",
+        text2: "Please fix the errors before saving.",
+        position: "top", //Show toast from the top
         visibilityTime: 5000, //disappears after 5 seconds
         autoHide: true,
       });
@@ -94,14 +93,13 @@ export default function AccountSettings() {
 
     // Show success toast when info saved
     Toast.show({
-      type: 'success',
-      text1: 'Saved!',
-      text2: 'Your information has been updated.',
-      position: 'top', // Show toast from the top
+      type: "success",
+      text1: "Saved!",
+      text2: "Your information has been updated.",
+      position: "top", // Show toast from the top
       visibilityTime: 5000, // notification disappears after 5 seconds
       autoHide: true,
     });
-
   };
 
   // Pick profile image from gallery
@@ -119,16 +117,19 @@ export default function AccountSettings() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: theme.background }]}
+    >
+      {/* KeyboardAvoidingView so inputs don't get hidden by keyboard */}
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={80}
+        behavior={Platform.OS === "ios" ? "padding" : "height"} 
+        keyboardVerticalOffset={80} 
       >
         {/* Back button to go back to home page */}
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => navigation.navigate("home/index")} 
+          onPress={() => navigation.navigate("home/index")}
         >
           <Ionicons name="arrow-back" size={16} color="black" />
         </TouchableOpacity>
@@ -138,10 +139,11 @@ export default function AccountSettings() {
           Your Account Settings
         </Text>
 
-        {/* Scrollable form */}
+        {/* Scrollable form that moves with keyboard */}
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled" // allows tapping outside input to dismiss keyboard
         >
           {/* Profile Picture */}
           <View style={styles.profilePicWrapper}>
@@ -159,7 +161,7 @@ export default function AccountSettings() {
           </View>
 
           {/* Form Inputs */}
-          {[ 
+          {[
             { key: "firstName", label: "First Name", placeholder: "Enter first name" },
             { key: "lastName", label: "Last Name", placeholder: "Enter last name" },
             { key: "dob", label: "Date of Birth", placeholder: "e.g. 01/01/2000" },
@@ -211,12 +213,10 @@ export default function AccountSettings() {
       </KeyboardAvoidingView>
 
       {/* Toast for notifications */}
-      <Toast /> 
+      <Toast />
     </SafeAreaView>
   );
 }
-
-
 
 const styles = StyleSheet.create({
   container: {
@@ -237,7 +237,7 @@ const styles = StyleSheet.create({
     elevation: 3,
     shadowColor: "#2b2a2aff",
     shadowOpacity: 0.2,
-    shadowOffset: {width: 0, height: 2},
+    shadowOffset: { width: 0, height: 2 },
     shadowRadius: 3,
   },
   title: {
@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     textAlign: "center",
     marginVertical: 16,
-    fontFamily: "Montserrat", 
+    fontFamily: "Montserrat",
   },
   scrollContent: {
     paddingHorizontal: 20,
@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     marginBottom: 6,
-    fontFamily: "Montserrat", 
+    fontFamily: "Montserrat",
   },
   input: {
     borderRadius: 10,
@@ -310,19 +310,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     color: "#fff",
-    fontFamily: "Montserrat", 
+    fontFamily: "Montserrat",
   },
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent:"center",
+    justifyContent: "center",
     marginVertical: 16,
     position: "relative",
   },
   errorText: {
-  color: "red",
-  fontSize: 12,
-  marginTop: 4,
-  fontFamily: "Montserrat",
-},
+    color: "red",
+    fontSize: 12,
+    marginTop: 4,
+    fontFamily: "Montserrat",
+  },
 });
