@@ -87,7 +87,7 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
         },
       ]}
     >
-      <Text style={{ color: "#FFF", fontFamily: Font.regular }}>
+      <Text style={{ color: "#FFF", fontFamily: Font.regular, fontSize: 15, lineHeight: 20 }}>
         {item.text}
       </Text>
     </View>
@@ -102,9 +102,9 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
         >
           {/* Header */}
           <View style={styles.header}>
-            <Text style={{ fontFamily: Font.bold, fontSize: 18, color: theme.tint }}>Darwin</Text>
+            <Text style={{ fontFamily: Font.bold, fontSize: 18, lineHeight: 22, color: theme.tint }}>Darwin</Text>
             <Pressable onPress={onClose} style={{ padding: 8 }}>
-              <Text style={{ fontFamily: Font.bold, color: "red", fontSize: 20 }}>✕</Text>
+              <Text style={{ fontFamily: Font.bold, color: "red", fontSize: 20, lineHeight: 24  }}>✕</Text>
             </Pressable>
           </View>
 
@@ -130,39 +130,52 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
           {/* Scroll-to-bottom button */}
           {showScrollDown && (
             <Pressable
-              style={[styles.scrollButton, { backgroundColor: theme.tint, zIndex: 999 }]} // zIndex ensures touch registers
+              style={[styles.scrollButton, { backgroundColor: theme.tint, zIndex: 999 }]} 
               onPress={() => flatListRef.current?.scrollToEnd({ animated: true })}
             >
-              <Text style={{ fontFamily: Font.bold, color: theme.background, fontSize: 16 }}>↓</Text>
+              <Text style={{ fontFamily: Font.bold, color: theme.background, fontSize: 16, lineHeight: 20  }}>↓</Text>
             </Pressable>
           )}
 
           {/* Typing indicator */}
           {loading && (
-            <Text style={{ fontFamily: Font.italic, color: theme.tint, marginHorizontal: 12, fontSize: 16 }}>
+            <Text style={{ fontFamily: Font.italic, color: theme.tint, marginHorizontal: 12, fontSize: 16, lineHeight: 20 }}>
               Darwin is typing...
             </Text>
           )}
 
           {/* Input Row */}
-          <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} keyboardVerticalOffset={CHAT_TOP}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"} 
+            keyboardVerticalOffset={Platform.OS === "ios" ? CHAT_TOP : 20} 
+          >
             <View style={[styles.inputBar, { backgroundColor: "#020114ff" }]}>
               <TextInput
-                style={[styles.input, { backgroundColor: theme.backgroundAlt, color: "#FFF", fontFamily: Font.regular }]}
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: theme.backgroundAlt,
+                    color: "#FFF",
+                    fontFamily: Font.regular,
+                    fontSize: 15,
+                    lineHeight: 20, 
+                  },
+                ]}
                 placeholder="Type your message..."
                 placeholderTextColor={theme.textSecondary}
                 value={input}
                 onChangeText={setInput}
                 onSubmitEditing={() => sendMessage(input)}
                 returnKeyType="send"
+                multiline
               />
               {/* History Button */}
               <Pressable style={[styles.iconBtn, { backgroundColor: theme.tint, zIndex: 10 }]} onPress={() => setHistoryVisible(true)}>
-                <Text style={{ fontFamily: Font.bold, color: theme.background, fontSize: 18 }}>≡</Text>
+                <Text style={{ fontFamily: Font.bold, color: theme.background, fontSize: 18, lineHeight: 22 }}>≡</Text>
               </Pressable>
               {/* Send Button */}
               <Pressable style={[styles.sendButton, { backgroundColor: theme.tint, zIndex: 10 }]} onPress={() => sendMessage(input)}>
-                <Text style={{ fontFamily: Font.bold, color: theme.background }}>Send</Text>
+                <Text style={{ fontFamily: Font.bold, color: theme.background, fontSize: 15, lineHeight: 20  }}>Send</Text>
               </Pressable>
             </View>
           </KeyboardAvoidingView>
@@ -173,9 +186,9 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
       <Modal visible={historyVisible} animationType="fade" transparent>
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: theme.backgroundAlt }]}>
-            <Text style={{ fontFamily: Font.bold, color: theme.textPrimary, fontSize: 20, marginBottom: 12 }}>History</Text>
+            <Text style={{ fontFamily: Font.bold, color: theme.textPrimary, fontSize: 20, lineHeight: 24 , marginBottom: 12 }}>History</Text>
             <Pressable onPress={() => setHistoryVisible(false)} style={{ paddingVertical: 12, alignItems: "center" }}>
-              <Text style={{ fontFamily: Font.bold, color: "red", fontSize: 16 }}>Close</Text>
+              <Text style={{ fontFamily: Font.bold, color: "red", fontSize: 16, lineHeight: 20  }}>Close</Text>
             </Pressable>
           </View>
         </View>
@@ -227,16 +240,18 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    height: 40,
+    minHeight: 44, 
     borderRadius: 20,
     paddingHorizontal: 12,
+    paddingVertical: 8, 
+    textAlignVertical: "center", 
   },
   iconBtn: {
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 16,
     paddingHorizontal: 12,
-    height: 40,
+    height: 44, 
     marginLeft: 8,
   },
   sendButton: {
@@ -244,7 +259,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 20,
     paddingHorizontal: 16,
-    height: 40,
+    height: 44,
     marginLeft: 8,
   },
   scrollButton: {
