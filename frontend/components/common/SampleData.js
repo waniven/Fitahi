@@ -6,6 +6,8 @@ const yesterday = new Date(today);
 yesterday.setDate(yesterday.getDate() - 1);
 const dayBefore = new Date(today);
 dayBefore.setDate(dayBefore.getDate() - 2);
+const threeDaysAgo = new Date(today);
+threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
 
 export const sampleEntries = {
   // Water entries matching WaterEntryModal format
@@ -130,8 +132,46 @@ export const sampleEntries = {
     }
   ],
 
+  // Workout entries matching your workout result structure
+  workoutEntries: [
+    {
+      id: "workout_1",
+      workoutName: "Upper Body Strength",
+      totalTimeSpent: 2700, // 45 minutes in seconds
+      completedExercises: ["Push-ups", "Pull-ups", "Bench Press", "Shoulder Press"],
+      timestamp: today.toISOString(),
+    },
+    {
+      id: "workout_2", 
+      workoutName: "Cardio Session",
+      totalTimeSpent: 1800, // 30 minutes in seconds
+      completedExercises: ["Treadmill", "Cycling"],
+      timestamp: today.toISOString(),
+    },
+    {
+      id: "workout_3",
+      workoutName: "Leg Day",
+      totalTimeSpent: 3300, // 55 minutes in seconds
+      completedExercises: ["Squats", "Deadlifts", "Leg Press", "Calf Raises"],
+      timestamp: yesterday.toISOString(),
+    },
+    {
+      id: "workout_4",
+      workoutName: "Core Workout", 
+      totalTimeSpent: 1200, // 20 minutes in seconds
+      completedExercises: ["Planks", "Crunches", "Russian Twists"],
+      timestamp: dayBefore.toISOString(),
+    },
+    {
+      id: "workout_5",
+      workoutName: "Full Body HIIT",
+      totalTimeSpent: 2400, // 40 minutes in seconds
+      completedExercises: ["Burpees", "Mountain Climbers", "Jump Squats", "Push-ups"],
+      timestamp: threeDaysAgo.toISOString(),
+    }
+  ],
+
   // Placeholder for other features you might add later
-  workoutEntries: [],
   supplementEntries: [],
 };
 

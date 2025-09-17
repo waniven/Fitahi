@@ -11,8 +11,8 @@ import { Ionicons } from '@expo/vector-icons';
 const CustomButtonThree = ({
   onPress,
   size = 32,
-  backgroundColor = Colors.light.background, // White background as requested
-  iconColor = Colors.dark.background, // Dark arrow as requested
+  backgroundColor = Colors.light.background, 
+  iconColor = Colors.dark.background, 
   style,
   disabled = false,
   borderRadius,

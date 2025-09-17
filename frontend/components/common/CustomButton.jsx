@@ -10,6 +10,7 @@ import { Font } from '@/constants/Font';
  * @param {function} onPress - Function called when button is pressed
  * @param {string} variant - Button style variant: 'primary', 'secondary', 'success', 'warning', 'error'
  * @param {string} size - Button size: 'small', 'medium', 'large'
+ * @param {boolean} rounded - Whether to use smooth rounded corners (pill shape)
  * @param {boolean} disabled - Whether the button is disabled
  * @param {object} style - Additional custom styles for the button container
  * @param {object} textStyle - Additional custom styles for the button text
@@ -19,6 +20,7 @@ const CustomButton = ({
   onPress, 
   variant = 'primary', 
   size = 'medium',
+  rounded = false,
   disabled = false,
   style,
   textStyle 
@@ -38,6 +40,11 @@ const CustomButton = ({
       baseStyle.push(styles.buttonLarge);
     } else {
       baseStyle.push(styles.buttonMedium);
+    }
+    
+    // Apply rounded corners if requested
+    if (rounded) {
+      baseStyle.push(styles.buttonRounded);
     }
     
     // Apply color variant styles
@@ -122,6 +129,11 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
     // Shadow for Android
     elevation: 5,
+  },
+  
+  // Rounded button variant for smooth pill shape
+  buttonRounded: {
+    borderRadius: 28, // Smooth rounded corners
   },
   
   // Button size variants

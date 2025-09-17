@@ -1,14 +1,16 @@
 // components/analytics/AnalyticsDashboard.jsx
 import React from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
-  SafeAreaView, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  SafeAreaView,
   StatusBar,
-  Dimensions
+  Dimensions,
+  TouchableOpacity
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { LineChart, BarChart, StackedBarChart } from 'react-native-chart-kit';
 import { Colors } from '../../constants/Colors';
 import { Font, Type, TextVariants } from '../../constants/Font';
@@ -21,13 +23,35 @@ const screenWidth = Dimensions.get('window').width;
 const chartWidth = screenWidth - 80; // Increased padding for better fit
 
 /**
- * AnalyticsDashboard - Enhanced dashboard with StackedBarChart nutrition visualization
+ * AnalyticsDashboard - Enhanced dashboard with workout analytics and navigation
  */
 const AnalyticsDashboard = ({ onBackPress, onRefresh }) => {
+  const router = useRouter(); // Use Expo Router instead of navigation prop
   const theme = Colors["dark"];
-  
+
   // Use sample data - you can replace this with props later if needed
   const data = sampleEntries;
+
+  // Navigation handlers for each chart using Expo Router
+  const navigateToWaterLogs = () => {
+    router.push('/analytics/WaterAnalyticsScreen');
+
+  };
+
+  const navigateToWorkoutLogs = () => {
+    router.push('/analytics/WorkoutAnalyticsScreen');
+
+  };
+
+  const navigateToNutritionLogs = () => {
+    router.push('/analytics/NutritionAnalyticsScreen');
+
+  };
+
+  const navigateToBiometricLogs = () => {
+      router.push('/analytics/BiometricsAnalyticsScreen');
+
+  };
 
   // Clean white chart configuration
   const whiteChartConfig = {
@@ -56,11 +80,14 @@ const AnalyticsDashboard = ({ onBackPress, onRefresh }) => {
     }
   };
 
+  // Helper function to convert seconds to minutes
+  const secondsToMinutes = (seconds) => Math.round(seconds / 60);
+
   // Water data - Bar Chart
   const prepareWaterData = () => {
     const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     const waterByDay = Array(7).fill(0);
-    
+
     data.waterEntries.forEach(entry => {
       const date = new Date(entry.timestamp);
       const dayIndex = (date.getDay() + 6) % 7; // Convert Sunday=0 to Monday=0
@@ -75,33 +102,56 @@ const AnalyticsDashboard = ({ onBackPress, onRefresh }) => {
     };
   };
 
+  // Workout data - Bar Chart showing total time spent per day
+  const prepareWorkoutData = () => {
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const workoutByDay = Array(7).fill(0);
+
+    data.workoutEntries.forEach(entry => {
+      const date = new Date(entry.timestamp);
+      const dayIndex = (date.getDay() + 6) % 7; // Convert Sunday=0 to Monday=0
+      workoutByDay[dayIndex] += entry.totalTimeSpent || 0;
+    });
+
+    return {
+      labels: days,
+      datasets: [{
+        data: workoutByDay.map(seconds => secondsToMinutes(seconds)) // Convert to minutes
+      }]
+    };
+  };
+
   // Nutrition Chart with StackedBarChart using real sample data
   const prepareNutritionStackedData = () => {
     const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     const dailyMacros = [];
-    
+
     // Process each day
     days.forEach((day, dayIndex) => {
       let proteinCals = 0;
       let carbsCals = 0;
       let fatCals = 0;
-      
+
       data.nutritionEntries.forEach(entry => {
         const date = new Date(entry.timestamp);
         const entryDayIndex = (date.getDay() + 6) % 7; // Convert Sunday=0 to Monday=0
-        
+
         if (entryDayIndex === dayIndex) {
           proteinCals += (entry.protein || 0) * 4;
           carbsCals += (entry.carbs || 0) * 4;
           fatCals += (entry.fat || 0) * 9;
         }
       });
-      
+
       // Only add default values if absolutely no data exists
       if (proteinCals === 0 && carbsCals === 0 && fatCals === 0) {
         dailyMacros.push([0, 0, 0]); // Show empty bars for days with no data
       } else {
-        dailyMacros.push([proteinCals, carbsCals, fatCals]);
+        dailyMacros.push([
+          Math.round(proteinCals),
+          Math.round(carbsCals),
+          Math.round(fatCals)
+        ]);
       }
     });
 
@@ -114,10 +164,10 @@ const AnalyticsDashboard = ({ onBackPress, onRefresh }) => {
 
   // Biometrics - Line Chart
   const prepareBiometricsData = () => {
-    const sortedEntries = [...data.biometricEntries].sort((a, b) => 
+    const sortedEntries = [...data.biometricEntries].sort((a, b) =>
       new Date(a.timestamp) - new Date(b.timestamp)
     );
-    
+
     if (sortedEntries.length === 0) {
       return {
         labels: ['Start'],
@@ -137,9 +187,9 @@ const AnalyticsDashboard = ({ onBackPress, onRefresh }) => {
       if (index === sortedEntries.length - 1) return 'Latest';
       return `Day ${index + 1}`;
     });
-    
+
     const weights = sortedEntries.map(entry => entry.weight);
-    
+
     return {
       labels: labels,
       datasets: [{ data: weights }]
@@ -147,13 +197,14 @@ const AnalyticsDashboard = ({ onBackPress, onRefresh }) => {
   };
 
   const waterData = prepareWaterData();
+  const workoutData = prepareWorkoutData();
   const nutritionStackedData = prepareNutritionStackedData();
   const biometricsData = prepareBiometricsData();
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
       <StatusBar barStyle="light-content" backgroundColor={theme.background} />
-      
+
       <View style={[styles.container, { backgroundColor: theme.background }]}>
         {/* Header */}
         <View style={styles.header}>
@@ -169,141 +220,180 @@ const AnalyticsDashboard = ({ onBackPress, onRefresh }) => {
           Take a visual look at your progress.
         </Text>
 
-        <ScrollView 
-          style={styles.scrollContainer} 
+        <ScrollView
+          style={styles.scrollContainer}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
         >
-          {/* Water Chart */}
-          <View style={styles.chartSection}>
-            <View style={styles.chartTitleContainer}>
-              <Text style={[styles.chartTitle, { color: "#FFFFFF" }]}>
-                WATER INTAKE
-              </Text>
-              <Text style={[styles.chartSubtitle, { color: "#CCCCCC" }]}>
-                Daily consumption (mL)
-              </Text>
-            </View>
-            
-            <View style={styles.chartContainer}>
-              <BarChart
-                data={waterData}
-                width={chartWidth}
-                height={200}
-                chartConfig={{
-                  ...whiteChartConfig,
-                  color: (opacity = 1) => `rgba(74, 144, 226, ${opacity})`,
-                  barPercentage: 0.7,
-                }}
-                style={styles.chart}
-                showValuesOnTopOfBars={false}
-                fromZero={true}
-                segments={4}
-              />
-              <Text style={styles.chartPeriod}>This Week</Text>
-            </View>
-          </View>
+          {/* Water Chart - Clickable */}
+          <TouchableOpacity onPress={navigateToWaterLogs} activeOpacity={0.8}>
+            <View style={styles.chartSection}>
+              <View style={styles.chartTitleContainer}>
+                <Text style={[styles.chartTitle, { color: "#FFFFFF" }]}>
+                  WATER INTAKE
+                </Text>
+                <Text style={[styles.chartSubtitle, { color: "#CCCCCC" }]}>
+                  Daily consumption (mL)
+                </Text>
+              </View>
 
-          {/* Nutrition Chart - Stacked Bar Chart */}
-          <View style={styles.chartSection}>
-            <View style={styles.chartTitleContainer}>
-              <Text style={[styles.chartTitle, { color: "#FFFFFF" }]}>
-                TOTAL PER DAY (KCAL)
-              </Text>
-              <Text style={[styles.chartSubtitle, { color: "#CCCCCC" }]}>
-                Calories by macronutrient breakdown
-              </Text>
+              <View style={styles.chartContainer}>
+                <BarChart
+                  data={waterData}
+                  width={chartWidth}
+                  height={200}
+                  chartConfig={{
+                    ...whiteChartConfig,
+                    color: (opacity = 1) => `rgba(74, 144, 226, ${opacity})`,
+                    barPercentage: 0.7,
+                  }}
+                  style={styles.chart}
+                  showValuesOnTopOfBars={false}
+                  fromZero={true}
+                  segments={4}
+                />
+                <Text style={styles.chartPeriod}>This Week</Text>
+              </View>
             </View>
-            
-            <View style={styles.nutritionChartContainer}>
-              <StackedBarChart
-                data={nutritionStackedData}
-                width={chartWidth}
-                height={300} // Increased height for better proportions
-                chartConfig={{
-                  backgroundColor: '#ffffff',
-                  backgroundGradientFrom: '#ffffff',
-                  backgroundGradientTo: '#ffffff',
-                  decimalPlaces: 0,
-                  color: (opacity = 1) => `rgba(51, 51, 51, ${opacity})`,
-                  labelColor: (opacity = 1) => `rgba(51, 51, 51, ${opacity})`,
-                  fillShadowGradient: '#ffffff',
-                  fillShadowGradientOpacity: 0.1,
-                  barPercentage: 0.6, // Reduce bar width for better spacing
-                  style: {
-                    borderRadius: 16,
-                    paddingRight: 20, // Add right padding
-                  },
-                  propsForBackgroundLines: {
-                    strokeDasharray: '3,3',
-                    stroke: 'rgba(0, 0, 0, 0.1)',
-                    strokeWidth: 1
-                  },
-                  propsForLabels: {
-                    fontSize: 10, // Slightly smaller labels
-                    fontFamily: Font.regular
-                  },
-                  formatYLabel: (value) => Math.round(value).toString(),
-                }}
-                style={styles.nutritionChart}
-                segments={6}
-                withHorizontalLabels={true}
-                withVerticalLabels={true}
-                showBarTops={false}
-              />
-              
-              {/* Clean Legend */}
-              <View style={styles.nutritionLegend}>
-                <View style={styles.legendRow}>
-                  <View style={styles.legendItem}>
-                    <View style={[styles.legendDot, { backgroundColor: '#4ECDC4' }]} />
-                    <Text style={styles.legendText}>Protein</Text>
-                  </View>
-                  <View style={styles.legendItem}>
-                    <View style={[styles.legendDot, { backgroundColor: '#FFB74D' }]} />
-                    <Text style={styles.legendText}>Carbs</Text>
-                  </View>
-                  <View style={styles.legendItem}>
-                    <View style={[styles.legendDot, { backgroundColor: '#5DADE2' }]} />
-                    <Text style={styles.legendText}>Fat</Text>
+          </TouchableOpacity>
+
+          {/* Workout Chart - Clickable */}
+          <TouchableOpacity onPress={navigateToWorkoutLogs} activeOpacity={0.8}>
+            <View style={styles.chartSection}>
+              <View style={styles.chartTitleContainer}>
+                <Text style={[styles.chartTitle, { color: "#FFFFFF" }]}>
+                  WORKOUT TIME
+                </Text>
+                <Text style={[styles.chartSubtitle, { color: "#CCCCCC" }]}>
+                  Daily workout duration (minutes)
+                </Text>
+              </View>
+
+              <View style={styles.chartContainer}>
+                <BarChart
+                  data={workoutData}
+                  width={chartWidth}
+                  height={200}
+                  chartConfig={{
+                    ...whiteChartConfig,
+                    color: (opacity = 1) => `rgba(255, 99, 132, ${opacity})`, // Pink/Red color for workouts
+                    barPercentage: 0.7,
+                  }}
+                  style={styles.chart}
+                  showValuesOnTopOfBars={false}
+                  fromZero={true}
+                  segments={4}
+                />
+                <Text style={styles.chartPeriod}>This Week</Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+
+          {/* Nutrition Chart - Clickable */}
+          <TouchableOpacity onPress={navigateToNutritionLogs} activeOpacity={0.8}>
+            <View style={styles.chartSection}>
+              <View style={styles.chartTitleContainer}>
+                <Text style={[styles.chartTitle, { color: "#FFFFFF" }]}>
+                  TOTAL PER DAY (KCAL)
+                </Text>
+                <Text style={[styles.chartSubtitle, { color: "#CCCCCC" }]}>
+                  Calories by macronutrient breakdown
+                </Text>
+              </View>
+
+              <View style={styles.nutritionChartContainer}>
+                <StackedBarChart
+                  data={nutritionStackedData}
+                  width={chartWidth}
+                  height={300} // Increased height for better proportions
+                  chartConfig={{
+                    backgroundColor: '#ffffff',
+                    backgroundGradientFrom: '#ffffff',
+                    backgroundGradientTo: '#ffffff',
+                    decimalPlaces: 0,
+                    color: (opacity = 1) => `rgba(51, 51, 51, ${opacity})`,
+                    labelColor: (opacity = 1) => `rgba(51, 51, 51, ${opacity})`,
+                    fillShadowGradient: '#ffffff',
+                    fillShadowGradientOpacity: 0.1,
+                    barPercentage: 0.6, // Reduce bar width for better spacing
+                    style: {
+                      borderRadius: 16,
+                      paddingRight: 20, // Add right padding
+                    },
+                    propsForBackgroundLines: {
+                      strokeDasharray: '3,3',
+                      stroke: 'rgba(0, 0, 0, 0.1)',
+                      strokeWidth: 1
+                    },
+                    propsForLabels: {
+                      fontSize: 10, // Slightly smaller labels
+                      fontFamily: Font.regular
+                    },
+                    formatYLabel: (value) => Math.floor(value).toString(),
+                    yAxisInterval: 100,
+                  }}
+                  style={styles.nutritionChart}
+                  segments={5}
+                  withHorizontalLabels={true}
+                  withVerticalLabels={true}
+                  showBarTops={false}
+                />
+
+                {/* Clean Legend */}
+                <View style={styles.nutritionLegend}>
+                  <View style={styles.legendRow}>
+                    <View style={styles.legendItem}>
+                      <View style={[styles.legendDot, { backgroundColor: '#4ECDC4' }]} />
+                      <Text style={styles.legendText}>Protein</Text>
+                    </View>
+                    <View style={styles.legendItem}>
+                      <View style={[styles.legendDot, { backgroundColor: '#FFB74D' }]} />
+                      <Text style={styles.legendText}>Carbs</Text>
+                    </View>
+                    <View style={styles.legendItem}>
+                      <View style={[styles.legendDot, { backgroundColor: '#5DADE2' }]} />
+                      <Text style={styles.legendText}>Fat</Text>
+                    </View>
                   </View>
                 </View>
-              </View>
-              
-              <Text style={styles.chartPeriod}>Current Week</Text>
-            </View>
-          </View>
 
-          {/* Biometrics Chart */}
-          <View style={styles.chartSection}>
-            <View style={styles.chartTitleContainer}>
-              <Text style={[styles.chartTitle, { color: "#FFFFFF" }]}>
-                WEIGHT PROGRESS
-              </Text>
-              <Text style={[styles.chartSubtitle, { color: "#CCCCCC" }]}>
-                Track your journey
-              </Text>
+                <Text style={styles.chartPeriod}>Current Week</Text>
+              </View>
             </View>
-            
-            <View style={styles.chartContainer}>
-              <LineChart
-                data={biometricsData}
-                width={chartWidth}
-                height={180}
-                chartConfig={{
-                  ...whiteChartConfig,
-                  color: (opacity = 1) => `rgba(54, 162, 235, ${opacity})`,
-                }}
-                style={styles.chart}
-                bezier
-                withDots={true}
-                withInnerLines={false}
-                withOuterLines={false}
-                segments={3}
-              />
-              <Text style={styles.chartPeriod}>Progress Timeline</Text>
+          </TouchableOpacity>
+
+          {/* Biometrics Chart - Clickable */}
+          <TouchableOpacity onPress={navigateToBiometricLogs} activeOpacity={0.8}>
+            <View style={styles.chartSection}>
+              <View style={styles.chartTitleContainer}>
+                <Text style={[styles.chartTitle, { color: "#FFFFFF" }]}>
+                  WEIGHT PROGRESS
+                </Text>
+                <Text style={[styles.chartSubtitle, { color: "#CCCCCC" }]}>
+                  Track your journey
+                </Text>
+              </View>
+
+              <View style={styles.chartContainer}>
+                <LineChart
+                  data={biometricsData}
+                  width={chartWidth}
+                  height={180}
+                  chartConfig={{
+                    ...whiteChartConfig,
+                    color: (opacity = 1) => `rgba(54, 162, 235, ${opacity})`,
+                  }}
+                  style={styles.chart}
+                  bezier
+                  withDots={true}
+                  withInnerLines={false}
+                  withOuterLines={false}
+                  segments={3}
+                />
+                <Text style={styles.chartPeriod}>Progress Timeline</Text>
+              </View>
             </View>
-          </View>
+          </TouchableOpacity>
 
           <View style={styles.bottomSpacing} />
         </ScrollView>

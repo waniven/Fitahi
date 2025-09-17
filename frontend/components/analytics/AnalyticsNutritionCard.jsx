@@ -1,13 +1,12 @@
-// components/nutrition/NutritionDataCard.jsx
+// components/analytics/AnalyticsNutritionCard.jsx
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Font, Type, TextVariants } from '../../constants/Font';
 import CustomToast from '../common/CustomToast';
 
-// Displays nutrition entry with meal/time on left, nutrition badges on right in 2x2 grid
-// Positioned to match calories bar alignment
-const NutritionDataCard = ({ 
+// Displays nutrition entry with food name, meal/time, and nutrition badges for analytics screens
+const AnalyticsNutritionCard = ({ 
   entry,
   onDelete,
   showDeleteButton = false,
@@ -16,14 +15,18 @@ const NutritionDataCard = ({
 }) => {
   const { foodName, mealType, calories, protein, carbs, fat, timestamp } = entry;
 
-  // Formats timestamp to display time in 24-hour format
-  const formatTime = (timestamp) => {
+  // Format timestamp to display date and time like "08 Aug, 07:00am"
+  const formatTimestamp = (timestamp) => {
     const date = new Date(timestamp);
-    return date.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false
-    });
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = date.toLocaleDateString('en-US', { month: 'short' });
+    let hours = date.getHours();
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    const ampm = hours >= 12 ? 'pm' : 'am';
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    
+    return `${day} ${month}, ${hours.toString().padStart(2, '0')}:${minutes}${ampm}`;
   };
 
   // Capitalizes first letter of meal type
@@ -39,27 +42,39 @@ const NutritionDataCard = ({
 
   return (
     <View style={[styles.container, style]} {...props}>
-      <View style={styles.leftSection}>
-        <Text style={styles.mealTypeText}>{formatMealType(mealType)}</Text>
-        <Text style={styles.timeText}>{formatTime(timestamp)}</Text>
+      {/* Top section with food name and timestamp */}
+      <View style={styles.headerSection}>
+        <Text style={styles.foodNameText} numberOfLines={1}>
+          {foodName}
+        </Text>
+        <Text style={styles.timestampText}>
+          {formatTimestamp(timestamp)}
+        </Text>
       </View>
 
-      <View style={styles.rightSection}>
-        <View style={styles.nutritionRow}>
-          <View style={[styles.nutritionBadge, styles.caloriesBadge]}>
-            <Text style={styles.badgeText}>Calories: {calories} kcal</Text>
-          </View>
-          <View style={[styles.nutritionBadge, styles.proteinBadge]}>
-            <Text style={styles.badgeText}>Protein: {protein} g</Text>
-          </View>
+      {/* Main content section */}
+      <View style={styles.mainContent}>
+        <View style={styles.leftSection}>
+          <Text style={styles.mealTypeText}>{formatMealType(mealType)}</Text>
         </View>
 
-        <View style={styles.nutritionRow}>
-          <View style={[styles.nutritionBadge, styles.fatBadge]}>
-            <Text style={styles.badgeText}>Fat: {fat} g</Text>
+        <View style={styles.rightSection}>
+          <View style={styles.nutritionRow}>
+            <View style={[styles.nutritionBadge, styles.caloriesBadge]}>
+              <Text style={styles.badgeText}>Calories: {calories} kcal</Text>
+            </View>
+            <View style={[styles.nutritionBadge, styles.proteinBadge]}>
+              <Text style={styles.badgeText}>Protein: {protein} g</Text>
+            </View>
           </View>
-          <View style={[styles.nutritionBadge, styles.carbsBadge]}>
-            <Text style={styles.badgeText}>Carbs: {carbs} g</Text>
+
+          <View style={styles.nutritionRow}>
+            <View style={[styles.nutritionBadge, styles.fatBadge]}>
+              <Text style={styles.badgeText}>Fat: {fat} g</Text>
+            </View>
+            <View style={[styles.nutritionBadge, styles.carbsBadge]}>
+              <Text style={styles.badgeText}>Carbs: {carbs} g</Text>
+            </View>
           </View>
         </View>
       </View>
@@ -80,7 +95,6 @@ const NutritionDataCard = ({
 const styles = StyleSheet.create({
   container: {
     width: '110%',
-    height: 80,
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 12,
@@ -88,8 +102,6 @@ const styles = StyleSheet.create({
     marginHorizontal: 0,
     alignSelf: 'center',
     maxWidth: 350,
-    flexDirection: 'row',
-    alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -99,6 +111,34 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
     position: 'relative',
+    minHeight: 100,
+  },
+
+  headerSection: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 8,
+    paddingRight: 30,
+  },
+
+  foodNameText: {
+    fontSize: 16,
+    color: '#4A90E2',
+    flex: 1,
+    marginRight: 8,
+    ...Type.bold,
+  },
+
+  timestampText: {
+    fontSize: 12,
+    color: '#666',
+    ...Type.regular,
+  },
+
+  mainContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 
   leftSection: {
@@ -109,13 +149,6 @@ const styles = StyleSheet.create({
   },
 
   mealTypeText: {
-    fontSize: 16,
-    color: '#4A90E2',
-    marginBottom: 2,
-    ...Type.bold,
-  },
-
-  timeText: {
     fontSize: 14,
     color: '#4A90E2',
     ...Type.regular,
@@ -173,6 +206,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
+    backgroundColor: '#F5F5F5',
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
@@ -185,4 +219,5 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
 });
-export default NutritionDataCard;
+
+export default AnalyticsNutritionCard;

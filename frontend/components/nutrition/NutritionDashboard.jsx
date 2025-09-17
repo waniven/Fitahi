@@ -510,7 +510,7 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   caloriesAmount: {
-    color: Colors.light.primary,
+    color: '#4F9AFF',
   },
   caloriesGoal: {
     color: '#666',
