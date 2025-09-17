@@ -1,11 +1,20 @@
 import React, { useRef, useState } from 'react';
-import {Dimensions, FlatList, Platform, StyleSheet, Text, TouchableOpacity, View, Picker,} from 'react-native';
+import {
+  Dimensions,
+  FlatList,
+  Platform,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  Picker,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import WheelPickerExpo from 'react-native-wheel-picker-expo';
 import { Colors } from '../../constants/Colors';
 import { questions } from '../../constants/quizData';
-import globalStyles from '../../styles/globalStyles';
+import { Font } from '@/constants/Font'; 
 
 const { width } = Dimensions.get('window');
 
@@ -24,7 +33,10 @@ export default function Quiz() {
   // Go to next question
   const goNext = () => {
     if (currentIndex < questions.length - 1) {
-      flatListRef.current?.scrollToIndex({ index: currentIndex + 1, animated: true });
+      flatListRef.current?.scrollToIndex({
+        index: currentIndex + 1,
+        animated: true,
+      });
       setCurrentIndex(currentIndex + 1);
     } else {
       router.replace('/profile/thankyou');
@@ -46,7 +58,9 @@ export default function Quiz() {
     return (
       <View style={[styles.slide, { width }]}>
         {/* Question Text */}
-        <Text style={[styles.question, { color: '#fff' }]}>{item.question}</Text>
+        <Text style={[styles.question, { color: '#fff' }]}>
+          {item.question}
+        </Text>
 
         {/* Picker Question */}
         {slideIsPicker ? (
@@ -64,10 +78,19 @@ export default function Quiz() {
                   backgroundColor: '#000',
                 }}
               >
-                {Array.from({ length: item.max - item.min + 1 }, (_, i) => {
-                  const num = item.min + i;
-                  return <Picker.Item key={num} label={`${num} ${item.unit}`} value={num} />;
-                })}
+                {Array.from(
+                  { length: item.max - item.min + 1 },
+                  (_, i) => {
+                    const num = item.min + i;
+                    return (
+                      <Picker.Item
+                        key={num}
+                        label={`${num} ${item.unit}`}
+                        value={num}
+                      />
+                    );
+                  },
+                )}
               </Picker>
             ) : (
               <WheelPickerExpo
@@ -79,14 +102,24 @@ export default function Quiz() {
                   borderRadius: 12,
                   backgroundColor: theme.tint,
                 }}
-                itemTextStyle={{ color: '#fff', fontSize: 18, fontWeight: '700' }}
-                items={Array.from({ length: item.max - item.min + 1 }, (_, i) => {
-                  const num = item.min + i;
-                  return { label: `${num} ${item.unit}`, value: num };
-                })}
+                itemTextStyle={{
+                  color: '#fff',
+                  fontSize: 18,
+                  fontFamily: Font.bold, 
+                }}
+                items={Array.from(
+                  { length: item.max - item.min + 1 },
+                  (_, i) => {
+                    const num = item.min + i;
+                    return { label: `${num} ${item.unit}`, value: num };
+                  },
+                )}
                 initialSelectedIndex={0}
                 onChange={({ item: selected }) =>
-                  setAnswers((prev) => ({ ...prev, [item.id]: selected.value }))
+                  setAnswers((prev) => ({
+                    ...prev,
+                    [item.id]: selected.value,
+                  }))
                 }
               />
             )}
@@ -102,10 +135,11 @@ export default function Quiz() {
                   key={option}
                   style={[
                     styles.optionButton,
-                    idx !== item.options.length - 1 && styles.optionDivider,
+                    idx !== item.options.length - 1 &&
+                      styles.optionDivider,
                     {
                       width: '100%',
-                      backgroundColor: isSelected ? theme.tint : '#000', // black boxes
+                      backgroundColor: isSelected ? theme.tint : '#000',
                       borderRadius: 12,
                       paddingVertical: 16,
                       paddingHorizontal: 12,
@@ -124,7 +158,7 @@ export default function Quiz() {
                   <Text
                     style={[
                       styles.optionText,
-                      { color: isSelected ? '#000' : '#fff' }, 
+                      { color: isSelected ? '#000' : '#fff' },
                     ]}
                   >
                     {option}
@@ -139,13 +173,18 @@ export default function Quiz() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: '#151924' }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: '#151924' }]}
+    >
       {/* Progress Bar */}
       <View style={styles.progressBarBackground}>
         <View
           style={[
             styles.progressBarFill,
-            { width: `${((currentIndex + 1) / questions.length) * 100}%`, backgroundColor: theme.tint },
+            {
+              width: `${((currentIndex + 1) / questions.length) * 100}%`,
+              backgroundColor: theme.tint,
+            },
           ]}
         />
       </View>
@@ -153,7 +192,9 @@ export default function Quiz() {
       {/* Intro Text */}
       {currentIndex === 0 && (
         <View style={styles.headerContainer}>
-          <Text style={[styles.headerTitle, { color: theme.tint }]}>Nice to meet you, </Text>
+          <Text style={[styles.headerTitle, { color: theme.tint }]}>
+            Nice to meet you,
+          </Text>
           <Text style={[styles.headerSubtitle, { color: '#fff' }]}>
             Now, let’s get to know you!
           </Text>
@@ -169,9 +210,15 @@ export default function Quiz() {
         showsHorizontalScrollIndicator={false}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
-        getItemLayout={(_, index) => ({ length: width, offset: width * index, index })}
+        getItemLayout={(_, index) => ({
+          length: width,
+          offset: width * index,
+          index,
+        })}
         onMomentumScrollEnd={(e) => {
-          const index = Math.round(e.nativeEvent.contentOffset.x / width);
+          const index = Math.round(
+            e.nativeEvent.contentOffset.x / width,
+          );
           setCurrentIndex(index);
         }}
         scrollEventThrottle={16}
@@ -209,9 +256,7 @@ export default function Quiz() {
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1 
-  },
+  container: { flex: 1 },
 
   // Intro Header
   headerContainer: {
@@ -221,15 +266,13 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 24,
-    fontWeight: '800',
     marginBottom: 8,
-    fontFamily: 'Montserrat',
+    fontFamily: Font.extrabold,
   },
   headerSubtitle: {
     fontSize: 18,
-    fontWeight: '600',
     lineHeight: 24,
-    fontFamily: 'Montserrat',
+    fontFamily: Font.semibold, 
   },
 
   // Question Slide
@@ -237,13 +280,12 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 20,
     justifyContent: 'center',
-    backgroundColor: "#151924",
+    backgroundColor: '#151924',
   },
   question: {
     fontSize: 22,
-    fontWeight: '700',
     marginBottom: 20,
-    fontFamily: 'Montserrat',
+    fontFamily: Font.bold,
   },
 
   // Picker
@@ -268,8 +310,7 @@ const styles = StyleSheet.create({
   },
   optionText: {
     fontSize: 18,
-    fontWeight: '700',
-    fontFamily: 'Montserrat',
+    fontFamily: Font.bold,
   },
 
   // Progress Bar
@@ -303,8 +344,7 @@ const styles = StyleSheet.create({
   },
   skipText: {
     fontSize: 16,
-    fontWeight: '700',
-    fontFamily: 'Montserrat',
+    fontFamily: Font.bold, 
   },
   nextButton: {
     paddingVertical: 12,
@@ -316,7 +356,6 @@ const styles = StyleSheet.create({
   },
   nextText: {
     fontSize: 16,
-    fontWeight: '700',
-    fontFamily: 'Montserrat',
+    fontFamily: Font.bold, 
   },
 });

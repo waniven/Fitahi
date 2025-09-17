@@ -13,22 +13,22 @@ export default function BottomNav() {
   return (
     <View style={[styles.bottomNav, { backgroundColor: "#fff" }]}>
       <TouchableOpacity style={styles.navItem} onPress={() => router.push("/home")}>
-        <Ionicons name="home-outline" size={26} color={theme.tint} />
+        <Ionicons name="home-outline" size={26} color= "#0f0e0eff" />
         <Text style={[globalStyles.navText, { color: theme.tint }]}>Home</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.navItem} onPress={() => router.push("/main/analytics")}>
-        <Ionicons name="stats-chart-outline" size={26} color={theme.tint} />
+        <Ionicons name="stats-chart-outline" size={26} color="#0f0e0eff" />
         <Text style={[globalStyles.navText, { color: theme.tint }]}>Analytics</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.navItem} onPress={() => router.push("/main/supplements")}>
-        <Ionicons name="medkit-outline" size={26} color={theme.tint} />
+        <Ionicons name="medkit-outline" size={26} color="#0f0e0eff" />
         <Text style={[globalStyles.navText, { color: theme.tint }]}>Supplements</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.navItem} onPress={() => router.push("/profile/AccountSettings")}>
-        <Ionicons name="settings-outline" size={26} color={theme.tint} />
+        <Ionicons name="settings-outline" size={26} color="#0f0e0eff" />
         <Text style={[globalStyles.navText, { color: theme.tint }]}>Settings</Text>
       </TouchableOpacity>
     </View>
