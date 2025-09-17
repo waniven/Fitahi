@@ -1,17 +1,26 @@
 // profile/AccountSettings.jsx
 import React, { useEffect, useState } from "react";
-import {StyleSheet, Text, TextInput, TouchableOpacity, View, KeyboardAvoidingView, Platform, ScrollView, Image,} from "react-native";
-import { SafeAreaView } from 'react-native-safe-area-context';
+import {
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Image,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Colors } from "../../constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
-import * as ImagePicker from "expo-image-picker"; 
-import * as ImageManipulator from 'expo-image-manipulator';
+import * as ImagePicker from "expo-image-picker";
+import * as ImageManipulator from "expo-image-manipulator";
 import { useNavigation } from "@react-navigation/native";
 import { getMe, updateMe } from "@/services/userService";
 import { logout } from "@/services/authService";
 import { router } from "expo-router";
-import CustomInput from '../../components/common/CustomInput';
-import Toast from 'react-native-toast-message'; 
+import CustomInput from "../../components/common/CustomInput";
+import Toast from "react-native-toast-message";
 
 export default function AccountSettings() {
   const theme = Colors["dark"];
@@ -19,7 +28,7 @@ export default function AccountSettings() {
   const [profileImage, setProfileImage] = useState(null); //State for profile image
   const [selectedDob, setSelectedDob] = useState(null); //for date picker
   const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState('');
+  const [loadError, setLoadError] = useState("");
   const [errors, setErrors] = useState({});
 
   const toYmd = (d) => (d ? new Date(d).toISOString().slice(0, 10) : "");
@@ -57,9 +66,9 @@ export default function AccountSettings() {
         setForm((prev) => ({
           ...prev,
           firstName: me.firstname ?? "",
-          lastName:  me.lastname ?? "",
-          email:     me.email ?? "",
-          dob:       dobStr,
+          lastName: me.lastname ?? "",
+          email: me.email ?? "",
+          dob: dobStr,
         }));
 
         setSelectedDob(fromYmd(dobStr));
@@ -67,7 +76,6 @@ export default function AccountSettings() {
         if (me.pfp) {
           setProfileImage({ uri: me.pfp });
         }
-
       } catch (e) {
         if (!alive) return;
         const msg = e?.response?.data?.error || "Failed to load profile";
@@ -76,36 +84,38 @@ export default function AccountSettings() {
         if (alive) setLoading(false);
       }
     })();
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, []);
-  
+
   // Validate inputs
   const validateForm = () => {
     const newErrors = {};
 
     if (!/^[A-Za-z]+$/.test(form.firstName.trim())) {
-      newErrors.firstName = "First name must contain only letters.";  //first name must only contain letter no numbers etc
+      newErrors.firstName = "First name must contain only letters."; //first name must only contain letter no numbers etc
     }
     if (!/^[A-Za-z]+$/.test(form.lastName.trim())) {
-      newErrors.lastName = "Last name must contain only letters.";  //last name only contains letters
+      newErrors.lastName = "Last name must contain only letters."; //last name only contains letters
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
-      newErrors.email = "Invalid email format.";  //email must be valid
+      newErrors.email = "Invalid email format."; //email must be valid
     }
-    if (form.password.length > 0 && form.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters."; //password to be at least 6 characters
+    if (form.password.length > 0 && form.password.length < 8) {
+      newErrors.password = "Password must be at least 8 characters."; //password to be at least 8 characters
     }
     if (form.height && !/^\d+(\s?cm)?$/.test(form.height.trim())) {
       newErrors.height = "Height must be a number (e.g. 170 cm)."; //height in cm
     }
     if (form.weight && !/^\d+(\s?kg)?$/.test(form.weight.trim())) {
-      newErrors.weight = "Weight must be a number (e.g. 65 kg).";  //weight in kgs
+      newErrors.weight = "Weight must be a number (e.g. 65 kg)."; //weight in kgs
     }
     if (form.waterGoal && !/^\d+(\.\d+)?L$/i.test(form.waterGoal.trim())) {
-      newErrors.waterGoal = "Water goal must be like '2L' or '2.5L'.";  //water in L
+      newErrors.waterGoal = "Water goal must be like '2L' or '2.5L'."; //water in L
     }
 
-    console.log(newErrors)
+    console.log(newErrors);
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -113,27 +123,31 @@ export default function AccountSettings() {
   // Pick profile image from gallery
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: 'images',
+      mediaTypes: "images",
       base64: true,
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.8,
     });
 
-  if (!result.canceled) {
-    const a = result.assets[0];
-    const manip = await ImageManipulator.manipulateAsync(
-      a.uri,
-      [{ resize: { width: 512 } }],//make image smaller for upload
-      { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG, base64: true }
-    );
+    if (!result.canceled) {
+      const a = result.assets[0];
+      const manip = await ImageManipulator.manipulateAsync(
+        a.uri,
+        [{ resize: { width: 512 } }], //make image smaller for upload
+        {
+          compress: 0.7,
+          format: ImageManipulator.SaveFormat.JPEG,
+          base64: true,
+        }
+      );
 
-    setProfileImage({
-      uri: manip.uri,
-      base64: manip.base64,
-      mime: 'image/jpeg'
-    });
-  }
+      setProfileImage({
+        uri: manip.uri,
+        base64: manip.base64,
+        mime: "image/jpeg",
+      });
+    }
   };
 
   // Handle input changes
@@ -141,15 +155,15 @@ export default function AccountSettings() {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
-  //Save chances to backend 
+  //Save chances to backend
   const handleSave = async () => {
-    if(!validateForm()){
+    if (!validateForm()) {
       // Show toast if validation fails
       Toast.show({
-        type: 'error',
-        text1: 'Validation Error',
-        text2: 'Please fix the errors before saving.',
-        position: 'top', //Show toast from the top
+        type: "error",
+        text1: "Validation Error",
+        text2: "Please fix the errors before saving.",
+        position: "top", //Show toast from the top
         visibilityTime: 5000, //disappears after 5 seconds
         autoHide: true,
       });
@@ -160,7 +174,7 @@ export default function AccountSettings() {
       const firstname = form.firstName.trim();
       const lastname = form.lastName.trim();
       const email = form.email.trim().toLowerCase();
-      const dateofbirth = form.dob; 
+      const dateofbirth = form.dob;
 
       //Build data URL if we have base64
       const pfp = profileImage?.base64
@@ -181,10 +195,10 @@ export default function AccountSettings() {
 
       // Show success toast when info saved
       Toast.show({
-        type: 'success',
-        text1: 'Saved!',
-        text2: 'Your information has been updated.',
-        position: 'top', // Show toast from the top
+        type: "success",
+        text1: "Saved!",
+        text2: "Your information has been updated.",
+        position: "top", // Show toast from the top
         visibilityTime: 5000, // notification disappears after 5 seconds
         autoHide: true,
       });
@@ -199,15 +213,16 @@ export default function AccountSettings() {
     setForm((prev) => ({ ...prev, dob: toYmd(date) }));
   };
 
-
   const handleLogout = () => {
     console.log("logout");
-    logout()
+    logout();
     router.replace("/");
-  }
+  };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: theme.background }]}
+    >
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -216,7 +231,7 @@ export default function AccountSettings() {
         {/* Back button to go back to home page */}
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => navigation.navigate("home/index")} 
+          onPress={() => navigation.navigate("home/index")}
         >
           <Ionicons name="arrow-back" size={16} color="black" />
         </TouchableOpacity>
@@ -235,7 +250,10 @@ export default function AccountSettings() {
           <View style={styles.profilePicWrapper}>
             <View style={styles.profileCircle}>
               {profileImage ? (
-                <Image source={{ uri: profileImage.uri }} style={styles.profileImage} />
+                <Image
+                  source={{ uri: profileImage.uri }}
+                  style={styles.profileImage}
+                />
               ) : (
                 <Ionicons name="person" size={60} color="white" />
               )}
@@ -252,7 +270,7 @@ export default function AccountSettings() {
               label="First Name"
               placeholder="First Name"
               value={form.firstName}
-              onChangeText={(text) => handleChange('firstName', text)}
+              onChangeText={(text) => handleChange("firstName", text)}
               errorMessage={errors.firstName}
               required
             />
@@ -261,7 +279,7 @@ export default function AccountSettings() {
               label="Last Name"
               placeholder="Last Name"
               value={form.lastName}
-              onChangeText={(text) => handleChange('lastName', text)}
+              onChangeText={(text) => handleChange("lastName", text)}
               errorMessage={errors.lastName}
               required
             />
@@ -279,7 +297,7 @@ export default function AccountSettings() {
               label="Email Address"
               placeholder="Email address"
               value={form.email}
-              onChangeText={(text) => handleChange('email', text)}
+              onChangeText={(text) => handleChange("email", text)}
               keyboardType="email-address"
               errorMessage={errors.email}
               required
@@ -289,7 +307,7 @@ export default function AccountSettings() {
               label="Password"
               placeholder="Password"
               value={form.password}
-              onChangeText={(text) => handleChange('password', text)}
+              onChangeText={(text) => handleChange("password", text)}
               errorMessage={errors.password}
               secureTextEntry
             />
@@ -298,78 +316,79 @@ export default function AccountSettings() {
               label="Fitness Goal"
               placeholder="e.g. Lose weight"
               value={form.fitnessGoal}
-              onChangeText={(text) => handleChange('fitnessGoal', text)}
+              onChangeText={(text) => handleChange("fitnessGoal", text)}
             />
 
             <CustomInput
               label="Fitness Level"
               placeholder="Beginner/Intermediate/Advanced"
               value={form.fitnessLevel}
-              onChangeText={(text) => handleChange('fitnessLevel', text)}
+              onChangeText={(text) => handleChange("fitnessLevel", text)}
             />
 
             <CustomInput
               label="Training Days"
               placeholder="e.g. 3 days/week"
               value={form.trainingDays}
-              onChangeText={(text) => handleChange('trainingDays', text)}
+              onChangeText={(text) => handleChange("trainingDays", text)}
             />
 
             <CustomInput
               label="Training Time"
               placeholder="e.g. 1 hour/session"
               value={form.trainingTime}
-              onChangeText={(text) => handleChange('trainingTime', text)}
+              onChangeText={(text) => handleChange("trainingTime", text)}
             />
 
             <CustomInput
               label="Diet"
               placeholder="e.g. Vegetarian"
               value={form.diet}
-              onChangeText={(text) => handleChange('diet', text)}
+              onChangeText={(text) => handleChange("diet", text)}
             />
 
             <CustomInput
               label="Height"
               placeholder="e.g. 168 cm"
               value={form.height}
-              onChangeText={(text) => handleChange('height', text)}
+              onChangeText={(text) => handleChange("height", text)}
             />
 
             <CustomInput
               label="Weight"
               placeholder="e.g. 60 kg"
               value={form.weight}
-              onChangeText={(text) => handleChange('weight', text)}
+              onChangeText={(text) => handleChange("weight", text)}
             />
 
             <CustomInput
               label="Water Intake Goal"
               placeholder="e.g. 2L per day"
               value={form.waterGoal}
-              onChangeText={(text) => handleChange('waterGoal', text)}
+              onChangeText={(text) => handleChange("waterGoal", text)}
             />
 
             <CustomInput
               label="Calories Intake Goal"
               placeholder="e.g. 2000 kcal"
               value={form.caloriesGoal}
-              onChangeText={(text) => handleChange('caloriesGoal', text)}
+              onChangeText={(text) => handleChange("caloriesGoal", text)}
             />
           </View>
 
-
-        {/* Logout button */}
-        <View style={styles.logoutButtonWrapper}>
-          <TouchableOpacity
-            style={[styles.saveButton, { backgroundColor: theme.error }]}
-            onPress={handleLogout}
-          >
-            <Text style={[styles.saveButtonText, { fontFamily: "Montserrat" }]}>
-              Logout
-            </Text>
-          </TouchableOpacity>
-        </View>
+          {/* Logout button */}
+          <View style={styles.logoutButtonWrapper}>
+            <TouchableOpacity
+              style={[styles.saveButton, { backgroundColor: theme.error }]}
+              onPress={handleLogout}
+            >
+              <Text
+                style={[styles.saveButtonText, { fontFamily: "Montserrat" }]}
+              >
+                Logout
+              </Text>
+            </TouchableOpacity>
+          </View>
 
           {/* Extra spacing to avoid save button overlap */}
           <View style={{ height: 100 }} />
@@ -386,17 +405,13 @@ export default function AccountSettings() {
             </Text>
           </TouchableOpacity>
         </View>
-
-
       </KeyboardAvoidingView>
 
       {/* Toast for notifications */}
-      <Toast /> 
+      <Toast />
     </SafeAreaView>
   );
 }
-
-
 
 const styles = StyleSheet.create({
   container: {
@@ -404,8 +419,8 @@ const styles = StyleSheet.create({
   },
 
   formContainer: {
-    width: '100%',
-    alignItems: 'center',
+    width: "100%",
+    alignItems: "center",
     marginBottom: 30,
   },
 
@@ -424,7 +439,7 @@ const styles = StyleSheet.create({
     elevation: 3,
     shadowColor: "#2b2a2aff",
     shadowOpacity: 0.2,
-    shadowOffset: {width: 0, height: 2},
+    shadowOffset: { width: 0, height: 2 },
     shadowRadius: 3,
   },
   title: {
@@ -432,7 +447,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     textAlign: "center",
     marginVertical: 16,
-    fontFamily: "Montserrat", 
+    fontFamily: "Montserrat",
   },
   scrollContent: {
     paddingHorizontal: 20,
@@ -474,7 +489,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     marginBottom: 6,
-    fontFamily: "Montserrat", 
+    fontFamily: "Montserrat",
   },
   input: {
     borderRadius: 10,
@@ -506,19 +521,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     color: "#fff",
-    fontFamily: "Montserrat", 
+    fontFamily: "Montserrat",
   },
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent:"center",
+    justifyContent: "center",
     marginVertical: 16,
     position: "relative",
   },
   errorText: {
-  color: "red",
-  fontSize: 12,
-  marginTop: 4,
-  fontFamily: "Montserrat",
-},
+    color: "red",
+    fontSize: 12,
+    marginTop: 4,
+    fontFamily: "Montserrat",
+  },
 });
