@@ -1,10 +1,13 @@
 // components/analytics/AnalyticsUniversalCard.jsx
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/Colors';
 import { Font, Type, TextVariants } from '../../constants/Font';
 import CustomToast from '../common/CustomToast';
+
+const screenWidth = Dimensions.get('window').width;
+const cardWidth = screenWidth - 40; // Responsive width with 20px margin on each side
 
 // Universal card component for Water, Workout, and Biometric entries in analytics screens
 const AnalyticsUniversalCard = ({ 
@@ -14,6 +17,7 @@ const AnalyticsUniversalCard = ({
   onPress, // New prop for handling card press
   showDeleteButton = false,
   style,
+  cardSpacing = 16, // New prop to control spacing between cards
   ...props
 }) => {
   
@@ -119,6 +123,25 @@ const AnalyticsUniversalCard = ({
 
   const mainDisplay = getMainDisplay();
 
+  // Dynamic styles with responsive width and spacing - matching AnalyticsNutritionCard
+  const dynamicStyles = StyleSheet.create({
+    cardContainer: {
+      backgroundColor: '#FFFFFF',
+      borderRadius: 16,
+      marginVertical: 6, // Match nutrition card vertical spacing
+      marginHorizontal: 0, // Match nutrition card horizontal spacing
+      width: cardWidth, // Responsive width
+      minHeight: 140, // Increased minimum height to accommodate all text
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4, // Match nutrition card shadow radius
+      elevation: 3, // Match nutrition card elevation
+      position: 'relative',
+      alignSelf: 'center',
+    },
+  });
+
   // Wrap in TouchableOpacity if onPress is provided
   const CardContent = (
     <>
@@ -156,7 +179,7 @@ const AnalyticsUniversalCard = ({
         </View>
 
         <View style={styles.detailsRow}>
-          <Text style={styles.detailText}>
+          <Text style={styles.detailText} numberOfLines={2} ellipsizeMode="tail">
             {getDetails()}
           </Text>
         </View>
@@ -167,7 +190,7 @@ const AnalyticsUniversalCard = ({
   if (onPress) {
     return (
       <TouchableOpacity 
-        style={[styles.cardContainer, style]} 
+        style={[dynamicStyles.cardContainer, style]} 
         onPress={handlePress}
         activeOpacity={0.7}
         {...props}
@@ -178,36 +201,19 @@ const AnalyticsUniversalCard = ({
   }
 
   return (
-    <View style={[styles.cardContainer, style]} {...props}>
+    <View style={[dynamicStyles.cardContainer, style]} {...props}>
       {CardContent}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  cardContainer: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    marginHorizontal: 20,
-    marginTop: 40,
-    marginBottom: 16,
-    width: 357,
-    height: 118,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-    position: 'relative',
-    alignSelf: 'center',
-  },
-
   accentBar: {
     position: 'absolute',
     left: 20,
-    top: (118 - 103) / 2,
+    top: 15, // Adjusted top position
     width: 8,
-    height: 103,
+    height: 110, // Increased height to match new card size
     borderRadius: 4,
   },
 
@@ -215,15 +221,16 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
     paddingLeft: 44,
-    paddingTop: 8,
+    paddingTop: 10, // Slightly increased top padding
     paddingRight: 16,
+    paddingBottom: 16, // Ensure bottom padding
   },
 
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 6, // Increased margin for better spacing
     minHeight: 20,
   },
 
@@ -232,7 +239,7 @@ const styles = StyleSheet.create({
   },
 
   timestamp: {
-    fontSize: 16,
+    fontSize: 15, // Slightly smaller to fit better
     color: '#666',
     textAlign: 'right',
     ...Type.regular,
@@ -246,13 +253,13 @@ const styles = StyleSheet.create({
   mainSection: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    marginBottom: 2,
-    marginTop: -17,
+    marginBottom: 4, // Increased margin
+    marginTop: -10, // Reduced negative margin
   },
 
   mainValue: {
-    fontSize: 32,
-    lineHeight: 36,
+    fontSize: 30, // Slightly smaller to fit better
+    lineHeight: 34,
     ...Type.bold,
   },
 
@@ -266,24 +273,26 @@ const styles = StyleSheet.create({
   subtitleSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 2,
+    marginBottom: 6, // Increased margin
     flexWrap: 'wrap',
   },
 
   subtitle: {
-    fontSize: 16,
+    fontSize: 15, // Slightly smaller
     ...Type.bold,
   },
 
   detailsRow: {
-    marginTop: 2,
+    marginTop: 4, // Increased margin
     justifyContent: 'flex-end',
+    flex: 1, // Allow it to expand and push content
   },
 
   detailText: {
-    fontSize: 16,
+    fontSize: 14, // Reduced font size to fit better
     color: '#333',
     ...Type.regular,
+    lineHeight: 18, // Better line height for readability
   },
 });
 

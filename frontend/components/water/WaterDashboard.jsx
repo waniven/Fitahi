@@ -61,37 +61,37 @@ const WaterDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress, daily
           </Text>
         </View>
 
-        {/* Section title for total water consumption */}
+        {/* Fixed section title for total water consumption */}
         <Text style={[textStyles.heading4, styles.totalWaterSectionTitle]}>TOTAL WATER DRUNK TODAY</Text>
+
+        {/* Fixed water consumption summary card */}
+        <View style={styles.totalWaterCard}>
+          <View style={styles.waterProgressContainer}>
+            <View style={styles.waterAmountRow}>
+              <Text style={[textStyles.bodyMedium, styles.waterLabel]}>Millilitres</Text>
+              <Text style={[textStyles.heading2, styles.waterAmount]}>
+                {totalWater} mL <Text style={[textStyles.bodyMedium, styles.goalText]}>/ {dailyGoal}</Text>
+              </Text>
+            </View>
+            
+            {/* Visual progress indicator */}
+            <View style={styles.progressBarContainer}>
+              <View 
+                style={[
+                  styles.progressBar, 
+                  { width: `${progressPercentage}%` }
+                ]} 
+              />
+              <View style={styles.progressBarBackground} />
+            </View>
+          </View>
+        </View>
 
         <ScrollView 
           style={styles.scrollContainer} 
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
         >
-          {/* Water consumption summary card */}
-          <View style={styles.totalWaterCard}>
-            <View style={styles.waterProgressContainer}>
-              <View style={styles.waterAmountRow}>
-                <Text style={[textStyles.bodyMedium, styles.waterLabel]}>Millilitres</Text>
-                <Text style={[textStyles.heading2, styles.waterAmount]}>
-                  {totalWater} mL <Text style={[textStyles.bodyMedium, styles.goalText]}>/ {dailyGoal}</Text>
-                </Text>
-              </View>
-              
-              {/* Visual progress indicator */}
-              <View style={styles.progressBarContainer}>
-                <View 
-                  style={[
-                    styles.progressBar, 
-                    { width: `${progressPercentage}%` }
-                  ]} 
-                />
-                <View style={styles.progressBarBackground} />
-              </View>
-            </View>
-          </View>
-
           {/* Daily entries listing */}
           <View style={styles.entriesSection}>
             <Text style={[textStyles.heading4, styles.entriesSectionTitle]}>TODAY'S ENTRIES</Text>
@@ -170,21 +170,12 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     paddingHorizontal: 20,
   },
-  scrollContainer: {
-    flex: 1,
-    paddingHorizontal: 20,
-  },
-  scrollContent: {
-    paddingBottom: 140,
-  },
   totalWaterCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 24,
-    marginBottom: 30,
-    width: '90%',
-    maxWidth: 350,
-    alignSelf: 'center',
+    marginBottom: 20,
+    marginHorizontal: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -232,6 +223,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#E5E5E5',
     borderRadius: 6,
   },
+  scrollContainer: {
+    flex: 1,
+    paddingHorizontal: 20,
+  },
+  scrollContent: {
+    paddingBottom: 160, // Increased from 140 to prevent button overlap
+  },
   entriesSection: {
     flex: 1,
   },
@@ -271,7 +269,7 @@ const styles = StyleSheet.create({
   },
   floatingButtonContainer: {
     position: 'absolute',
-    bottom: 115,
+    bottom: 80, // Moved up from 115 to prevent overlap
     left: 20,
     right: 20,
     zIndex: 1000,
