@@ -1,4 +1,3 @@
-// profile/AccountSettings.jsx
 import React, { useEffect, useState } from "react";
 import {
   StyleSheet,
@@ -20,13 +19,16 @@ import { getMe, updateMe } from "@/services/userService";
 import { logout } from "@/services/authService";
 import { router } from "expo-router";
 import CustomInput from "../../components/common/CustomInput";
+import CustomToast from "@/components/common/CustomToast";
 import Toast from "react-native-toast-message";
+import { Font } from "@/constants/Font";
+import CustomButton from "../../components/common/CustomButton";
 
 export default function AccountSettings() {
   const theme = Colors["dark"];
   const navigation = useNavigation();
-  const [profileImage, setProfileImage] = useState(null); //State for profile image
-  const [selectedDob, setSelectedDob] = useState(null); //for date picker
+  const [profileImage, setProfileImage] = useState(null);
+  const [selectedDob, setSelectedDob] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [errors, setErrors] = useState({});
@@ -58,7 +60,7 @@ export default function AccountSettings() {
     (async () => {
       try {
         setLoading(true);
-        const me = await getMe(); //get user info from backend
+        const me = await getMe();
         if (!alive) return;
 
         const dobStr = toYmd(me.dateofbirth);
@@ -134,7 +136,7 @@ export default function AccountSettings() {
       const a = result.assets[0];
       const manip = await ImageManipulator.manipulateAsync(
         a.uri,
-        [{ resize: { width: 512 } }], //make image smaller for upload
+        [{ resize: { width: 512 } }],
         {
           compress: 0.7,
           format: ImageManipulator.SaveFormat.JPEG,
@@ -159,14 +161,7 @@ export default function AccountSettings() {
   const handleSave = async () => {
     if (!validateForm()) {
       // Show toast if validation fails
-      Toast.show({
-        type: "error",
-        text1: "Validation Error",
-        text2: "Please fix the errors before saving.",
-        position: "top", //Show toast from the top
-        visibilityTime: 5000, //disappears after 5 seconds
-        autoHide: true,
-      });
+      CustomToast.validationError("Please fix the errors before saving.");
       return; //if requirements not met return error
     }
 
@@ -194,14 +189,7 @@ export default function AccountSettings() {
       });
 
       // Show success toast when info saved
-      Toast.show({
-        type: "success",
-        text1: "Saved!",
-        text2: "Your information has been updated.",
-        position: "top", // Show toast from the top
-        visibilityTime: 5000, // notification disappears after 5 seconds
-        autoHide: true,
-      });
+      CustomToast.success("Saved!", "Your information has been updated.");
     } catch (e) {
       const msg = e?.response?.data?.error || "Update failed";
       console.log(msg);
@@ -245,6 +233,7 @@ export default function AccountSettings() {
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
           {/* Profile Picture */}
           <View style={styles.profilePicWrapper}>
@@ -378,16 +367,14 @@ export default function AccountSettings() {
 
           {/* Logout button */}
           <View style={styles.logoutButtonWrapper}>
-            <TouchableOpacity
-              style={[styles.saveButton, { backgroundColor: theme.error }]}
+            <CustomButton
+              title="Logout"
               onPress={handleLogout}
-            >
-              <Text
-                style={[styles.saveButtonText, { fontFamily: "Montserrat" }]}
-              >
-                Logout
-              </Text>
-            </TouchableOpacity>
+              variant="error"
+              size="large"
+              rounded
+              style={{ width: "100%" }}
+            />
           </View>
 
           {/* Extra spacing to avoid save button overlap */}
@@ -396,14 +383,14 @@ export default function AccountSettings() {
 
         {/* Sticky Save Button at the bottom */}
         <View style={styles.saveButtonWrapper}>
-          <TouchableOpacity
-            style={[styles.saveButton, { backgroundColor: theme.tint }]}
+          <CustomButton
+            title="Save Information"
             onPress={handleSave}
-          >
-            <Text style={[styles.saveButtonText, { fontFamily: "Montserrat" }]}>
-              Save Information
-            </Text>
-          </TouchableOpacity>
+            variant="primary"
+            size="large"
+            rounded
+            style={{ width: "100%" }}
+          />
         </View>
       </KeyboardAvoidingView>
 
@@ -414,9 +401,7 @@ export default function AccountSettings() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
+  container: { flex: 1 },
 
   formContainer: {
     width: "100%",
@@ -444,10 +429,9 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 22,
-    fontWeight: "700",
     textAlign: "center",
     marginVertical: 16,
-    fontFamily: "Montserrat",
+    fontFamily: Font.bold,
   },
   scrollContent: {
     paddingHorizontal: 20,
@@ -482,53 +466,17 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "#fff",
   },
-  inputGroup: {
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: "600",
-    marginBottom: 6,
-    fontFamily: "Montserrat",
-  },
-  input: {
-    borderRadius: 10,
-    padding: 14,
-    fontSize: 16,
-    fontFamily: "Montserrat",
-  },
   saveButtonWrapper: {
     position: "absolute",
     bottom: 20,
     left: 20,
     right: 20,
   },
-
   logoutButtonWrapper: {
     position: "absolute",
     bottom: 110,
     left: 20,
     right: 20,
-  },
-
-  saveButton: {
-    paddingVertical: 16,
-    borderRadius: 30,
-    alignItems: "center",
-  },
-
-  saveButtonText: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#fff",
-    fontFamily: "Montserrat",
-  },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    marginVertical: 16,
-    position: "relative",
   },
   errorText: {
     color: "red",

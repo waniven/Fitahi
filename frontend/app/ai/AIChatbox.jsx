@@ -1,24 +1,22 @@
 import { useEffect, useRef, useState } from "react";
 import {
   Animated,
-  Dimensions,
   FlatList,
   KeyboardAvoidingView,
   Modal,
-  PanResponder,
   Platform,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
-  Alert,
 } from "react-native";
 import { Colors } from "../../constants/Colors";
+import { Font } from "../../constants/Font";
 import * as messageService from "../../services/messageService";
-import globalStyles from "../../styles/globalStyles";
+import CustomToast from "@/components/common/CustomToast";
 
-const { height: SCREEN_HEIGHT } = Dimensions.get("window");
+// const { height: SCREEN_HEIGHT } = Dimensions.get("window"); unused for now
 
 const CHAT_TOP = 80;
 const CHAT_SIDE = 20;
@@ -40,34 +38,35 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
   const typingController = useRef({ cancelled: false });
 
   const translateY = useRef(new Animated.Value(0)).current;
-  const panResponder = useRef(
-    PanResponder.create({
-      onMoveShouldSetPanResponder: (_, g) => g.dy > 0,
-      onPanResponderMove: (_, g) => {
-        if (g.dy > 0) translateY.setValue(g.dy);
-      },
-      onPanResponderRelease: (_, g) => {
-        if (g.dy > 150) {
-          Animated.timing(translateY, {
-            toValue: SCREEN_HEIGHT,
-            duration: 200,
-            useNativeDriver: true,
-          }).start(() => onClose?.());
-        } else {
-          Animated.spring(translateY, {
-            toValue: 0,
-            useNativeDriver: true,
-          }).start();
-        }
-      },
-    })
-  ).current;
+  // const panResponder = useRef(
+  //   PanResponder.create({
+  //     onMoveShouldSetPanResponder: (_, g) => g.dy > 0,
+  //     onPanResponderMove: (_, g) => {
+  //       if (g.dy > 0) translateY.setValue(g.dy);
+  //     },
+  //     onPanResponderRelease: (_, g) => {
+  //       if (g.dy > 150) {
+  //         Animated.timing(translateY, {
+  //           toValue: SCREEN_HEIGHT,
+  //           duration: 200,
+  //           useNativeDriver: true,
+  //         }).start(() => onClose?.());
+  //       } else {
+  //         Animated.spring(translateY, {
+  //           toValue: 0,
+  //           useNativeDriver: true,
+  //         }).start();
+  //       }
+  //     },
+  //   })
+  // ).current;
 
   useEffect(() => {
     if (chatMessages.length > 0) {
-      setTimeout(() => {
-        flatListRef.current?.scrollToEnd({ animated: true });
-      }, 100);
+      setTimeout(
+        () => flatListRef.current?.scrollToEnd({ animated: true }),
+        100
+      );
     }
   }, [chatMessages]);
 
@@ -83,9 +82,7 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
       const { userMessage, aiMessage, conversationId } =
         await messageService.sendMessage(clean, activeConvo?._id);
 
-      if (typingController.current.cancelled) {
-        return; // stop if convo was deleted mid-reply
-      }
+      if (typingController.current.cancelled) return;
 
       setActiveConvo({ ...activeConvo, _id: conversationId });
 
@@ -101,17 +98,16 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
       setChatMessages((prev) => [...prev, safeUserMsg, safeAiMsg]);
       setMessages((prev) => [...prev, safeUserMsg, safeAiMsg]);
     } catch (err) {
-      let description = "Something went wrong. Please try again later.";
+      let description = "Please try again later.";
       if (err.response?.status === 500) {
-        description =
-          "Darwin is having issues or may be overloaded! Try again soon.";
+        description = "Server overloaded, try again soon!";
       } else if (err.response?.status === 401) {
-        description = "Your session expired (401). Please log in again.";
+        description = "Session expired, please log in again.";
       } else if (err.message?.includes("Network")) {
-        description = "No internet connection. Check your network and retry.";
+        description = "Check your network connection!";
       }
 
-      Alert.alert("Darwin Unavailable", description);
+      CustomToast.error("Darwin Unavailable", description);
     } finally {
       setLoading(false);
     }
@@ -173,7 +169,14 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
         },
       ]}
     >
-      <Text style={[{ color: "#FFF" }, globalStyles.textRegular]}>
+      <Text
+        style={{
+          color: "#FFF",
+          fontFamily: Font.regular,
+          fontSize: 15,
+          lineHeight: 20,
+        }}
+      >
         {item.text}
       </Text>
     </View>
@@ -187,21 +190,27 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
             styles.container,
             { backgroundColor: theme.background, transform: [{ translateY }] },
           ]}
-          {...panResponder.panHandlers}
+          // {...panResponder.panHandlers} commented out to disable drag to close since it makes the buttons difficult to use
         >
           <View style={styles.header}>
             <Text
-              style={[
-                styles.headerText,
-                globalStyles.textBold,
-                { color: theme.tint },
-              ]}
+              style={{
+                fontFamily: Font.bold,
+                fontSize: 18,
+                lineHeight: 22,
+                color: theme.tint,
+              }}
             >
               Darwin
             </Text>
             <TouchableOpacity onPress={onClose} style={{ padding: 8 }}>
               <Text
-                style={[globalStyles.textBold, { color: "red", fontSize: 20 }]}
+                style={{
+                  fontFamily: Font.bold,
+                  color: "red",
+                  fontSize: 20,
+                  lineHeight: 24,
+                }}
               >
                 ✕
               </Text>
@@ -225,10 +234,13 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
 
           {loading && (
             <Text
-              style={[
-                globalStyles.textRegular,
-                { color: theme.tint, marginHorizontal: 12 },
-              ]}
+              style={{
+                fontFamily: Font.regular,
+                color: theme.tint,
+                marginHorizontal: 12,
+                fontSize: 12,
+                lineHeight: 20,
+              }}
             >
               Darwin is typing...
             </Text>
@@ -242,8 +254,13 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
               <TextInput
                 style={[
                   styles.input,
-                  { backgroundColor: theme.backgroundAlt, color: "#FFF" },
-                  globalStyles.textRegular,
+                  {
+                    backgroundColor: theme.backgroundAlt,
+                    color: "#FFF",
+                    fontFamily: Font.regular,
+                    fontSize: 15,
+                    lineHeight: 20,
+                  },
                 ]}
                 placeholder="Type your message..."
                 placeholderTextColor={theme.textSecondary}
@@ -251,16 +268,19 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
                 onChangeText={setInput}
                 onSubmitEditing={() => sendMessage(input)}
                 returnKeyType="send"
+                multiline
               />
               <TouchableOpacity
                 style={[styles.iconBtn, { backgroundColor: theme.tint }]}
                 onPress={() => setHistoryVisible(true)}
               >
                 <Text
-                  style={[
-                    globalStyles.textBold,
-                    { color: theme.background, fontSize: 18 },
-                  ]}
+                  style={{
+                    fontFamily: Font.bold,
+                    color: theme.background,
+                    fontSize: 18,
+                    lineHeight: 22,
+                  }}
                 >
                   ≡
                 </Text>
@@ -270,7 +290,12 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
                 onPress={() => sendMessage(input)}
               >
                 <Text
-                  style={[globalStyles.textBold, { color: theme.background }]}
+                  style={{
+                    fontFamily: Font.bold,
+                    color: theme.background,
+                    fontSize: 15,
+                    lineHeight: 20,
+                  }}
                 >
                   Send
                 </Text>
@@ -289,10 +314,13 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
             ]}
           >
             <Text
-              style={[
-                globalStyles.textBold,
-                { fontSize: 20, marginBottom: 12, color: "#FFF" },
-              ]}
+              style={{
+                fontFamily: Font.bold,
+                color: theme.textPrimary,
+                fontSize: 20,
+                lineHeight: 24,
+                marginBottom: 12,
+              }}
             >
               History
             </Text>
@@ -301,7 +329,7 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
               onPress={newConversation}
               style={{ paddingVertical: 8 }}
             >
-              <Text style={[globalStyles.textBold, { color: theme.tint }]}>
+              <Text style={{ fontFamily: Font.bold, color: theme.tint }}>
                 + New Conversation
               </Text>
             </TouchableOpacity>
@@ -320,7 +348,12 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
                   onPress={() => selectConversation(c)}
                   style={{ flex: 1 }}
                 >
-                  <Text style={{ color: theme.textPrimary }}>
+                  <Text
+                    style={{
+                      fontFamily: Font.regular,
+                      color: theme.textPrimary,
+                    }}
+                  >
                     {c.title || "Untitled"} -{" "}
                     {new Date(c.updatedAt).toLocaleString()}
                   </Text>
@@ -335,9 +368,7 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
               onPress={() => setHistoryVisible(false)}
               style={{ paddingVertical: 12 }}
             >
-              <Text style={[globalStyles.textBold, { color: "red" }]}>
-                Close
-              </Text>
+              <Text style={{ fontFamily: Font.bold, color: "red" }}>Close</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -373,7 +404,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#333",
   },
-  headerText: { fontSize: 18 },
   messageBubble: {
     padding: 12,
     borderRadius: 12,
@@ -388,13 +418,20 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: "#333",
   },
-  input: { flex: 1, height: 40, borderRadius: 20, paddingHorizontal: 12 },
+  input: {
+    flex: 1,
+    minHeight: 44,
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    textAlignVertical: "center",
+  },
   iconBtn: {
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 16,
     paddingHorizontal: 12,
-    height: 40,
+    height: 44,
     marginLeft: 8,
   },
   sendButton: {
@@ -402,7 +439,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 20,
     paddingHorizontal: 16,
-    height: 40,
+    height: 44,
     marginLeft: 8,
   },
   modalOverlay: {
