@@ -41,3 +41,10 @@ export async function updateMe({ firstname, lastname, email, dateofbirth, passwo
 export async function deleteMe() {
     await api.delete("users/me");
 }
+
+// save quiz answers from user upon sign-up
+export async function saveQuiz(quiz) {
+    console.log(quiz)
+    const res = await api.patch("users/me/quiz", { quiz });
+    return res.data;
+}
