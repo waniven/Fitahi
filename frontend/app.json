@@ -1,6 +1,6 @@
 {
   "expo": {
-    "jsEngine": "jsc",
+    "jsEngine": "hermes",
     "name": "frontend",
     "slug": "frontend",
     "version": "1.0.0",
