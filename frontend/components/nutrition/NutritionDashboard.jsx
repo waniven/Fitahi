@@ -63,7 +63,7 @@ const NutritionDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress, d
         <View style={[styles.pieChartContainer, { width: size, height: size }]}>
           <View style={styles.emptyPieChart}>
             <Text style={[textStyles.heading3, styles.emptyChartText]}>0</Text>
-            <Text style={[textStyles.bodySmall, styles.emptyChartSubtext]}>kcal</Text>
+            <Text style={[textStyles.bodySmall, styles.emptyChartSubtext]}>grams</Text>
           </View>
         </View>
       );
@@ -172,17 +172,17 @@ const NutritionDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress, d
                   }
                 ]}
               >
-                <Text style={styles.donutLabelText}>{segment.value} kcal</Text>
+                <Text style={styles.donutLabelText}>{segment.value} g</Text>
                 <Text style={styles.donutLabelSubtext}>{segment.label}</Text>
               </View>
             );
           })}
         </View>
         
-        {/* Center display showing total calories */}
+        {/* Center display showing total grams */}
         <View style={styles.donutCenter}>
           <Text style={[textStyles.bodyMedium, styles.donutCenterText]}>{total}</Text>
-          <Text style={styles.donutCenterSubtext}>kcal total</Text>
+          <Text style={styles.donutCenterSubtext}>grams total</Text>
         </View>
       </View>
     );
@@ -206,71 +206,72 @@ const NutritionDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress, d
           </Text>
         </View>
 
+        {/* Fixed title section */}
         <Text style={[textStyles.heading4, styles.totalsSectionTitle]}>YOUR TOTALS FOR TODAY</Text>
+
+        {/* Fixed nutrition overview section */}
+        <View style={styles.nutritionOverviewContainer}>
+          <View style={styles.pieChartSection}>
+            <DonutChart nutrition={totalNutrition} size={140} />
+          </View>
+
+          {/* Individual macronutrient progress indicators */}
+          <View style={styles.macroProgressSection}>
+            <View style={styles.macroProgressItem}>
+              <Text style={[textStyles.bodyMedium, styles.macroLabel]}>Protein</Text>
+              <View style={styles.progressBarContainer}>
+                <View 
+                  style={[
+                    styles.progressBar, 
+                    styles.proteinProgress,
+                    { width: `${Math.min((totalNutrition.protein / dailyGoals.protein) * 100, 100)}%` }
+                  ]} 
+                />
+              </View>
+              <Text style={[textStyles.bodySmall, styles.macroText]}>
+                {totalNutrition.protein} g / {dailyGoals.protein} g
+              </Text>
+            </View>
+
+            <View style={styles.macroProgressItem}>
+              <Text style={[textStyles.bodyMedium, styles.macroLabel]}>Fat</Text>
+              <View style={styles.progressBarContainer}>
+                <View 
+                  style={[
+                    styles.progressBar, 
+                    styles.fatProgress,
+                    { width: `${Math.min((totalNutrition.fat / dailyGoals.fat) * 100, 100)}%` }
+                  ]} 
+                />
+              </View>
+              <Text style={[textStyles.bodySmall, styles.macroText]}>
+                {totalNutrition.fat} g / {dailyGoals.fat} g
+              </Text>
+            </View>
+
+            <View style={styles.macroProgressItem}>
+              <Text style={[textStyles.bodyMedium, styles.macroLabel]}>Carbs</Text>
+              <View style={styles.progressBarContainer}>
+                <View 
+                  style={[
+                    styles.progressBar, 
+                    styles.carbsProgress,
+                    { width: `${Math.min((totalNutrition.carbs / dailyGoals.carbs) * 100, 100)}%` }
+                  ]} 
+                />
+              </View>
+              <Text style={[textStyles.bodySmall, styles.macroText]}>
+                {totalNutrition.carbs} g / {dailyGoals.carbs} g
+              </Text>
+            </View>
+          </View>
+        </View>
 
         <ScrollView 
           style={styles.scrollContainer} 
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
         >
-          {/* Nutrition overview with chart and progress bars */}
-          <View style={styles.nutritionOverviewContainer}>
-            <View style={styles.pieChartSection}>
-              <DonutChart nutrition={totalNutrition} size={140} />
-            </View>
-
-            {/* Individual macronutrient progress indicators */}
-            <View style={styles.macroProgressSection}>
-              <View style={styles.macroProgressItem}>
-                <Text style={[textStyles.bodyMedium, styles.macroLabel]}>Protein</Text>
-                <View style={styles.progressBarContainer}>
-                  <View 
-                    style={[
-                      styles.progressBar, 
-                      styles.proteinProgress,
-                      { width: `${Math.min((totalNutrition.protein / dailyGoals.protein) * 100, 100)}%` }
-                    ]} 
-                  />
-                </View>
-                <Text style={[textStyles.bodySmall, styles.macroText]}>
-                  {totalNutrition.protein} g / {dailyGoals.protein} g
-                </Text>
-              </View>
-
-              <View style={styles.macroProgressItem}>
-                <Text style={[textStyles.bodyMedium, styles.macroLabel]}>Fat</Text>
-                <View style={styles.progressBarContainer}>
-                  <View 
-                    style={[
-                      styles.progressBar, 
-                      styles.fatProgress,
-                      { width: `${Math.min((totalNutrition.fat / dailyGoals.fat) * 100, 100)}%` }
-                    ]} 
-                  />
-                </View>
-                <Text style={[textStyles.bodySmall, styles.macroText]}>
-                  {totalNutrition.fat} g / {dailyGoals.fat} g
-                </Text>
-              </View>
-
-              <View style={styles.macroProgressItem}>
-                <Text style={[textStyles.bodyMedium, styles.macroLabel]}>Carbs</Text>
-                <View style={styles.progressBarContainer}>
-                  <View 
-                    style={[
-                      styles.progressBar, 
-                      styles.carbsProgress,
-                      { width: `${Math.min((totalNutrition.carbs / dailyGoals.carbs) * 100, 100)}%` }
-                    ]} 
-                  />
-                </View>
-                <Text style={[textStyles.bodySmall, styles.macroText]}>
-                  {totalNutrition.carbs} g / {dailyGoals.carbs} g
-                </Text>
-              </View>
-            </View>
-          </View>
-
           {/* Total calories summary card */}
           <View style={styles.caloriesCard}>
             <View style={styles.caloriesContent}>
@@ -371,17 +372,11 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     paddingHorizontal: 20,
   },
-  scrollContainer: {
-    flex: 1,
-    paddingHorizontal: 20,
-  },
-  scrollContent: {
-    paddingBottom: 140,
-  },
   nutritionOverviewContainer: {
     flexDirection: 'row',
     marginBottom: 20,
     gap: 20,
+    paddingHorizontal: 20,
   },
   pieChartSection: {
     flex: 1,
@@ -482,6 +477,13 @@ const styles = StyleSheet.create({
   },
   macroText: {
     color: '#FFFFFF',
+  },
+  scrollContainer: {
+    flex: 1,
+    paddingHorizontal: 20,
+  },
+  scrollContent: {
+    paddingBottom: 140,
   },
   caloriesCard: {
     backgroundColor: '#FFFFFF',

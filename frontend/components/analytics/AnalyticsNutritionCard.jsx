@@ -1,9 +1,12 @@
 // components/analytics/AnalyticsNutritionCard.jsx
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Font, Type, TextVariants } from '../../constants/Font';
 import CustomToast from '../common/CustomToast';
+
+const screenWidth = Dimensions.get('window').width;
+const cardWidth = screenWidth - 40; // Responsive width with 20px margin on each side
 
 // Displays nutrition entry with food name, meal/time, and nutrition badges for analytics screens
 const AnalyticsNutritionCard = ({ 
@@ -42,66 +45,65 @@ const AnalyticsNutritionCard = ({
 
   return (
     <View style={[styles.container, style]} {...props}>
-      {/* Top section with food name and timestamp */}
-      <View style={styles.headerSection}>
-        <Text style={styles.foodNameText} numberOfLines={1}>
+      {/* Header section with full food name */}
+      <View style={[styles.headerSection, { paddingRight: showDeleteButton ? 35 : 0 }]}>
+        <Text style={styles.foodNameText} numberOfLines={2}>
           {foodName}
         </Text>
+        {showDeleteButton && (
+          <TouchableOpacity 
+            style={styles.deleteButton}
+            onPress={handleDelete}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Ionicons name="trash-outline" size={16} color="#666" />
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {/* Timestamp and meal type section */}
+      <View style={styles.metaSection}>
         <Text style={styles.timestampText}>
           {formatTimestamp(timestamp)}
         </Text>
-      </View>
-
-      {/* Main content section */}
-      <View style={styles.mainContent}>
-        <View style={styles.leftSection}>
+        <View style={styles.mealTypeBadge}>
           <Text style={styles.mealTypeText}>{formatMealType(mealType)}</Text>
         </View>
+      </View>
 
-        <View style={styles.rightSection}>
-          <View style={styles.nutritionRow}>
-            <View style={[styles.nutritionBadge, styles.caloriesBadge]}>
-              <Text style={styles.badgeText}>Calories: {calories} kcal</Text>
-            </View>
-            <View style={[styles.nutritionBadge, styles.proteinBadge]}>
-              <Text style={styles.badgeText}>Protein: {protein} g</Text>
-            </View>
+      {/* Nutrition badges section */}
+      <View style={styles.nutritionSection}>
+        <View style={styles.nutritionRow}>
+          <View style={[styles.nutritionBadge, styles.caloriesBadge]}>
+            <Text style={styles.badgeText}>Calories: {calories} kcal</Text>
           </View>
+          <View style={[styles.nutritionBadge, styles.proteinBadge]}>
+            <Text style={styles.badgeText}>Protein: {protein} g</Text>
+          </View>
+        </View>
 
-          <View style={styles.nutritionRow}>
-            <View style={[styles.nutritionBadge, styles.fatBadge]}>
-              <Text style={styles.badgeText}>Fat: {fat} g</Text>
-            </View>
-            <View style={[styles.nutritionBadge, styles.carbsBadge]}>
-              <Text style={styles.badgeText}>Carbs: {carbs} g</Text>
-            </View>
+        <View style={styles.nutritionRow}>
+          <View style={[styles.nutritionBadge, styles.carbsBadge]}>
+            <Text style={styles.badgeText}>Carbs: {carbs} g</Text>
+          </View>
+          <View style={[styles.nutritionBadge, styles.fatBadge]}>
+            <Text style={styles.badgeText}>Fat: {fat} g</Text>
           </View>
         </View>
       </View>
-
-      {showDeleteButton && (
-        <TouchableOpacity 
-          style={styles.deleteButton}
-          onPress={handleDelete}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        >
-          <Ionicons name="trash-outline" size={16} color="#666" />
-        </TouchableOpacity>
-      )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    width: '110%',
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    padding: 12,
-    marginVertical: 6,
-    marginHorizontal: 0,
+    padding: 16, // Increased padding
+    marginVertical: 8, // Slightly increased vertical spacing
+    marginHorizontal: 20, // Added horizontal margins
     alignSelf: 'center',
-    maxWidth: 350,
+    width: cardWidth, // Responsive width
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -111,69 +113,90 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
     position: 'relative',
-    minHeight: 100,
+    minHeight: 160, // Increased minimum height for better layout
   },
 
   headerSection: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 8,
-    paddingRight: 30,
+    marginBottom: 12, // Increased spacing
   },
 
   foodNameText: {
-    fontSize: 16,
+    fontSize: 18, // Slightly larger font
     color: '#4A90E2',
     flex: 1,
-    marginRight: 8,
+    lineHeight: 22, // Better line height for multi-line text
     ...Type.bold,
   },
 
+  deleteButton: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#F5F5F5',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+
+  metaSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16, // Spacing before nutrition section
+  },
+
   timestampText: {
-    fontSize: 12,
+    fontSize: 13,
     color: '#666',
     ...Type.regular,
   },
 
-  mainContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-
-  leftSection: {
-    justifyContent: 'center',
-    marginRight: 12,
-    minWidth: 70,
-    maxWidth: 90,
+  mealTypeBadge: {
+    backgroundColor: '#E3F2FD',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#4A90E2',
   },
 
   mealTypeText: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#4A90E2',
-    ...Type.regular,
+    ...Type.semibold,
   },
 
-  rightSection: {
+  nutritionSection: {
     flex: 1,
-    justifyContent: 'space-between',
-    paddingRight: 24,
   },
 
   nutritionRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 4,
+    marginBottom: 8, // Spacing between rows
   },
 
   nutritionBadge: {
-    borderRadius: 16,
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    flex: 0.49,
+    borderRadius: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    flex: 0.48, // Slightly less than 0.5 for better spacing
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 24,
+    minHeight: 50, // Increased height for better layout
   },
 
   caloriesBadge: {
@@ -194,29 +217,17 @@ const styles = StyleSheet.create({
 
   badgeText: {
     color: '#FFFFFF',
-    fontSize: 10,
+    fontSize: 11,
     textAlign: 'center',
-    ...Type.semibold,
+    marginBottom: 2,
+    ...Type.medium,
   },
 
-  deleteButton: {
-    position: 'absolute',
-    top: 6,
-    right: 6,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#F5F5F5',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+  badgeValue: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    textAlign: 'center',
+    ...Type.bold,
   },
 });
 

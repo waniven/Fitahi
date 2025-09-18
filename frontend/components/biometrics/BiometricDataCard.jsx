@@ -1,10 +1,13 @@
 // components/common/BiometricDataCard.jsx
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/Colors';
 import { Font, Type, TextVariants } from '../../constants/Font';
 import CustomToast from '../common/CustomToast';
+
+const screenWidth = Dimensions.get('window').width;
+const cardWidth = screenWidth - 40; // Responsive width with 20px margin on each side
 
 // Configuration constants
 const BMI_RANGES = {
@@ -124,16 +127,15 @@ const styles = StyleSheet.create({
   cardContainer: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    marginHorizontal: 20,
-    marginTop: 40,
-    marginBottom: 16,
-    width: 357,
-    height: 118,
+    marginVertical: 6, // Match other cards' vertical spacing
+    marginHorizontal: 0, // Match other cards' horizontal spacing
+    width: cardWidth, // Responsive width
+    minHeight: 140, // Increased from 118 for better content spacing
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowRadius: 4, // Match other cards' shadow radius
+    elevation: 3, // Match other cards' elevation
     position: 'relative',
     alignSelf: 'center',
   },
@@ -141,9 +143,9 @@ const styles = StyleSheet.create({
   accentBar: {
     position: 'absolute',
     left: 20,
-    top: (118 - 103) / 2,
+    top: 12, // Proportional top margin
     width: 8,
-    height: 103,
+    height: 116, // Scaled proportionally: (140 - 24) for top/bottom margins
     backgroundColor: '#4F9AFF',
     borderRadius: 4,
   },
@@ -151,16 +153,17 @@ const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
     padding: 16,
-    paddingLeft: 44,
-    paddingTop: 8,
+    paddingLeft: 44, // Match universal card alignment
+    paddingTop: 10, // Match universal card top padding
     paddingRight: 16,
+    paddingBottom: 16, // Match universal card bottom padding
   },
 
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 6, // Match universal card margin
     minHeight: 20,
   },
 
@@ -171,6 +174,8 @@ const styles = StyleSheet.create({
   timestamp: {
     color: '#666',
     textAlign: 'right',
+    fontSize: 15, // Match universal card timestamp size
+    ...Type.regular, // Add Type styling
   },
 
   deleteButton: {
@@ -181,42 +186,53 @@ const styles = StyleSheet.create({
   weightSection: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    marginBottom: 2,
-    marginTop: -17,
+    marginBottom: 4, // Match universal card main section margin
+    marginTop: -10, // Match universal card negative margin
   },
 
   weightValue: {
     color: '#4F9AFF',
-    lineHeight: 36,
+    lineHeight: 34, // Match universal card line height
+    fontSize: 30, // Match universal card main value size
+    ...Type.bold, // Add Type styling
   },
 
   weightUnit: {
     color: '#666',
     marginLeft: 4,
+    fontSize: 16, // Match universal card unit size
+    ...Type.regular, // Add Type styling
   },
 
   bmiSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 2,
+    marginBottom: 6, // Match universal card subtitle margin
     flexWrap: 'wrap',
   },
 
   bmiStatus: {
-    // Color will be set dynamically based on BMI range
+    fontSize: 15, // Match universal card subtitle size
+    ...Type.bold, // Add Type styling
   },
 
   bmiValue: {
     color: '#666',
+    fontSize: 14, // Match universal card detail text size
+    ...Type.regular, // Add Type styling
   },
 
   detailsRow: {
-    marginTop: 2,
+    marginTop: 4, // Match universal card details margin
     justifyContent: 'flex-end',
+    flex: 1, // Match universal card flex expansion
   },
 
   detailText: {
     color: '#333',
+    fontSize: 14, // Match universal card detail text size
+    ...Type.regular, // Add Type styling
+    lineHeight: 18, // Match universal card line height
   },
 });
 

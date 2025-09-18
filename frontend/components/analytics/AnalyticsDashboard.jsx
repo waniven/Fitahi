@@ -20,7 +20,8 @@ import FloatingAIButton from '../../app/ai/FloatingAIButton';
 import BottomNav from '../navbar/BottomNav';
 
 const screenWidth = Dimensions.get('window').width;
-const chartWidth = screenWidth - 80; // Increased padding for better fit
+const chartWidth = screenWidth - 60; // Reduced padding for better fit
+const chartContainerWidth = screenWidth - 40; // Container width
 
 /**
  * AnalyticsDashboard - Enhanced dashboard with workout analytics and navigation
@@ -35,25 +36,21 @@ const AnalyticsDashboard = ({ onBackPress, onRefresh }) => {
   // Navigation handlers for each chart using Expo Router
   const navigateToWaterLogs = () => {
     router.push('/analytics/WaterAnalyticsScreen');
-
   };
 
   const navigateToWorkoutLogs = () => {
     router.push('/analytics/WorkoutAnalyticsScreen');
-
   };
 
   const navigateToNutritionLogs = () => {
     router.push('/analytics/NutritionAnalyticsScreen');
-
   };
 
   const navigateToBiometricLogs = () => {
-      router.push('/analytics/BiometricsAnalyticsScreen');
-
+    router.push('/analytics/BiometricsAnalyticsScreen');
   };
 
-  // Clean white chart configuration
+  // Enhanced chart configuration with better padding and margins
   const whiteChartConfig = {
     backgroundColor: '#ffffff',
     backgroundGradientFrom: '#ffffff',
@@ -77,7 +74,9 @@ const AnalyticsDashboard = ({ onBackPress, onRefresh }) => {
     propsForLabels: {
       fontSize: 11,
       fontFamily: Font.regular
-    }
+    },
+    paddingRight: 30, // Add right padding to prevent label cutoff
+    paddingLeft: 10,   // Add left padding for better spacing
   };
 
   // Helper function to convert seconds to minutes
@@ -162,37 +161,45 @@ const AnalyticsDashboard = ({ onBackPress, onRefresh }) => {
     };
   };
 
-  // Biometrics - Line Chart
+  // Biometrics - Line Chart with current week format
   const prepareBiometricsData = () => {
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    
+    // If we have biometric entries, map them to the current week
     const sortedEntries = [...data.biometricEntries].sort((a, b) =>
       new Date(a.timestamp) - new Date(b.timestamp)
     );
 
     if (sortedEntries.length === 0) {
       return {
-        labels: ['Start'],
-        datasets: [{ data: [70] }]
+        labels: days,
+        datasets: [{ data: [70, 70, 70, 70, 70, 70, 70] }] // Flat line if no data
       };
     }
 
-    if (sortedEntries.length === 1) {
-      return {
-        labels: ['Day 1'],
-        datasets: [{ data: [sortedEntries[0].weight] }]
-      };
-    }
-
-    const labels = sortedEntries.map((_, index) => {
-      if (index === 0) return 'Start';
-      if (index === sortedEntries.length - 1) return 'Latest';
-      return `Day ${index + 1}`;
+    // Create weight data for each day of the week
+    const weeklyWeights = Array(7).fill(null);
+    
+    // Map existing entries to days (simplified - you might want more sophisticated logic)
+    sortedEntries.forEach((entry, index) => {
+      if (index < 7) {
+        weeklyWeights[index] = entry.weight;
+      }
     });
 
-    const weights = sortedEntries.map(entry => entry.weight);
+    // Fill missing days with the last known weight
+    let lastKnownWeight = sortedEntries[sortedEntries.length - 1].weight;
+    for (let i = 0; i < weeklyWeights.length; i++) {
+      if (weeklyWeights[i] === null) {
+        weeklyWeights[i] = lastKnownWeight;
+      } else {
+        lastKnownWeight = weeklyWeights[i];
+      }
+    }
 
     return {
-      labels: labels,
-      datasets: [{ data: weights }]
+      labels: days,
+      datasets: [{ data: weeklyWeights }]
     };
   };
 
@@ -245,14 +252,14 @@ const AnalyticsDashboard = ({ onBackPress, onRefresh }) => {
                   chartConfig={{
                     ...whiteChartConfig,
                     color: (opacity = 1) => `rgba(74, 144, 226, ${opacity})`,
-                    barPercentage: 0.7,
+                    barPercentage: 0.6,
                   }}
                   style={styles.chart}
                   showValuesOnTopOfBars={false}
                   fromZero={true}
                   segments={4}
                 />
-                <Text style={styles.chartPeriod}>This Week</Text>
+                <Text style={styles.chartPeriod}>Current Week</Text>
               </View>
             </View>
           </TouchableOpacity>
@@ -277,14 +284,14 @@ const AnalyticsDashboard = ({ onBackPress, onRefresh }) => {
                   chartConfig={{
                     ...whiteChartConfig,
                     color: (opacity = 1) => `rgba(255, 99, 132, ${opacity})`, // Pink/Red color for workouts
-                    barPercentage: 0.7,
+                    barPercentage: 0.6,
                   }}
                   style={styles.chart}
                   showValuesOnTopOfBars={false}
                   fromZero={true}
                   segments={4}
                 />
-                <Text style={styles.chartPeriod}>This Week</Text>
+                <Text style={styles.chartPeriod}>Current Week</Text>
               </View>
             </View>
           </TouchableOpacity>
@@ -305,7 +312,7 @@ const AnalyticsDashboard = ({ onBackPress, onRefresh }) => {
                 <StackedBarChart
                   data={nutritionStackedData}
                   width={chartWidth}
-                  height={300} // Increased height for better proportions
+                  height={300}
                   chartConfig={{
                     backgroundColor: '#ffffff',
                     backgroundGradientFrom: '#ffffff',
@@ -315,10 +322,9 @@ const AnalyticsDashboard = ({ onBackPress, onRefresh }) => {
                     labelColor: (opacity = 1) => `rgba(51, 51, 51, ${opacity})`,
                     fillShadowGradient: '#ffffff',
                     fillShadowGradientOpacity: 0.1,
-                    barPercentage: 0.6, // Reduce bar width for better spacing
+                    barPercentage: 0.5,
                     style: {
                       borderRadius: 16,
-                      paddingRight: 20, // Add right padding
                     },
                     propsForBackgroundLines: {
                       strokeDasharray: '3,3',
@@ -326,11 +332,13 @@ const AnalyticsDashboard = ({ onBackPress, onRefresh }) => {
                       strokeWidth: 1
                     },
                     propsForLabels: {
-                      fontSize: 10, // Slightly smaller labels
+                      fontSize: 10,
                       fontFamily: Font.regular
                     },
                     formatYLabel: (value) => Math.floor(value).toString(),
                     yAxisInterval: 100,
+                    paddingRight: 40, // Increased right padding
+                    paddingLeft: 15,   // Increased left padding
                   }}
                   style={styles.nutritionChart}
                   segments={5}
@@ -370,7 +378,7 @@ const AnalyticsDashboard = ({ onBackPress, onRefresh }) => {
                   WEIGHT PROGRESS
                 </Text>
                 <Text style={[styles.chartSubtitle, { color: "#CCCCCC" }]}>
-                  Track your journey
+                  Daily weight tracking (kg)
                 </Text>
               </View>
 
@@ -378,7 +386,7 @@ const AnalyticsDashboard = ({ onBackPress, onRefresh }) => {
                 <LineChart
                   data={biometricsData}
                   width={chartWidth}
-                  height={180}
+                  height={200}
                   chartConfig={{
                     ...whiteChartConfig,
                     color: (opacity = 1) => `rgba(54, 162, 235, ${opacity})`,
@@ -388,9 +396,9 @@ const AnalyticsDashboard = ({ onBackPress, onRefresh }) => {
                   withDots={true}
                   withInnerLines={false}
                   withOuterLines={false}
-                  segments={3}
+                  segments={4}
                 />
-                <Text style={styles.chartPeriod}>Progress Timeline</Text>
+                <Text style={styles.chartPeriod}>Current Week</Text>
               </View>
             </View>
           </TouchableOpacity>
@@ -442,6 +450,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 140,
     alignItems: 'center',
+    paddingHorizontal: 10, // Add horizontal padding to scroll content
   },
   chartSection: {
     marginBottom: 40,
@@ -468,35 +477,39 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#ffffff',
     borderRadius: 16,
-    padding: 15,
-    marginHorizontal: 40, // Increased margin for better spacing
+    padding: 20, // Increased padding for better spacing
+    marginHorizontal: 20, // Reduced margin for bigger containers
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.12,
     shadowRadius: 8,
     elevation: 5,
-    width: screenWidth - 80, // Match the chartWidth
+    width: chartContainerWidth, // Use container width
+    minWidth: chartContainerWidth, // Ensure minimum width
   },
   nutritionChartContainer: {
     alignItems: 'center',
     backgroundColor: '#ffffff',
     borderRadius: 16,
-    padding: 20, // Increased padding
-    marginHorizontal: 40, // Increased margin for better spacing
+    padding: 25, // Increased padding for nutrition chart
+    marginHorizontal: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.12,
     shadowRadius: 8,
     elevation: 5,
-    width: screenWidth - 80, // Match the chartWidth
+    width: chartContainerWidth,
+    minWidth: chartContainerWidth,
   },
   chart: {
     borderRadius: 12,
+    marginLeft: 0, // Remove left margin
+    marginRight: 0, // Remove right margin
   },
   nutritionChart: {
     borderRadius: 12,
-    marginLeft: 5, // Small left margin for better alignment
-    marginRight: 5, // Small right margin for better alignment
+    marginLeft: -10, // Negative margin to center better
+    marginRight: 0,
   },
   chartPeriod: {
     ...TextVariants.caption,
@@ -508,13 +521,14 @@ const styles = StyleSheet.create({
   nutritionLegend: {
     marginTop: 15,
     marginBottom: 5,
-    paddingHorizontal: 10, // Add horizontal padding
+    paddingHorizontal: 10,
+    width: '100%',
   },
   legendRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    width: '100%', // Use full width
+    width: '100%',
   },
   legendItem: {
     flexDirection: 'row',
