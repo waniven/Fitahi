@@ -7,10 +7,10 @@ import api from "./api";
  */
 
 //create water log (POST)
-export async function postWater({ time, ammount }) {
+export async function postWater({ time, amount }) {
     const res = await api.post('water', {
         time,
-        ammount
+        amount
     });
     return res.data;
 }
@@ -22,10 +22,10 @@ export async function getWater() {
 }
 
 //update water log (PATCH)
-export async function updateWater({ id, time, ammount }) {
+export async function updateWater({ id, time, amount }) {
     const res = await api.patch(`water/${id}`, {
         time,
-        ammount,
+        amount,
     });
     return res.data;
 }

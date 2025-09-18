@@ -10,10 +10,10 @@ const router = express.Router();
  */
 router.post('/', auth, async (req, res, next) => {
     try {
-        const { time, ammount } = req.body;
+        const { time, amount } = req.body;
 
-        //check if ammount is a number
-        if (ammount === undefined || Number.isNaN(Number(ammount))){
+        //check if amount is a number
+        if (amount === undefined || Number.isNaN(Number(amount))){
             return res.status(400).json({ error: 'amount is required and must be a number' });
         }
 
@@ -42,14 +42,14 @@ router.patch('/:id', auth, async (req, res, next) => {
         const { id } = req.params;
         validateId(id);
 
-        //check if ammount is a number
-        if (req.body.ammount === undefined || Number.isNaN(Number(req.body.ammount))){
+        //check if amount is a number
+        if (req.body.amount === undefined || Number.isNaN(Number(req.body.amount))){
             return res.status(400).json({ error: 'amount is required and must be a number' });
         }
 
         //allow only whitelisted fields
         const updates = {};
-        if (req.body.ammount !== undefined) updates.ammount = req.body.ammount;
+        if (req.body.amount !== undefined) updates.amount = req.body.amount;
         if (req.body.time !== undefined) updates.time = req.body.time;
 
 
