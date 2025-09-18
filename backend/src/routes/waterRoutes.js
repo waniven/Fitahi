@@ -33,45 +33,6 @@ router.post('/', auth, async (req, res, next) => {
 });
 
 /**
- * PATCH /api/water
- * update an exsisting water log
- */
-router.patch('/:id', auth, async (req, res, next) => {
-    try {
-        //load and check if id is valid
-        const { id } = req.params;
-        validateId(id);
-
-        //check if amount is a number
-        if (req.body.amount === undefined || Number.isNaN(Number(req.body.amount))){
-            return res.status(400).json({ error: 'amount is required and must be a number' });
-        }
-
-        //allow only whitelisted fields
-        const updates = {};
-        if (req.body.amount !== undefined) updates.amount = req.body.amount;
-        if (req.body.time !== undefined) updates.time = req.body.time;
-
-
-        //find and update water log for current user
-        const updateWater = await Water.findOneAndUpdate(
-            { _id: id, userId: req.user.id },
-            { $set: updates },
-            { new: true, runValidators: true }
-        );
-
-        if (!updateWater) {
-            return res.status(404).json({ error: 'Water log not found' });
-        }
-
-        return res.json(updateWater);
-    } catch (err) {
-        //error to global error handler 
-        return next(err);
-    }
-});
-
-/**
  * DELETE /api/water/:id
  * delete water log by id
  */

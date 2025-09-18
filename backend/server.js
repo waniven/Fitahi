@@ -10,6 +10,7 @@ const workoutRoutes = require('./src/routes/workoutRoutes');
 const workoutResultRoutes = require('./src/routes/workoutResultRoutes');
 const messageRoutes = require("./src/routes/messageRoutes");
 const conversationRoutes = require("./src/routes/conversationRoutes");
+const waterRoutes = require("./src/routes/waterRoutes");
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.use('/api/workouts', workoutRoutes);
 app.use('/api/workout-results', workoutResultRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/conversations", conversationRoutes);
+app.use("/api/water", waterRoutes);
 
 //global error handing
 app.use((err, _req, res, _next) => {

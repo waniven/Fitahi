@@ -45,7 +45,8 @@ const WaterDataCard = ({
 
   // Handle instant delete with toast notification
   const handleDelete = () => {
-    CustomToast.waterDeleted(entry.amount);
+    //moved to water.jsx based on api response
+    //CustomToast.waterDeleted(entry.amount);
     if (onDelete) {
       onDelete(entry.id);
     }

@@ -21,15 +21,6 @@ export async function getWater() {
     return res.data;
 }
 
-//update water log (PATCH)
-export async function updateWater({ id, time, amount }) {
-    const res = await api.patch(`water/${id}`, {
-        time,
-        amount,
-    });
-    return res.data;
-}
-
 //delete water log 
 export async function deleteWater(id){
     await api.delete(`water/${id}`);
