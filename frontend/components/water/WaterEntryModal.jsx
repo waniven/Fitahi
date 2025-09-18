@@ -191,7 +191,8 @@ export default function WaterEntryModal({
         timestamp: new Date().toISOString(),
       };
       
-      CustomToast.waterSaved(parseFloat(amountValue));
+      //replaced in water.jsx based on api response
+      //CustomToast.waterSaved(parseFloat(amountValue));
       
       if (onSave) {
         onSave(newWaterEntry);
