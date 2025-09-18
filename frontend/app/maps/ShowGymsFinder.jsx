@@ -25,7 +25,7 @@ import { Colors } from "@/constants/Colors";
 import { Font } from "@/constants/Font";
 import { AIContext } from "../ai/AIContext";
 
-const GOOGLE_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || "<YOUR_KEY>";
+const GOOGLE_KEY = process.env.GOOGLE_MAPS_API_KEY;
 
 // ShowGymsFinder helps user locate nearest gyms to their locations
 export default function ShowGymsFinder({ navigation }) {
@@ -217,18 +217,35 @@ export default function ShowGymsFinder({ navigation }) {
           styles.rowCard,
           {
             borderColor: isSelected ? theme.tint : "transparent",
-            backgroundColor: theme.card
+            backgroundColor: theme.card,
           },
         ]}
       >
         <View style={{ flex: 1 }}>
-          <Text style={[styles.rowTitle, {color: theme.textPrimary, fontFamily: Font.bold}]} numberOfLines={1}>
+          <Text
+            style={[
+              styles.rowTitle,
+              { color: theme.textPrimary, fontFamily: Font.bold },
+            ]}
+            numberOfLines={1}
+          >
             {item.name || "Gym"}
           </Text>
-          <Text style={[styles.rowSubtitle, {color: theme.textSecondary, fontFamily: Font.regular}]} numberOfLines={2}>
+          <Text
+            style={[
+              styles.rowSubtitle,
+              { color: theme.textSecondary, fontFamily: Font.regular },
+            ]}
+            numberOfLines={2}
+          >
             {item.vicinity || item.formatted_address || "—"}
           </Text>
-          <Text style={[styles.metaLine, {color: theme.tint, fontFamily: Font.regular}]}>
+          <Text
+            style={[
+              styles.metaLine,
+              { color: theme.tint, fontFamily: Font.regular },
+            ]}
+          >
             {item.rating ? `⭐ ${item.rating}  ·  ` : ""}
             {item.opening_hours?.open_now != null
               ? item.opening_hours.open_now
@@ -239,9 +256,17 @@ export default function ShowGymsFinder({ navigation }) {
         </View>
         <TouchableOpacity
           onPress={() => openInMaps(item)}
-          style={[styles.rowBtn, {backgroundColor: theme.tint}]}
+          style={[styles.rowBtn, { backgroundColor: theme.tint }]}
         >
-          <Text style={{ color: theme.textPrimary, fontFamily: Font.semibold, fontWeight: "700" }}>Map</Text>
+          <Text
+            style={{
+              color: theme.textPrimary,
+              fontFamily: Font.semibold,
+              fontWeight: "700",
+            }}
+          >
+            Map
+          </Text>
         </TouchableOpacity>
       </TouchableOpacity>
     );
@@ -256,11 +281,20 @@ export default function ShowGymsFinder({ navigation }) {
   return (
     <View style={[styles.screen, { backgroundColor: theme.background }]}>
       {/* Search bar */}
-      <View style={[styles.searchBar, {borderColor: theme.tint, fontFamily: Font.semibold}]}>
+      <View
+        style={[
+          styles.searchBar,
+          { borderColor: theme.tint, fontFamily: Font.semibold },
+        ]}
+      >
         <View
           style={[
             styles.inputWrap,
-            { borderColor: theme.tint, backgroundColor: theme.inputBg, fontFamily: Font.regular },
+            {
+              borderColor: theme.tint,
+              backgroundColor: theme.inputBg,
+              fontFamily: Font.regular,
+            },
           ]}
         >
           <TextInput
@@ -268,7 +302,10 @@ export default function ShowGymsFinder({ navigation }) {
             placeholderTextColor={theme.textSecondary}
             value={search}
             onChangeText={setSearch}
-            style={[styles.input, { color: theme.textPrimary, fontFamily: Font.regular }]}
+            style={[
+              styles.input,
+              { color: theme.textPrimary, fontFamily: Font.regular },
+            ]}
             returnKeyType="search"
             onSubmitEditing={onSearchPress}
           />
@@ -276,7 +313,14 @@ export default function ShowGymsFinder({ navigation }) {
             onPress={onSearchPress}
             style={[styles.actionBtn, { backgroundColor: theme.tint }]}
           >
-            <Text style={[styles.input, {fontFamily: Font.semibold, color: theme.textPrimary} ]}>Search</Text>
+            <Text
+              style={[
+                styles.input,
+                { fontFamily: Font.semibold, color: theme.textPrimary },
+              ]}
+            >
+              Search
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -295,8 +339,8 @@ export default function ShowGymsFinder({ navigation }) {
         <MapView
           ref={mapRef}
           style={StyleSheet.absoluteFillObject}
-          region={region}
-          onRegionChangeComplete={setRegion}
+          initialRegion={DEFAULT_REGION} // uncontrolled instead of region={region}
+          onRegionChangeComplete={(r) => setRegion(r)} // track region but don’t lock map
           showsUserLocation
           loadingEnabled
         >
@@ -422,5 +466,5 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
-  }
+  },
 });

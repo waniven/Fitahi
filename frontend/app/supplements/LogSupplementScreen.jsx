@@ -34,7 +34,6 @@ function LogSupplements({ navigation }) {
       else router.replace("/home/index");
     };
     navigation.setOptions({
-      
       headerLeft: () => (
         <CustomButtonThree onPress={() => navigation.goBack()} />
       ),
@@ -506,7 +505,7 @@ function timeToMinutes(str) {
 }
 
 // Map 0..6 -> Mon..Sun labels
-const DAY_LABELS = ["M", "T", "W", "Th", "F", "Sa", "Su"];
+const DAY_LABELS = ["M", "T", "W", "T", "F", "S", "S"];
 
 /**
  * Turn an array of weekday indices into a label string.
@@ -578,7 +577,6 @@ const styles = StyleSheet.create({
     zIndex: 1000,
     ...(Platform.OS === "android" ? { elevation: 20 } : {}),
   },
-  navItem: { alignItems: "center" },
 
   // TODAY card
   todayCard: {

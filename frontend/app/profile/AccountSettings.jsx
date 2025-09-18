@@ -1,16 +1,40 @@
-// profile/AccountSettings.jsx
-import React, { useState } from "react";
-import {StyleSheet, Text, TextInput, TouchableOpacity, View, KeyboardAvoidingView, Platform, ScrollView, Image} from "react-native";
+import React, { useEffect, useState } from "react";
+import {
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Image,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Colors } from "../../constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
+import * as ImageManipulator from "expo-image-manipulator";
 import { useNavigation } from "@react-navigation/native";
+import { getMe, updateMe } from "@/services/userService";
+import { logout } from "@/services/authService";
+import { router } from "expo-router";
+import CustomInput from "../../components/common/CustomInput";
+import CustomToast from "@/components/common/CustomToast";
 import Toast from "react-native-toast-message";
+import { Font } from "@/constants/Font";
+import CustomButton from "../../components/common/CustomButton";
 
 export default function AccountSettings() {
   const theme = Colors["dark"];
   const navigation = useNavigation();
+  const [profileImage, setProfileImage] = useState(null);
+  const [selectedDob, setSelectedDob] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [errors, setErrors] = useState({});
+
+  const toYmd = (d) => (d ? new Date(d).toISOString().slice(0, 10) : "");
+  const fromYmd = (s) => (s ? new Date(s) : null);
 
   // Form state for all input fields
   const [form, setForm] = useState({
@@ -30,35 +54,58 @@ export default function AccountSettings() {
     caloriesGoal: "",
   });
 
-  //validation error
-  const [errors, setErrors] = useState({});
+  //Fetch profile on mount and prefill form
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        setLoading(true);
+        const me = await getMe();
+        if (!alive) return;
 
-  // State for profile image
-  const [profileImage, setProfileImage] = useState(null);
+        const dobStr = toYmd(me.dateofbirth);
 
-  // Handle input changes
-  const handleChange = (key, value) => {
-    setForm((prev) => ({ ...prev, [key]: value }));
-  };
+        setForm((prev) => ({
+          ...prev,
+          firstName: me.firstname ?? "",
+          lastName: me.lastname ?? "",
+          email: me.email ?? "",
+          dob: dobStr,
+        }));
+
+        setSelectedDob(fromYmd(dobStr));
+
+        if (me.pfp) {
+          setProfileImage({ uri: me.pfp });
+        }
+      } catch (e) {
+        if (!alive) return;
+        const msg = e?.response?.data?.error || "Failed to load profile";
+        setLoadError(msg);
+      } finally {
+        if (alive) setLoading(false);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   // Validate inputs
   const validateForm = () => {
-    let newErrors = {};
+    const newErrors = {};
 
     if (!/^[A-Za-z]+$/.test(form.firstName.trim())) {
-      newErrors.firstName = "First name must contain only letters."; // first name must only contain letter no numbers etc
+      newErrors.firstName = "First name must contain only letters."; //first name must only contain letter no numbers etc
     }
     if (!/^[A-Za-z]+$/.test(form.lastName.trim())) {
       newErrors.lastName = "Last name must contain only letters."; //last name only contains letters
     }
-    if (!/^\d{2}[\/-]\d{2}[\/-]\d{4}$/.test(form.dob.trim())) {
-      newErrors.dob = "Use DD/MM/YYYY format."; //date format day/month/year
-    }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
       newErrors.email = "Invalid email format."; //email must be valid
     }
-    if (form.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters."; //password to be at least 6 characters
+    if (form.password.length > 0 && form.password.length < 8) {
+      newErrors.password = "Password must be at least 8 characters."; //password to be at least 8 characters
     }
     if (form.height && !/^\d+(\s?cm)?$/.test(form.height.trim())) {
       newErrors.height = "Height must be a number (e.g. 170 cm)."; //height in cm
@@ -70,61 +117,104 @@ export default function AccountSettings() {
       newErrors.waterGoal = "Water goal must be like '2L' or '2.5L'."; //water in L
     }
 
+    console.log(newErrors);
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  };
-
-  // Save form data (placeholder)
-  const handleSave = () => {
-    if (!validateForm()) {
-      // Show toast if validation fails
-      Toast.show({
-        type: "error",
-        text1: "Validation Error",
-        text2: "Please fix the errors before saving.",
-        position: "top", //Show toast from the top
-        visibilityTime: 5000, //disappears after 5 seconds
-        autoHide: true,
-      });
-      return; //if requirements not met return error
-    }
-
-    console.log("Saved form data:", form);
-
-    // Show success toast when info saved
-    Toast.show({
-      type: "success",
-      text1: "Saved!",
-      text2: "Your information has been updated.",
-      position: "top", // Show toast from the top
-      visibilityTime: 5000, // notification disappears after 5 seconds
-      autoHide: true,
-    });
   };
 
   // Pick profile image from gallery
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: "images",
+      base64: true,
       allowsEditing: true,
       aspect: [1, 1],
-      quality: 0.7,
+      quality: 0.8,
     });
 
     if (!result.canceled) {
-      setProfileImage(result.assets[0].uri);
+      const a = result.assets[0];
+      const manip = await ImageManipulator.manipulateAsync(
+        a.uri,
+        [{ resize: { width: 512 } }],
+        {
+          compress: 0.7,
+          format: ImageManipulator.SaveFormat.JPEG,
+          base64: true,
+        }
+      );
+
+      setProfileImage({
+        uri: manip.uri,
+        base64: manip.base64,
+        mime: "image/jpeg",
+      });
     }
+  };
+
+  // Handle input changes
+  const handleChange = (key, value) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+  };
+
+  //Save chances to backend
+  const handleSave = async () => {
+    if (!validateForm()) {
+      // Show toast if validation fails
+      CustomToast.validationError("Please fix the errors before saving.");
+      return; //if requirements not met return error
+    }
+
+    try {
+      const firstname = form.firstName.trim();
+      const lastname = form.lastName.trim();
+      const email = form.email.trim().toLowerCase();
+      const dateofbirth = form.dob;
+
+      //Build data URL if we have base64
+      const pfp = profileImage?.base64
+        ? `data:${profileImage.mime};base64,${profileImage.base64}`
+        : undefined;
+
+      //updates the user in the DB via API
+      await updateMe({
+        firstname,
+        lastname,
+        email,
+        dateofbirth,
+
+        //only include password if the user actually changed it
+        ...(form.password ? { password: form.password } : {}),
+        ...(pfp ? { pfp } : {}),
+      });
+
+      // Show success toast when info saved
+      CustomToast.success("Saved!", "Your information has been updated.");
+    } catch (e) {
+      const msg = e?.response?.data?.error || "Update failed";
+      console.log(msg);
+    }
+  };
+
+  const handleDobChange = (date) => {
+    setSelectedDob(date);
+    setForm((prev) => ({ ...prev, dob: toYmd(date) }));
+  };
+
+  const handleLogout = () => {
+    console.log("logout");
+    logout();
+    router.replace("/");
   };
 
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.background }]}
     >
-      {/* KeyboardAvoidingView so inputs don't get hidden by keyboard */}
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"} 
-        keyboardVerticalOffset={80} 
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        keyboardVerticalOffset={1}
       >
         {/* Back button to go back to home page */}
         <TouchableOpacity
@@ -139,17 +229,20 @@ export default function AccountSettings() {
           Your Account Settings
         </Text>
 
-        {/* Scrollable form that moves with keyboard */}
+        {/* Scrollable form */}
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled" // allows tapping outside input to dismiss keyboard
+          keyboardShouldPersistTaps="handled"
         >
           {/* Profile Picture */}
           <View style={styles.profilePicWrapper}>
             <View style={styles.profileCircle}>
               {profileImage ? (
-                <Image source={{ uri: profileImage }} style={styles.profileImage} />
+                <Image
+                  source={{ uri: profileImage.uri }}
+                  style={styles.profileImage}
+                />
               ) : (
                 <Ionicons name="person" size={60} color="white" />
               )}
@@ -160,40 +253,129 @@ export default function AccountSettings() {
             </TouchableOpacity>
           </View>
 
-          {/* Form Inputs */}
-          {[
-            { key: "firstName", label: "First Name", placeholder: "Enter first name" },
-            { key: "lastName", label: "Last Name", placeholder: "Enter last name" },
-            { key: "dob", label: "Date of Birth", placeholder: "e.g. 01/01/2000" },
-            { key: "email", label: "Email", placeholder: "Enter email" },
-            { key: "password", label: "Password", placeholder: "Enter password", secure: true },
-            { key: "fitnessGoal", label: "Fitness Goal", placeholder: "e.g. Lose weight" },
-            { key: "fitnessLevel", label: "Fitness Level", placeholder: "Beginner/Intermediate/Advanced" },
-            { key: "trainingDays", label: "Training Days", placeholder: "e.g. 3 days/week" },
-            { key: "trainingTime", label: "Training Time", placeholder: "e.g. 1 hour/session" },
-            { key: "diet", label: "Diet", placeholder: "e.g. Vegetarian" },
-            { key: "height", label: "Height", placeholder: "e.g. 168 cm" },
-            { key: "weight", label: "Weight", placeholder: "e.g. 60 kg" },
-            { key: "waterGoal", label: "Water Intake Goal", placeholder: "e.g. 2L per day" },
-            { key: "caloriesGoal", label: "Calories Intake Goal", placeholder: "e.g. 2000 kcal" },
-          ].map((field) => (
-            <View key={field.key} style={styles.inputGroup}>
-              <Text style={[styles.label, { color: theme.textPrimary }]}>
-                {field.label}
-              </Text>
-              <TextInput
-                style={[styles.input, { backgroundColor: "white", color: "black" }]}
-                placeholder={field.placeholder}
-                placeholderTextColor="#888"
-                secureTextEntry={field.secure || false}
-                value={form[field.key]}
-                onChangeText={(text) => handleChange(field.key, text)}
-              />
-              {errors[field.key] && (
-                <Text style={styles.errorText}>{errors[field.key]}</Text>
-              )}
-            </View>
-          ))}
+          {/* Form Fields*/}
+          <View style={styles.formContainer}>
+            <CustomInput
+              label="First Name"
+              placeholder="First Name"
+              value={form.firstName}
+              onChangeText={(text) => handleChange("firstName", text)}
+              errorMessage={errors.firstName}
+              required
+            />
+
+            <CustomInput
+              label="Last Name"
+              placeholder="Last Name"
+              value={form.lastName}
+              onChangeText={(text) => handleChange("lastName", text)}
+              errorMessage={errors.lastName}
+              required
+            />
+
+            <CustomInput
+              label="Date of Birth"
+              placeholder="Choose a date"
+              isDatePicker
+              selectedDate={selectedDob}
+              onDateChange={handleDobChange}
+              required
+            />
+
+            <CustomInput
+              label="Email Address"
+              placeholder="Email address"
+              value={form.email}
+              onChangeText={(text) => handleChange("email", text)}
+              keyboardType="email-address"
+              errorMessage={errors.email}
+              required
+            />
+
+            <CustomInput
+              label="Password"
+              placeholder="Password"
+              value={form.password}
+              onChangeText={(text) => handleChange("password", text)}
+              errorMessage={errors.password}
+              secureTextEntry
+            />
+
+            <CustomInput
+              label="Fitness Goal"
+              placeholder="e.g. Lose weight"
+              value={form.fitnessGoal}
+              onChangeText={(text) => handleChange("fitnessGoal", text)}
+            />
+
+            <CustomInput
+              label="Fitness Level"
+              placeholder="Beginner/Intermediate/Advanced"
+              value={form.fitnessLevel}
+              onChangeText={(text) => handleChange("fitnessLevel", text)}
+            />
+
+            <CustomInput
+              label="Training Days"
+              placeholder="e.g. 3 days/week"
+              value={form.trainingDays}
+              onChangeText={(text) => handleChange("trainingDays", text)}
+            />
+
+            <CustomInput
+              label="Training Time"
+              placeholder="e.g. 1 hour/session"
+              value={form.trainingTime}
+              onChangeText={(text) => handleChange("trainingTime", text)}
+            />
+
+            <CustomInput
+              label="Diet"
+              placeholder="e.g. Vegetarian"
+              value={form.diet}
+              onChangeText={(text) => handleChange("diet", text)}
+            />
+
+            <CustomInput
+              label="Height"
+              placeholder="e.g. 168 cm"
+              value={form.height}
+              onChangeText={(text) => handleChange("height", text)}
+            />
+
+            <CustomInput
+              label="Weight"
+              placeholder="e.g. 60 kg"
+              value={form.weight}
+              onChangeText={(text) => handleChange("weight", text)}
+            />
+
+            <CustomInput
+              label="Water Intake Goal"
+              placeholder="e.g. 2L per day"
+              value={form.waterGoal}
+              onChangeText={(text) => handleChange("waterGoal", text)}
+            />
+
+            <CustomInput
+              label="Calories Intake Goal"
+              placeholder="e.g. 2000 kcal"
+              value={form.caloriesGoal}
+              onChangeText={(text) => handleChange("caloriesGoal", text)}
+            />
+          </View>
+
+          {/* Logout button */}
+          <View style={styles.logoutButtonWrapper}>
+            <CustomButton
+              title="Logout"
+              onPress={handleLogout}
+              variant="error"
+              size="large"
+              rounded
+              style={{ width: "100%" }}
+            />
+          </View>
 
           {/* Extra spacing to avoid save button overlap */}
           <View style={{ height: 100 }} />
@@ -201,14 +383,14 @@ export default function AccountSettings() {
 
         {/* Sticky Save Button at the bottom */}
         <View style={styles.saveButtonWrapper}>
-          <TouchableOpacity
-            style={[styles.saveButton, { backgroundColor: theme.tint }]}
+          <CustomButton
+            title="Save Information"
             onPress={handleSave}
-          >
-            <Text style={[styles.saveButtonText, { fontFamily: "Montserrat" }]}>
-              Save Information
-            </Text>
-          </TouchableOpacity>
+            variant="primary"
+            size="large"
+            rounded
+            style={{ width: "100%" }}
+          />
         </View>
       </KeyboardAvoidingView>
 
@@ -219,9 +401,14 @@ export default function AccountSettings() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  container: { flex: 1 },
+
+  formContainer: {
+    width: "100%",
+    alignItems: "center",
+    marginBottom: 30,
   },
+
   backButton: {
     position: "absolute",
     top: 16,
@@ -242,10 +429,9 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 22,
-    fontWeight: "700",
     textAlign: "center",
     marginVertical: 16,
-    fontFamily: "Montserrat",
+    fontFamily: Font.bold,
   },
   scrollContent: {
     paddingHorizontal: 20,
@@ -280,44 +466,17 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "#fff",
   },
-  inputGroup: {
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: "600",
-    marginBottom: 6,
-    fontFamily: "Montserrat",
-  },
-  input: {
-    borderRadius: 10,
-    padding: 14,
-    fontSize: 16,
-    fontFamily: "Montserrat",
-  },
   saveButtonWrapper: {
     position: "absolute",
     bottom: 20,
     left: 20,
     right: 20,
   },
-  saveButton: {
-    paddingVertical: 16,
-    borderRadius: 30,
-    alignItems: "center",
-  },
-  saveButtonText: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#fff",
-    fontFamily: "Montserrat",
-  },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    marginVertical: 16,
-    position: "relative",
+  logoutButtonWrapper: {
+    position: "absolute",
+    bottom: 110,
+    left: 20,
+    right: 20,
   },
   errorText: {
     color: "red",

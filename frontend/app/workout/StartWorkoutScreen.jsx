@@ -10,10 +10,10 @@ import {
 import { MaterialIcons } from "@expo/vector-icons";
 import { Colors } from "@/constants/Colors";
 import { Font } from "@/constants/Font";
-import WorkoutResult from "@/components/workouts/models/WorkoutResult";
 import PrimaryButton from "@/components/PrimaryButton";
+import { createWorkoutResult } from "@/services/workoutResultService";
 
-//StartWorkoutScreen lets user click Start on the Workout Log and go to WorkoutScreen
+// StartWorkoutScreen lets user click Start on the Workout Log and go to WorkoutScreen
 export default function StartWorkoutScreen({ route, navigation }) {
   const scheme = useColorScheme();
   const theme = Colors[scheme ?? "light"];
@@ -22,10 +22,10 @@ export default function StartWorkoutScreen({ route, navigation }) {
   const workout = route?.params?.workoutDetail ?? route?.params?.workout ?? {};
   const exercises = Array.isArray(workout?.exercises) ? workout.exercises : [];
 
-  // Set header title to workout name
+  // Set header title to workout name (backend uses workoutName)
   useEffect(() => {
-    navigation.setOptions({ title: workout?.name || "Workout" });
-  }, [navigation, workout?.name]);
+    navigation.setOptions({ title: workout?.workoutName || "Workout" });
+  }, [navigation, workout?.workoutName]);
 
   // Build ordered phases
   const phases = useMemo(() => buildPhases(exercises), [exercises]);
@@ -38,7 +38,7 @@ export default function StartWorkoutScreen({ route, navigation }) {
 
   const currentPhase = phases[phaseIndex] ?? null;
 
-  // Tick timer
+  // Tick timer — increments phaseElapsed AND totalElapsed while running
   useEffect(() => {
     if (!isRunning) return;
     const id = setInterval(() => {
@@ -55,12 +55,13 @@ export default function StartWorkoutScreen({ route, navigation }) {
 
   // Display value (down phases show remaining, up phases count up)
   let timerValue = 0;
-  let isOver = false;
+  let isOver = false; // overtime indicator (used only for color)
   if (currentPhase) {
     if (currentPhase.mode === "down") {
       const remaining = (currentPhase.target ?? 0) - phaseElapsed;
       timerValue = remaining;
-      isOver = remaining < 0;
+      // show overtime (red) once it goes negative — but DO NOT auto-advance
+      isOver = timerValue < 0;
     } else {
       timerValue = phaseElapsed;
     }
@@ -79,7 +80,8 @@ export default function StartWorkoutScreen({ route, navigation }) {
   // Return a new completed list as if we credited this phase
   const getCompletedAfterPhase = (phase, currentCompleted) => {
     if (!phase || !isLastWorkOfExercise(phase)) return currentCompleted;
-    const name = exercises[phase.exerciseIndex]?.name?.trim();
+    // backend uses exerciseName
+    const name = exercises[phase.exerciseIndex]?.exerciseName?.trim();
     return name ? [...currentCompleted, name] : currentCompleted;
   };
 
@@ -93,10 +95,10 @@ export default function StartWorkoutScreen({ route, navigation }) {
     if (phaseIndex < phases.length - 1) {
       setPhaseIndex((i) => i + 1);
     }
-    // Do NOT navigate here. "End Workout" controls navigation.
+    // Phase elapsed will reset via the useEffect watching phaseIndex
   };
 
-  const onEnd = () => {
+  const onEnd = async () => {
     setIsRunning(false);
 
     // Compute a local, up-to-date completed list (don’t trust async state)
@@ -105,22 +107,36 @@ export default function StartWorkoutScreen({ route, navigation }) {
       completedExercises
     );
 
-    const result = new WorkoutResult(
-      Date.now().toString(),
-      totalElapsed,
-      completedNow,
-      new Date().toISOString(),
-      workout?.id
-    );
+    // Backend expects: workout_id, totalTimeSpent, completedExercises
+    const payload = {
+      workout_id: workout?._id ?? workout?.id,
+      totalTimeSpent: totalElapsed,
+      completedExercises: completedNow,
+      dateCompleted: new Date().toISOString(),
+    };
 
-    navigation.replace("WorkoutResult", { result, workout }); //Navigate here
+    try {
+      const saved = await createWorkoutResult(payload);
+      navigation.replace("WorkoutResult", { result: saved, workout });
+    } catch (err) {
+      console.error("Failed to save workout:", err);
+      // fallback so UI still works even if backend fails
+      const fallback = new WorkoutResult(
+        Date.now().toString(),
+        totalElapsed,
+        completedNow,
+        new Date().toISOString(),
+        workout?._id ?? workout?.id
+      );
+      navigation.replace("WorkoutResult", { result: fallback, workout });
+    }
   };
 
   // Current exercise label (work or rest shows the exercise we’re on)
   const currentExerciseName = (() => {
     if (!currentPhase) return "All done";
     const ex = exercises[currentPhase.exerciseIndex];
-    return ex?.name ?? "Exercise";
+    return ex?.exerciseName ?? "Exercise";
   })();
 
   // Up Next: names of exercises after current exercise index
@@ -129,7 +145,7 @@ export default function StartWorkoutScreen({ route, navigation }) {
     const afterIdx = (currentPhase.exerciseIndex ?? -1) + 1;
     return exercises
       .slice(afterIdx)
-      .map((ex, i) => ex?.name || `Exercise ${afterIdx + i + 1}`);
+      .map((ex) => ex?.exerciseName || `Exercise ${afterIdx + 1}`);
   })();
 
   const runIcon = isRunning ? "pause" : "play-arrow";
@@ -302,8 +318,9 @@ function buildPhases(exercises) {
 
   exercises.forEach((ex, exIdx) => {
     const sets = toInt(ex?.numOfSets, 1);
-    const workDuration = toInt(ex?.duration, 0); // seconds; 0 => open-ended
-    const rest = toInt(ex?.rest, 0); // seconds
+    // support both names (robustness): prefer exerciseDuration/restTime
+    const workDuration = toInt(ex?.exerciseDuration ?? ex?.duration, 0); // seconds; 0 => open-ended
+    const rest = toInt(ex?.restTime ?? ex?.rest, 0); // seconds
 
     for (let set = 1; set <= sets; set++) {
       // Work phase
@@ -385,14 +402,7 @@ const styles = StyleSheet.create({
     gap: 12,
     justifyContent: "center",
   },
-  circleBtn: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    borderWidth: 2,
-    alignItems: "center",
-    justifyContent: "center",
-  },
+  
   nextBtn: {
     paddingVertical: 14,
     paddingHorizontal: 24,
@@ -401,14 +411,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
 
-  endBtn: {
-    marginTop: 24,
-    alignSelf: "center",
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingVertical: 12,
-    paddingHorizontal: 18,
-  },
   runBtn: {
     paddingVertical: 12,
     paddingHorizontal: 24,

@@ -21,7 +21,9 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { Ionicons } from "@expo/vector-icons";
 
 // Labels only; index still maps 0=Mon ... 6=Sun
-const DAYS = ["M", "T", "W", "Th", "F", "Sa", "Su"];
+const DAYS = ["M", "T", "W", "T", "F", "S", "S"];
+
+const DECIMAL_RE = /^\d*\.?\d*$/; // allows "", "5", "5.", "5.4"
 
 // SupplementsInput show the filling form to plan supplement
 export default function SupplementsInput({
@@ -73,6 +75,14 @@ export default function SupplementsInput({
     }
   }, [visible, entryToEdit]);
 
+  function handleDosageChange(text) {
+  // normalize comma to dot if someone types "5,4"
+  const v = text.replace(",", ".");
+  if (DECIMAL_RE.test(v)) {
+    setDosage(v);
+  }
+}
+
   // resetForm is used to reset form to blank
   function resetForm() {
     setName("");
@@ -98,9 +108,11 @@ export default function SupplementsInput({
   // handleSave to save the input
   function handleSave() {
     const isNameValid = name.trim().length > 0;
-    const isDosageValid = dosage.trim().length > 0;
     const isTimeValid = timeOfDay.trim().length > 0;
     const isDaysValid = selectedDays.length > 0;
+    // dosage: must be a number > 0 (supports "5" or "5.4")
+    const cleaned = dosage.trim().replace(",", ".");
+    const isDosageValid = /^\d*\.?\d+$/.test(cleaned) && Number(cleaned) > 0;
 
     setShowErrors(true);
     if (!isNameValid || !isDosageValid || !isTimeValid || !isDaysValid) {
@@ -109,20 +121,18 @@ export default function SupplementsInput({
       if (!isDosageValid) missing.push("dosage");
       if (!isTimeValid) missing.push("time to take");
       if (!isDaysValid) missing.push("days to take");
-      Alert.alert(
-        "Complete all fields",
-        `Please provide: ${missing.join(", ")}`
-      );
+
       return;
     }
 
     const plan = new SupplementsPlan(
-      entryToEdit?.id ?? `supp_${Date.now()}_${Math.random().toString(36).slice(2,8)}`,
+      entryToEdit?.id ??
+        `supp_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
       name.trim(),
-      dosage.trim(),
+      cleaned,
       timeOfDay.trim(),
       [...selectedDays],
-      entryToEdit?.logs || [], // preserve logs if editing
+      entryToEdit?.logs || [] // preserve logs if editing
     );
 
     onSaveSupplement?.(plan);
@@ -177,6 +187,10 @@ export default function SupplementsInput({
   const dosageErr = showErrors && dosage.trim().length === 0;
   const timeErr = showErrors && timeOfDay.trim().length === 0;
   const daysErr = showErrors && selectedDays.length === 0;
+  const dosageFormatErr =
+    showErrors &&
+    dosage.trim().length > 0 &&
+    !/^\d*\.?\d+$/.test(dosage.trim()); // must have at least one digit if not empty
 
   return (
     <Modal
@@ -242,16 +256,26 @@ export default function SupplementsInput({
               style={[
                 styles.input,
                 { backgroundColor: theme.inputField, fontFamily: Font.regular },
-                dosageErr && { borderColor: theme.error, marginBottom: 6 },
+                (dosageErr || dosageFormatErr) && {
+                  borderColor: theme.error,
+                  marginBottom: 6,
+                },
               ]}
               placeholder="e.g., 5"
               placeholderTextColor="#4C5A6A"
               value={dosage}
-              onChangeText={setDosage}
+              onChangeText={handleDosageChange}
+              onBlur={() => {
+                // tidy up: strip trailing dot like "5."
+                setDosage((d) => (d && d.endsWith(".") ? d.slice(0, -1) : d));
+              }}
+              keyboardType={Platform.OS === "ios" ? "decimal-pad" : "numeric"}
               returnKeyType="next"
             />
             {dosageErr ? (
               <Text style={err(theme)}>Please enter a dosage</Text>
+            ) : dosageFormatErr ? (
+              <Text style={err(theme)}>Only numbers like 5 or 5.4</Text>
             ) : null}
 
             {/* Time of day (picker) */}
@@ -311,7 +335,6 @@ export default function SupplementsInput({
                   is24Hour={false}
                   display={Platform.OS === "ios" ? "spinner" : "default"}
                   onChange={(event, selected) => {
-                    
                     if (Platform.OS === "android") {
                       setShowTimePicker(false);
                     }
@@ -415,21 +438,32 @@ export default function SupplementsInput({
               <Text style={err(theme)}>Please choose at least one day</Text>
             ) : null}
 
-            {/* Reminder */}
-          <View style={styles.reminderWrap}>
-            <Text
-              style={[
-                styles.reminderText,
-                { color: theme.background, fontFamily: Font.semibold },
-              ]}
-            >
-              🔔 You will be reminded one hour before,
-              {"\n"}and once more at the time you specified.
-            </Text>
-          </View>
+            {/* Supplement reminder note */}
+            <View style={styles.reminderSection}>
+              <View
+                style={[
+                  styles.reminderContainer,
+                  { borderLeftColor: theme.tint, borderColor: theme.tint },
+                ]}
+              >
+                <Ionicons
+                  name="notifications"
+                  size={16}
+                  color={theme.tint}
+                  style={styles.reminderIcon}
+                />
+                <Text
+                  style={[
+                    styles.reminderText,
+                    { fontFamily: Font.regular, color: theme.tint },
+                  ]}
+                >
+                  By default, you will be reminded one hour before, and once
+                  more at the time you specified.
+                </Text>
+              </View>
+            </View>
           </ScrollView>
-
-          
 
           {/* Floating Save */}
           <PrimaryButton
@@ -458,6 +492,8 @@ function err(theme) {
     fontSize: 12,
   };
 }
+
+
 
 const styles = StyleSheet.create({
   modalOverlay: {
@@ -502,15 +538,31 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderWidth: 1,
   },
-  reminderWrap: {
-    alignItems: "center",
-    marginTop: 8,
-    marginBottom: 150,
-    paddingHorizontal: 16,
-  },
+  
   reminderText: {
     fontSize: 12,
     textAlign: "center",
     opacity: 0.8,
+    flex: 1,
+    lineHeight: 20,
   },
+  reminderSection: {
+    marginBottom: 20,
+    marginTop: 20,
+  },
+
+  reminderContainer: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    borderRadius: 12,
+    padding: 16,
+    borderLeftWidth: 4,
+    backgroundColor: "#F0F8FF",
+  },
+
+  reminderIcon: {
+    marginRight: 8,
+    marginTop: 2,
+  },
+
 });

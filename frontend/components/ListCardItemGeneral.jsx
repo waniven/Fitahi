@@ -4,7 +4,7 @@ import { Colors } from "@/constants/Colors";
 import { Font } from "@/constants/Font";
 import { MaterialIcons } from "@expo/vector-icons";
 
-const DAY_LABELS = ["M", "T", "W", "Th", "F", "Sa", "Su"];
+const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 function formatDays(indices = []) {
   if (!Array.isArray(indices)) return "—";
   const uniq = [...new Set(indices)].filter((i) => i >= 0 && i <= 6);

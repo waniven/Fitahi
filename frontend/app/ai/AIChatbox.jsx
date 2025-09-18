@@ -1,82 +1,164 @@
 import { useEffect, useRef, useState } from "react";
-import { Animated, Dimensions, FlatList, KeyboardAvoidingView, Modal, PanResponder, Platform, StyleSheet, Text, TextInput, Pressable, View } from "react-native";
+import {
+  Animated,
+  FlatList,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { Colors } from "../../constants/Colors";
-import { AILocal } from "../../constants/AILocal";
 import { Font } from "../../constants/Font";
+import * as messageService from "../../services/messageService";
+import CustomToast from "@/components/common/CustomToast";
 
-// screen height for dragging to close
-const { height: SCREEN_HEIGHT } = Dimensions.get("window");
+// const { height: SCREEN_HEIGHT } = Dimensions.get("window"); unused for now
 
-// constants for spacing
-const CHAT_TOP = 80; // distance from top screen
-const CHAT_SIDE = 20; // horizontal margin
-const CHAT_BOTTOM = 40; // bottom margin / stays above nav bar
+const CHAT_TOP = 80;
+const CHAT_SIDE = 20;
+const CHAT_BOTTOM = 40;
 const INPUT_ROW_HEIGHT = 56;
 
 export default function AIChatbox({ onClose, messages, setMessages }) {
   const scheme = "dark";
   const theme = Colors[scheme ?? "dark"];
 
-  // Live chat starts empty on open
   const [chatMessages, setChatMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [historyVisible, setHistoryVisible] = useState(false);
-  const [showScrollDown, setShowScrollDown] = useState(false);
+  const [conversations, setConversations] = useState([]);
+  const [activeConvo, setActiveConvo] = useState(null);
 
   const flatListRef = useRef(null);
+  const typingController = useRef({ cancelled: false });
 
-  // Drag-to-close using PanResponder
   const translateY = useRef(new Animated.Value(0)).current;
-  const panResponder = useRef(
-    PanResponder.create({
-      onMoveShouldSetPanResponder: (_, g) => g.dy > 0, // respond to downward drags
-      onPanResponderMove: (_, g) => { if (g.dy > 0) translateY.setValue(g.dy); },
-      onPanResponderRelease: (_, g) => {
-        if (g.dy > 150) {
-          // animate off screen and close
-          Animated.timing(translateY, { toValue: SCREEN_HEIGHT, duration: 200, useNativeDriver: true })
-            .start(() => onClose?.());
-        } else {
-          // return to original position
-          Animated.spring(translateY, { toValue: 0, useNativeDriver: true }).start();
-        }
-      },
-    })
-  ).current;
+  // const panResponder = useRef(
+  //   PanResponder.create({
+  //     onMoveShouldSetPanResponder: (_, g) => g.dy > 0,
+  //     onPanResponderMove: (_, g) => {
+  //       if (g.dy > 0) translateY.setValue(g.dy);
+  //     },
+  //     onPanResponderRelease: (_, g) => {
+  //       if (g.dy > 150) {
+  //         Animated.timing(translateY, {
+  //           toValue: SCREEN_HEIGHT,
+  //           duration: 200,
+  //           useNativeDriver: true,
+  //         }).start(() => onClose?.());
+  //       } else {
+  //         Animated.spring(translateY, {
+  //           toValue: 0,
+  //           useNativeDriver: true,
+  //         }).start();
+  //       }
+  //     },
+  //   })
+  // ).current;
 
-  // auto-scroll down when new message gets sent
   useEffect(() => {
     if (chatMessages.length > 0) {
-      setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
+      setTimeout(
+        () => flatListRef.current?.scrollToEnd({ animated: true }),
+        100
+      );
     }
   }, [chatMessages]);
 
-  // send message and simulate AI response
   const sendMessage = async (text) => {
     const clean = text?.trim();
     if (!clean) return;
 
-    const userMsg = { id: Date.now().toString(), text: clean, fromAI: false };
-    setChatMessages((prev) => [...prev, userMsg]);
-    setMessages((prev) => [...prev, userMsg]);
     setInput("");
     setLoading(true);
+    typingController.current = { cancelled: false };
 
     try {
-      await new Promise((r) => setTimeout(r, 350)); // simulate processing
-      const aiText = await AILocal(clean); // local AI response
-      const aiMsg = { id: (Date.now() + 1).toString(), text: aiText, fromAI: true };
-      setChatMessages((prev) => [...prev, aiMsg]);
-      setMessages((prev) => [...prev, aiMsg]);
-    } catch (e) {
-      const errMsg = { id: Date.now().toString(), text: "Sorry I can't process your request right now. Please try again later", fromAI: true };
-      setChatMessages((prev) => [...prev, errMsg]);
-      setMessages((prev) => [...prev, errMsg]);
-    } finally { setLoading(false); }
+      const { userMessage, aiMessage, conversationId } =
+        await messageService.sendMessage(clean, activeConvo?._id);
+
+      if (typingController.current.cancelled) return;
+
+      setActiveConvo({ ...activeConvo, _id: conversationId });
+
+      const safeUserMsg = {
+        ...userMessage,
+        id: userMessage.id || Date.now().toString(),
+      };
+      const safeAiMsg = {
+        ...aiMessage,
+        id: aiMessage.id || (Date.now() + 1).toString(),
+      };
+
+      setChatMessages((prev) => [...prev, safeUserMsg, safeAiMsg]);
+      setMessages((prev) => [...prev, safeUserMsg, safeAiMsg]);
+    } catch (err) {
+      let description = "Please try again later.";
+      if (err.response?.status === 500) {
+        description = "Server overloaded, try again soon!";
+      } else if (err.response?.status === 401) {
+        description = "Session expired, please log in again.";
+      } else if (err.message?.includes("Network")) {
+        description = "Check your network connection!";
+      }
+
+      CustomToast.error("Darwin Unavailable", description);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // render message bubble
+  const loadConversations = async () => {
+    try {
+      const convos = await messageService.getConversations();
+      setConversations(convos);
+    } catch (err) {
+      console.error("Failed to load conversations:", err);
+    }
+  };
+
+  useEffect(() => {
+    if (historyVisible) loadConversations();
+  }, [historyVisible]);
+
+  const selectConversation = async (convo) => {
+    setActiveConvo(convo);
+    const msgs = await messageService.getMessagesByConversation(convo._id);
+    setChatMessages(msgs);
+    setMessages(msgs);
+    setHistoryVisible(false);
+  };
+
+  const newConversation = async () => {
+    const convo = await messageService.createConversation();
+    setActiveConvo(convo);
+    setChatMessages([]);
+    setMessages([]);
+    setHistoryVisible(false);
+  };
+
+  const deleteConversation = async (convoId) => {
+    try {
+      await messageService.deleteConversation(convoId);
+      setConversations((prev) => prev.filter((c) => c._id !== convoId));
+
+      if (activeConvo?._id === convoId) {
+        typingController.current.cancelled = true;
+        setActiveConvo(null);
+        setChatMessages([]);
+        setMessages([]);
+        setLoading(false);
+      }
+    } catch (err) {
+      console.error("Failed to delete conversation:", err);
+    }
+  };
+
   const renderItem = ({ item }) => (
     <View
       style={[
@@ -87,7 +169,14 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
         },
       ]}
     >
-      <Text style={{ color: "#FFF", fontFamily: Font.regular, fontSize: 15, lineHeight: 20 }}>
+      <Text
+        style={{
+          color: "#FFF",
+          fontFamily: Font.regular,
+          fontSize: 15,
+          lineHeight: 20,
+        }}
+      >
         {item.text}
       </Text>
     </View>
@@ -97,57 +186,69 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
     <Modal visible animationType="slide" transparent>
       <View style={styles.overlay}>
         <Animated.View
-          style={[styles.container, { backgroundColor: theme.background, transform: [{ translateY }] }]}
-          {...panResponder.panHandlers}
+          style={[
+            styles.container,
+            { backgroundColor: theme.background, transform: [{ translateY }] },
+          ]}
+          // {...panResponder.panHandlers} commented out to disable drag to close since it makes the buttons difficult to use
         >
-          {/* Header */}
           <View style={styles.header}>
-            <Text style={{ fontFamily: Font.bold, fontSize: 18, lineHeight: 22, color: theme.tint }}>Darwin</Text>
-            <Pressable onPress={onClose} style={{ padding: 8 }}>
-              <Text style={{ fontFamily: Font.bold, color: "red", fontSize: 20, lineHeight: 24  }}>✕</Text>
-            </Pressable>
+            <Text
+              style={{
+                fontFamily: Font.bold,
+                fontSize: 18,
+                lineHeight: 22,
+                color: theme.tint,
+              }}
+            >
+              Darwin
+            </Text>
+            <TouchableOpacity onPress={onClose} style={{ padding: 8 }}>
+              <Text
+                style={{
+                  fontFamily: Font.bold,
+                  color: "red",
+                  fontSize: 20,
+                  lineHeight: 24,
+                }}
+              >
+                ✕
+              </Text>
+            </TouchableOpacity>
           </View>
 
-          {/* Chat Messages */}
           <FlatList
             ref={flatListRef}
             data={chatMessages}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item, index) => item.id ?? `msg-${index}`}
             renderItem={renderItem}
-            contentContainerStyle={{ padding: 12, paddingBottom: INPUT_ROW_HEIGHT + 24 }}
-            keyboardShouldPersistTaps="handled"
-            onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-            onScroll={(e) => {
-              const offsetY = e.nativeEvent.contentOffset.y;
-              const contentHeight = e.nativeEvent.contentSize.height;
-              const layoutHeight = e.nativeEvent.layoutMeasurement.height;
-              const isAtBottom = offsetY + layoutHeight >= contentHeight - 50;
-              setShowScrollDown(!isAtBottom);
+            contentContainerStyle={{
+              padding: 12,
+              paddingBottom: INPUT_ROW_HEIGHT + 24,
             }}
-            scrollEventThrottle={100}
+            keyboardShouldPersistTaps="handled"
+            onContentSizeChange={() =>
+              flatListRef.current?.scrollToEnd({ animated: true })
+            }
           />
 
-          {/* Scroll-to-bottom button */}
-          {showScrollDown && (
-            <Pressable
-              style={[styles.scrollButton, { backgroundColor: theme.tint, zIndex: 999 }]} 
-              onPress={() => flatListRef.current?.scrollToEnd({ animated: true })}
-            >
-              <Text style={{ fontFamily: Font.bold, color: theme.background, fontSize: 16, lineHeight: 20  }}>↓</Text>
-            </Pressable>
-          )}
-
-          {/* Typing indicator */}
           {loading && (
-            <Text style={{ fontFamily: Font.italic, color: theme.tint, marginHorizontal: 12, fontSize: 16, lineHeight: 20 }}>
+            <Text
+              style={{
+                fontFamily: Font.regular,
+                color: theme.tint,
+                marginHorizontal: 12,
+                fontSize: 12,
+                lineHeight: 20,
+              }}
+            >
               Darwin is typing...
             </Text>
           )}
 
-          {/* Input Row */}
           <KeyboardAvoidingView
-            behavior={Platform.OS === "ios" ? "padding" : "height"} 
-            keyboardVerticalOffset={Platform.OS === "ios" ? CHAT_TOP : 20} 
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
+            keyboardVerticalOffset={CHAT_TOP}
           >
             <View style={[styles.inputBar, { backgroundColor: "#020114ff" }]}>
               <TextInput
@@ -158,7 +259,7 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
                     color: "#FFF",
                     fontFamily: Font.regular,
                     fontSize: 15,
-                    lineHeight: 20, 
+                    lineHeight: 20,
                   },
                 ]}
                 placeholder="Type your message..."
@@ -169,27 +270,106 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
                 returnKeyType="send"
                 multiline
               />
-              {/* History Button */}
-              <Pressable style={[styles.iconBtn, { backgroundColor: theme.tint, zIndex: 10 }]} onPress={() => setHistoryVisible(true)}>
-                <Text style={{ fontFamily: Font.bold, color: theme.background, fontSize: 18, lineHeight: 22 }}>≡</Text>
-              </Pressable>
-              {/* Send Button */}
-              <Pressable style={[styles.sendButton, { backgroundColor: theme.tint, zIndex: 10 }]} onPress={() => sendMessage(input)}>
-                <Text style={{ fontFamily: Font.bold, color: theme.background, fontSize: 15, lineHeight: 20  }}>Send</Text>
-              </Pressable>
+              <TouchableOpacity
+                style={[styles.iconBtn, { backgroundColor: theme.tint }]}
+                onPress={() => setHistoryVisible(true)}
+              >
+                <Text
+                  style={{
+                    fontFamily: Font.bold,
+                    color: theme.background,
+                    fontSize: 18,
+                    lineHeight: 22,
+                  }}
+                >
+                  ≡
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.sendButton, { backgroundColor: theme.tint }]}
+                onPress={() => sendMessage(input)}
+              >
+                <Text
+                  style={{
+                    fontFamily: Font.bold,
+                    color: theme.background,
+                    fontSize: 15,
+                    lineHeight: 20,
+                  }}
+                >
+                  Send
+                </Text>
+              </TouchableOpacity>
             </View>
           </KeyboardAvoidingView>
         </Animated.View>
       </View>
 
-      {/* Past Conversations */}
       <Modal visible={historyVisible} animationType="fade" transparent>
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: theme.backgroundAlt }]}>
-            <Text style={{ fontFamily: Font.bold, color: theme.textPrimary, fontSize: 20, lineHeight: 24 , marginBottom: 12 }}>History</Text>
-            <Pressable onPress={() => setHistoryVisible(false)} style={{ paddingVertical: 12, alignItems: "center" }}>
-              <Text style={{ fontFamily: Font.bold, color: "red", fontSize: 16, lineHeight: 20  }}>Close</Text>
-            </Pressable>
+          <View
+            style={[
+              styles.modalContent,
+              { backgroundColor: theme.backgroundAlt },
+            ]}
+          >
+            <Text
+              style={{
+                fontFamily: Font.bold,
+                color: theme.textPrimary,
+                fontSize: 20,
+                lineHeight: 24,
+                marginBottom: 12,
+              }}
+            >
+              History
+            </Text>
+
+            <TouchableOpacity
+              onPress={newConversation}
+              style={{ paddingVertical: 8 }}
+            >
+              <Text style={{ fontFamily: Font.bold, color: theme.tint }}>
+                + New Conversation
+              </Text>
+            </TouchableOpacity>
+
+            {conversations.map((c, i) => (
+              <View
+                key={c._id ?? `convo-${i}`}
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  paddingVertical: 8,
+                }}
+              >
+                <TouchableOpacity
+                  onPress={() => selectConversation(c)}
+                  style={{ flex: 1 }}
+                >
+                  <Text
+                    style={{
+                      fontFamily: Font.regular,
+                      color: theme.textPrimary,
+                    }}
+                  >
+                    {c.title || "Untitled"} -{" "}
+                    {new Date(c.updatedAt).toLocaleString()}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => deleteConversation(c._id)}>
+                  <Text style={{ color: "red", fontSize: 16 }}>🗑️</Text>
+                </TouchableOpacity>
+              </View>
+            ))}
+
+            <TouchableOpacity
+              onPress={() => setHistoryVisible(false)}
+              style={{ paddingVertical: 12 }}
+            >
+              <Text style={{ fontFamily: Font.bold, color: "red" }}>Close</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -240,18 +420,18 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    minHeight: 44, 
+    minHeight: 44,
     borderRadius: 20,
     paddingHorizontal: 12,
-    paddingVertical: 8, 
-    textAlignVertical: "center", 
+    paddingVertical: 8,
+    textAlignVertical: "center",
   },
   iconBtn: {
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 16,
     paddingHorizontal: 12,
-    height: 44, 
+    height: 44,
     marginLeft: 8,
   },
   sendButton: {
@@ -262,22 +442,11 @@ const styles = StyleSheet.create({
     height: 44,
     marginLeft: 8,
   },
-  scrollButton: {
-    position: "absolute",
-    right: 16,
-    bottom: INPUT_ROW_HEIGHT + 60,
-    padding: 10,
-    borderRadius: 20,
-    elevation: 4,
-  },
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "center",
     padding: 20,
   },
-  modalContent: {
-    borderRadius: 16,
-    padding: 16,
-  },
+  modalContent: { borderRadius: 16, padding: 16 },
 });

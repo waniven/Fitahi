@@ -4,6 +4,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import AIProvider from './ai/AIContext';
 import Toast from 'react-native-toast-message';
+import { SafeAreaProvider, initialWindowMetrics } from 'react-native-safe-area-context';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -25,11 +26,13 @@ export default function RootLayout() {
   if (!fontsLoaded) return null;
 
   return (
+    <SafeAreaProvider initialMetrics={initialWindowMetrics}>
     <AIProvider>
       <Slot />
       <Toast />
 
     </AIProvider>
+    </SafeAreaProvider>
   );
 }
 

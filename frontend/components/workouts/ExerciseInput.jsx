@@ -13,7 +13,6 @@ import { Colors } from "@/constants/Colors";
 import { Font } from "@/constants/Font";
 import ModalCloseButton from "../ModalCloseButton";
 import PrimaryButton from "../PrimaryButton";
-import Exercise from "./models/Exercise";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // ExerciseInput let user set exercises in a workout
@@ -27,7 +26,7 @@ function ExerciseInput(props) {
   // Set the size of the modal content and scrollview
   const insets = useSafeAreaInsets();
   const BTN_HEIGHT = 56; //Height of the button
-  const EXTRA_BOTTOM = 43; 
+  const EXTRA_BOTTOM = 43;
   const bottomGutter = BTN_HEIGHT + EXTRA_BOTTOM + insets.bottom + 8;
 
   const makeExercise = () => ({
@@ -42,28 +41,54 @@ function ExerciseInput(props) {
 
   const fromModelToForm = (ex) => ({
     id: ex?.id ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`,
-    name: ex?.name ?? "",
+    name: ex?.exerciseName ?? "",
     reps: ex?.numOfReps !== undefined ? String(ex.numOfReps) : "",
     sets: ex?.numOfSets !== undefined ? String(ex.numOfSets) : "",
-    weight: ex?.weight !== undefined ? String(ex.weight) : "",
-    rest: ex?.rest !== undefined ? String(ex.rest) : "",
-    duration: ex?.duration !== undefined ? String(ex.duration) : "",
+    weight: ex?.exerciseWeight !== undefined ? String(ex.exerciseWeight) : "",
+    rest: ex?.restTime !== undefined ? String(ex.restTime) : "",
+    duration:
+      ex?.exerciseDuration !== undefined ? String(ex.exerciseDuration) : "",
     imageUrl: ex?.imageUrl ?? "",
   });
 
+  // clears state whenever the modal closes, so leftover exercises never linger
   useEffect(() => {
-    if (!props.visible) return;
-    const existing = props.workout?.exercises;
-    if (Array.isArray(existing) && existing.length > 0) {
-      // Seed with current workout's exercises
-      setExercises(existing.map(fromModelToForm));
-      setShowErrors(false);
-    } else {
-      // No exercises yet, start with one blank card
-      setExercises([makeExercise()]);
+    if (!props.visible) {
+      setExercises([]);
       setShowErrors(false);
     }
+  }, [props.visible]);
+
+  //seeds the exercises whenever the modal opens,
+  // either with existing workout data (for editing) or a fresh empty exercise (for new workouts)
+  useEffect(() => {
+    if (!props.visible) return;
+
+    if (!props.workout || !props.workout._id) {
+      // brand new workout → always start with fresh empty exercise
+      setExercises([makeExercise()]);
+    } else if (props.workout.exercises?.length > 0) {
+      // editing → load existing ones
+      setExercises(props.workout.exercises.map(fromModelToForm));
+    } else {
+      // editing but no exercises yet → still start with one empty
+      setExercises([makeExercise()]);
+    }
+
+    setShowErrors(false);
   }, [props.visible, props.workout]);
+
+  // allows only digits, keeps empty string for optional fields
+  function handleNumericInput(value, optional = false) {
+    const filtered = value.replace(/[^0-9]/g, "");
+    if (optional && filtered === "") return "";
+    return filtered;
+  }
+
+  // isInvalidNumber checks if a value is an invalid number (empty or <= 0)
+  function isInvalidNumber(value) {
+    return !value.trim() || Number(value) <= 0;
+  }
 
   // resetForm allows to reset form to original state
   function resetForm() {
@@ -85,7 +110,13 @@ function ExerciseInput(props) {
 
   // removeExerciseCard removes a selected exercise card
   function removeExerciseCard(id) {
-    setExercises((curr) => curr.filter((ex) => ex.id !== id));
+    setExercises((curr) => {
+      if (curr.length <= 1) {
+        alert("You must have at least one exercise in a workout.");
+        return curr; // don’t delete anything
+      }
+      return curr.filter((ex) => ex.id !== id);
+    });
   }
 
   // onCancel allows to click X to go back to Workout Input
@@ -94,43 +125,34 @@ function ExerciseInput(props) {
     props.onCancel?.();
   }
 
-  // toNumber converts value to a number
-  function toNumber(v) {
-    const n = Number(v);
-    return Number.isFinite(n) ? n : 0;
-  }
-
   // onSave checks each exercise form is valid and save them into an array and send back to the parent
   function onSave() {
     setShowErrors(true);
-    // Validation: require name, reps, sets, rest for each card
+
     for (let i = 0; i < exercises.length; i++) {
       const ex = exercises[i];
+
       if (
         !ex.name.trim() ||
-        !ex.reps.trim() ||
-        !ex.sets.trim() ||
-        !ex.rest.trim()
+        isInvalidNumber(ex.reps) ||
+        isInvalidNumber(ex.sets) ||
+        isInvalidNumber(ex.rest)
       ) {
-        return; // Errors will show under fields
+        return; // will show errors
       }
     }
 
-    const payload = exercises.map(
-      (ex) =>
-        new Exercise(
-          ex.id,
-          ex.name.trim(),
-          toNumber(ex.sets),
-          toNumber(ex.reps),
-          toNumber(ex.duration),
-          toNumber(ex.weight),
-          toNumber(ex.rest),
-          ex.imageUrl
-        )
-    );
+    const payload = exercises.map((ex) => ({
+      exerciseName: ex.name.trim(),
+      numOfSets: Number(ex.sets),
+      numOfReps: Number(ex.reps),
+      exerciseWeight: Number(ex.weight) || 0,
+      exerciseDuration: Number(ex.duration) || 0,
+      restTime: Number(ex.rest),
+      imageUrl: ex.imageUrl || "",
+    }));
 
-    props.onSave?.(payload); // Send Exercise[] to parent
+    props.onSave?.(payload);
     resetForm();
     props.onCancel?.();
   }
@@ -150,7 +172,6 @@ function ExerciseInput(props) {
   ];
 
   return (
-    
     <Modal
       visible={props.visible}
       animationType="slide"
@@ -159,7 +180,10 @@ function ExerciseInput(props) {
     >
       <View style={styles.modalOverlay}>
         <View
-          style={[styles.modalContent, { backgroundColor: theme.textPrimary, paddingBottom: bottomGutter }]}
+          style={[
+            styles.modalContent,
+            { backgroundColor: theme.textPrimary, paddingBottom: bottomGutter },
+          ]}
         >
           <ModalCloseButton onPress={onCancel} />
 
@@ -187,9 +211,9 @@ function ExerciseInput(props) {
           >
             {exercises.map((ex, idx) => {
               const nameError = showErrors && !ex.name.trim();
-              const repsError = showErrors && !ex.reps.trim();
-              const setsError = showErrors && !ex.sets.trim();
-              const restError = showErrors && !ex.rest.trim();
+              const repsError = showErrors && isInvalidNumber(ex.reps);
+              const setsError = showErrors && isInvalidNumber(ex.sets);
+              const restError = showErrors && isInvalidNumber(ex.rest);
 
               return (
                 <View
@@ -240,6 +264,7 @@ function ExerciseInput(props) {
                   <View style={styles.row}>
                     <View style={styles.col}>
                       <Text style={labelStyle}>REPS *</Text>
+                      {/* Reps */}
                       <TextInput
                         placeholder="Reps"
                         placeholderTextColor="#4C5A6A"
@@ -252,17 +277,20 @@ function ExerciseInput(props) {
                           },
                         ]}
                         value={ex.reps}
-                        onChangeText={(t) => updateExercise(ex.id, "reps", t)}
+                        onChangeText={(t) =>
+                          updateExercise(ex.id, "reps", handleNumericInput(t))
+                        }
                       />
                       {repsError ? (
                         <Text style={[styles.err, { color: theme.error }]}>
-                          Required
+                          {ex.reps.trim() === "" ? "Required" : "Cannot be 0"}
                         </Text>
                       ) : null}
                     </View>
 
                     <View style={styles.col}>
                       <Text style={labelStyle}>SETS *</Text>
+                      {/* Sets */}
                       <TextInput
                         placeholder="Sets"
                         placeholderTextColor="#4C5A6A"
@@ -275,11 +303,13 @@ function ExerciseInput(props) {
                           },
                         ]}
                         value={ex.sets}
-                        onChangeText={(t) => updateExercise(ex.id, "sets", t)}
+                        onChangeText={(t) =>
+                          updateExercise(ex.id, "sets", handleNumericInput(t))
+                        }
                       />
                       {setsError ? (
                         <Text style={[styles.err, { color: theme.error }]}>
-                          Required
+                          {ex.reps.trim() === "" ? "Required" : "Cannot be 0"}
                         </Text>
                       ) : null}
                     </View>
@@ -289,18 +319,26 @@ function ExerciseInput(props) {
                   <View style={styles.row}>
                     <View style={styles.col}>
                       <Text style={labelStyle}>WEIGHT</Text>
+                      {/* Weight (optional) */}
                       <TextInput
                         placeholder="Weight"
                         placeholderTextColor="#4C5A6A"
                         keyboardType="numeric"
                         style={fieldInputStyle}
                         value={ex.weight}
-                        onChangeText={(t) => updateExercise(ex.id, "weight", t)}
+                        onChangeText={(t) =>
+                          updateExercise(
+                            ex.id,
+                            "weight",
+                            handleNumericInput(t, true)
+                          )
+                        }
                       />
                     </View>
 
                     <View style={styles.col}>
                       <Text style={labelStyle}>REST TIME *</Text>
+                      {/* Rest */}
                       <TextInput
                         placeholder="Seconds"
                         placeholderTextColor="#4C5A6A"
@@ -313,11 +351,13 @@ function ExerciseInput(props) {
                           },
                         ]}
                         value={ex.rest}
-                        onChangeText={(t) => updateExercise(ex.id, "rest", t)}
+                        onChangeText={(t) =>
+                          updateExercise(ex.id, "rest", handleNumericInput(t))
+                        }
                       />
                       {restError ? (
                         <Text style={[styles.err, { color: theme.error }]}>
-                          Required
+                          {ex.reps.trim() === "" ? "Required" : "Cannot be 0"}
                         </Text>
                       ) : null}
                     </View>
@@ -327,6 +367,7 @@ function ExerciseInput(props) {
                   <View style={[styles.row, { alignItems: "flex-end" }]}>
                     <View style={[styles.col, { flex: 1 }]}>
                       <Text style={labelStyle}>DURATION/SET</Text>
+                      {/* Duration (optional) */}
                       <TextInput
                         placeholder="Seconds"
                         placeholderTextColor="#4C5A6A"
@@ -334,7 +375,11 @@ function ExerciseInput(props) {
                         style={[...fieldInputStyle, { marginBottom: 0 }]}
                         value={ex.duration}
                         onChangeText={(t) =>
-                          updateExercise(ex.id, "duration", t)
+                          updateExercise(
+                            ex.id,
+                            "duration",
+                            handleNumericInput(t, true)
+                          )
                         }
                       />
                     </View>

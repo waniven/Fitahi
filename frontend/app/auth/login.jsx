@@ -8,14 +8,15 @@ import CustomInput from "../../components/common/CustomInput";
 import CustomButton from "../../components/common/CustomButton";
 import CustomToast from "../../components/common/CustomToast";
 import globalStyles from "../../styles/globalStyles"; 
+import { login } from "../../services/authService";
 
 export default function Login() {
   const router = useRouter();
   const theme = Colors["dark"];
-  
-  // Form state
+
+  //for state
   const [formData, setFormData] = useState({ email: "", password: "" });
-  const [errors, setErrors] = useState({});
+  const [busy, setBusy] = useState(false);
   const [hasAttemptedLogin, setHasAttemptedLogin] = useState(false);
 
   // Email validation function
@@ -23,13 +24,13 @@ export default function Login() {
     if (!email || !email.trim()) return 'Email is required';
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email.trim())) return 'Please enter a valid email address';
-    return null;
+    return email.trim();
   };
 
   // Password validation function
   const validatePassword = (password) => {
     if (!password || !password.trim()) return 'Password is required';
-    return null;
+    return password;
   };
 
   // Update form field and clear errors if user has attempted login
@@ -47,50 +48,32 @@ export default function Login() {
       }
       
       if (!fieldError) {
-        setErrors(prev => ({ ...prev, [field]: null }));
+        CustomToast.error(prev => ({ ...prev, [field]: null }));
       }
     }
   };
 
-  // Validate all form fields
-  const validateForm = () => {
-    const newErrors = {};
-    
-    const emailError = validateEmail(formData.email);
-    if (emailError) {
-      newErrors.email = emailError;
-    }
-    
-    const passwordError = validatePassword(formData.password);
-    if (passwordError) {
-      newErrors.password = passwordError;
-    }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
 
-  // Handle login with validation and toast notifications
-  const handleLogin = () => {
-    setHasAttemptedLogin(true);
-    
-    if (validateForm()) {
-      // Success case
+  //validation and navigation
+  const handleLogin = async () => {
+    const email = validateEmail(formData.email);
+    const password = validatePassword(formData.password);
+
+    try {
+      setBusy(true);
+      await login(email, password);
       CustomToast.success("Welcome Back!", "Login successful");
-      router.push("/home");
-    } else {
-      // Show validation error toast
-      if (errors.email && errors.password) {
-        CustomToast.error("Login Failed", "Please check your email and password");
-      } else if (errors.email) {
-        CustomToast.error("Invalid Email", "Please enter a valid email address");
-      } else if (errors.password) {
-        CustomToast.error("Login Failed", "Password is required");
-      } else {
-        CustomToast.error("Login Failed", "Please check your credentials");
-      }
+      router.replace("/home");
+    } catch (err) {
+        const status = err?.response?.status;
+        const serverMsg = err?.response?.data?.error;
+        const msg = serverMsg || `Login failed${status ? ` (${status})` : ""}`;
+        CustomToast.error(msg);
+        if (!serverMsg) console.log("LOGIN ERROR:", { status, data: err?.response?.data, message: err?.message, code: err?.code });
+    } finally {
+      setBusy(false);
     }
-  };
+  }
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
@@ -121,7 +104,6 @@ export default function Login() {
               value={formData.email}
               onChangeText={(text) => updateField("email", text)}
               keyboardType="email-address"
-              errorMessage={errors.email}
               required
             />
 
@@ -131,7 +113,6 @@ export default function Login() {
               value={formData.password}
               onChangeText={(text) => updateField("password", text)}
               secureTextEntry
-              errorMessage={errors.password}
               required
             />
           </View>
