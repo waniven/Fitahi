@@ -24,8 +24,9 @@ import CustomButtonThree from "../../components/common/CustomButtonThree";
 import { Colors } from "@/constants/Colors";
 import { Font } from "@/constants/Font";
 import { AIContext } from "../ai/AIContext";
+import { EXPO_PUBLIC_GOOGLE_MAPS_API_KEY } from "@env";
 
-const GOOGLE_KEY = process.env.GOOGLE_MAPS_API_KEY;
+const GOOGLE_KEY = EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
 
 // ShowGymsFinder helps user locate nearest gyms to their locations
 export default function ShowGymsFinder({ navigation }) {
@@ -133,6 +134,11 @@ export default function ShowGymsFinder({ navigation }) {
     )}+gym&location=${lat},${lng}&radius=5000&key=${GOOGLE_KEY}`;
 
   async function fetchGyms(url) {
+    if (!GOOGLE_KEY) {
+      console.warn("Google Maps API key is missing!");
+      setGyms([]);
+      return;
+    }
     setLoading(true);
     try {
       const res = await fetch(url);
@@ -149,10 +155,12 @@ export default function ShowGymsFinder({ navigation }) {
           .filter(Boolean)
           .map((ll) => ({ latitude: ll.lat, longitude: ll.lng }));
         if (coords) points.push(coords);
-        mapRef.current.fitToCoordinates(points, {
-          edgePadding: { top: 60, right: 60, bottom: 60, left: 60 },
-          animated: true,
-        });
+        if (points.length > 0) {
+          mapRef.current.fitToCoordinates(points, {
+            edgePadding: { top: 60, right: 60, bottom: 60, left: 60 },
+            animated: true,
+          });
+        }
       }
     } catch (e) {
       console.warn("fetchGyms error", e);
@@ -163,13 +171,13 @@ export default function ShowGymsFinder({ navigation }) {
 
   // onNearestPress is used to find nearest gyms
   const onNearestPress = () => {
-    if (!coords) return;
+    if (!coords || !GOOGLE_KEY) return;
     fetchGyms(nearbyUrl({ lat: coords.latitude, lng: coords.longitude }));
   };
 
   // onSearchPress is used to search for gyms
   const onSearchPress = () => {
-    if (!coords || !search.trim()) return;
+    if (!coords || !search.trim() || !GOOGLE_KEY) return;
     fetchGyms(
       textSearchUrl(search.trim(), {
         lat: coords.latitude,

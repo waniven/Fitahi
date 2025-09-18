@@ -215,7 +215,8 @@ export default function Home() {
           </View>
         </View>
 
-        {/* Premium card */}
+        {/*Commented out for the purposes of showcasing only finished features in Sprint 1*/}
+        {/* Premium card
         {showPremium && (
           <View style={[styles.premiumCard, { backgroundColor: "#fff" }]}>
             <Ionicons name="diamond-outline" size={20} color={theme.tint} />
@@ -224,7 +225,7 @@ export default function Home() {
               <Text style={{ color: theme.tint, fontWeight: "700" }}>✕</Text>
             </TouchableOpacity>
           </View>
-        )}
+        )} */}
 
         {/* Quick log cards */}
         <LogCards cards={quickLogCards} />
