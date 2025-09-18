@@ -1,7 +1,14 @@
-// app/index.jsx
 import React, { useRef, useEffect } from "react";
 import { useRouter } from "expo-router";
-import { StyleSheet, Text, View, Animated, Easing, useColorScheme } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  View,
+  Animated,
+  Easing,
+  useColorScheme,
+  BackHandler,
+} from "react-native";
 import { Colors } from "../constants/Colors";
 import FitahiLogo from "../constants/FitahiLogo";
 import CustomButton from "../components/common/CustomButton";
@@ -13,7 +20,6 @@ export default function Index() {
   const router = useRouter();
 
   // Animated values for splash page
-
   const svgFade = useRef(new Animated.Value(0)).current;
   const svgTranslateY = useRef(new Animated.Value(-20)).current; // start slightly up
   const subtitleFade = useRef(new Animated.Value(0)).current;
@@ -58,6 +64,16 @@ export default function Index() {
         useNativeDriver: true,
       }),
     ]).start();
+
+    // prevent going back from splash
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      () => {
+        return true; // block back button
+      }
+    );
+
+    return () => backHandler.remove();
   }, []);
 
   return (
