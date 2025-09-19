@@ -1,47 +1,62 @@
-import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View, KeyboardAvoidingView, Platform } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { Colors } from '../../constants/Colors';
-import globalStyles from '../../styles/globalStyles';
-import CustomInput from '../../components/common/CustomInput';
-import CustomButton from '../../components/common/CustomButton';
-import { signup } from '@/services/userService';
-import { login } from '@/services/authService';
-import CustomToast from '../../components/common/CustomToast';
+// screens/SignUp.jsx
+import React, { useState } from "react";
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  KeyboardAvoidingView,
+  Platform,
+} from "react-native";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context"; // <-- added useSafeAreaInsets
+import { useRouter } from "expo-router";
+import { Colors } from "../../constants/Colors";
+import globalStyles from "../../styles/globalStyles";
+import CustomInput from "../../components/common/CustomInput";
+import CustomButton from "../../components/common/CustomButton";
+import { signup } from "@/services/userService";
+import { login } from "@/services/authService";
+import CustomToast from "../../components/common/CustomToast";
 
 // Validation functions
 const nameValidation = (name) => {
-  if (!name || !name.trim()) return 'This field is required';
-  if (name.trim().length < 2) return 'Name must be at least 2 characters';
-  if (!/^[a-zA-Z\s]+$/.test(name.trim())) return 'Name can only contain letters and spaces';
+  if (!name || !name.trim()) return "This field is required";
+  if (name.trim().length < 2) return "Name must be at least 2 characters";
+  if (!/^[a-zA-Z\s]+$/.test(name.trim()))
+    return "Name can only contain letters and spaces";
   return null;
 };
 
 const emailValidation = (email) => {
-  if (!email || !email.trim()) return 'Email is required';
+  if (!email || !email.trim()) return "Email is required";
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email.trim())) return 'Please enter a valid email address';
+  if (!emailRegex.test(email.trim()))
+    return "Please enter a valid email address";
   return null;
 };
 
 const passwordValidation = (password) => {
-  if (!password || !password.trim()) return 'Password is required';
-  if (password.length < 8) return 'Password must be at least 8 characters';
-  if (!/(?=.*[a-z])/.test(password)) return 'Password must contain a lowercase letter';
-  if (!/(?=.*[A-Z])/.test(password)) return 'Password must contain an uppercase letter';
-  if (!/(?=.*\d)/.test(password)) return 'Password must contain a number';
+  if (!password || !password.trim()) return "Password is required";
+  if (password.length < 8) return "Password must be at least 8 characters";
+  if (!/(?=.*[a-z])/.test(password))
+    return "Password must contain a lowercase letter";
+  if (!/(?=.*[A-Z])/.test(password))
+    return "Password must contain an uppercase letter";
+  if (!/(?=.*\d)/.test(password)) return "Password must contain a number";
   return null;
 };
 
 const dateValidation = (date) => {
-  if (!date) return 'Please select your date of birth';
+  if (!date) return "Please select your date of birth";
   const today = new Date();
   const birthDate = new Date(date);
   const age = today.getFullYear() - birthDate.getFullYear();
 
-  if (age < 13) return 'You must be at least 13 years old';
-  if (age > 120) return 'Please enter a valid birth date';
+  if (age < 13) return "You must be at least 13 years old";
+  if (age > 120) return "Please enter a valid birth date";
   return null;
 };
 
@@ -49,16 +64,16 @@ const dateValidation = (date) => {
 export default function SignUp() {
   const router = useRouter();
   const theme = Colors["dark"];
+  const insets = useSafeAreaInsets(); // <-- added
 
-  // Form state
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    password: '',
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: "",
   });
 
-  const [busy, setBusy] = useState(false); 
+  const [busy, setBusy] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
   const [errors, setErrors] = useState({});
   const [formError, setFormError] = useState("");
@@ -66,33 +81,25 @@ export default function SignUp() {
 
   // Updates form data for a specific field
   const updateField = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
 
     // Only clear errors if user has already attempted to submit
     if (hasAttemptedSubmit && errors[field]) {
       let fieldError = null;
-
       switch (field) {
-        case 'firstName':
-        case 'lastName':
+        case "firstName":
+        case "lastName":
           fieldError = nameValidation(value);
           break;
-        case 'email':
+        case "email":
           fieldError = emailValidation(value);
           break;
-        case 'password':
+        case "password":
           fieldError = passwordValidation(value);
           break;
       }
-
       if (!fieldError) {
-        setErrors(prev => ({
-          ...prev,
-          [field]: null
-        }));
+        setErrors((prev) => ({ ...prev, [field]: null }));
       }
     }
   };
@@ -103,12 +110,7 @@ export default function SignUp() {
 
     if (hasAttemptedSubmit && errors.dateOfBirth) {
       const dateError = dateValidation(date);
-      if (!dateError) {
-        setErrors(prev => ({
-          ...prev,
-          dateOfBirth: null
-        }));
-      }
+      if (!dateError) setErrors((prev) => ({ ...prev, dateOfBirth: null }));
     }
   };
 
@@ -117,29 +119,19 @@ export default function SignUp() {
     const newErrors = {};
 
     const firstNameError = nameValidation(formData.firstName);
-    if (firstNameError) {
-      newErrors.firstName = firstNameError;
-    }
+    if (firstNameError) newErrors.firstName = firstNameError;
 
     const lastNameError = nameValidation(formData.lastName);
-    if (lastNameError) {
-      newErrors.lastName = lastNameError;
-    }
+    if (lastNameError) newErrors.lastName = lastNameError;
 
     const emailError = emailValidation(formData.email);
-    if (emailError) {
-      newErrors.email = emailError;
-    }
+    if (emailError) newErrors.email = emailError;
 
     const passwordError = passwordValidation(formData.password);
-    if (passwordError) {
-      newErrors.password = passwordError;
-    }
+    if (passwordError) newErrors.password = passwordError;
 
     const dateError = dateValidation(selectedDate);
-    if (dateError) {
-      newErrors.dateOfBirth = dateError;
-    }
+    if (dateError) newErrors.dateOfBirth = dateError;
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -150,35 +142,37 @@ export default function SignUp() {
    */
   const handleContinue = async () => {
     setHasAttemptedSubmit(true);
-    
+
     if (validateForm()) {
-      console.log('Form data:', {
-        ...formData,
-        dateOfBirth: selectedDate
-      });
-
-    const firstname = formData.firstName.trim();
-    const lastname = formData.lastName.trim();
-    const email = formData.email.trim().toLowerCase();
-    const password = formData.password; 
-    const dateofbirth = selectedDate;
-
-    console.log('Payload:', { firstname, lastname, email, dateofbirth });
+      const firstname = formData.firstName.trim();
+      const lastname = formData.lastName.trim();
+      const email = formData.email.trim().toLowerCase();
+      const password = formData.password;
+      const dateofbirth = selectedDate;
 
       try {
         setBusy(true);
-        await signup ({ firstname, lastname, email, dateofbirth, password });
-        //login after creating user
+        await signup({ firstname, lastname, email, dateofbirth, password });
         await login(email, password);
-        CustomToast.success("Welcome to Fitahi!", "Account created successfully");
-        router.push('/profile/quiz');
+        CustomToast.success(
+          "Welcome to Fitahi!",
+          "Account created successfully"
+        );
+        router.push("/profile/quiz");
       } catch (err) {
         const status = err?.response?.status;
         const serverMsg = err?.response?.data?.error;
-        const msg = serverMsg || `Sign up failed${status ? ` (${status})` : ""}`;
+        const msg =
+          serverMsg || `Sign up failed${status ? ` (${status})` : ""}`;
         CustomToast.error(msg);
         console.log(msg);
-        if (!serverMsg) console.log("SIGNUP ERROR:", { status, data: err?.response?.data, message: err?.message, code: err?.code });
+        if (!serverMsg)
+          console.log("SIGNUP ERROR:", {
+            status,
+            data: err?.response?.data,
+            message: err?.message,
+            code: err?.code,
+          });
       } finally {
         setBusy(false);
       }
@@ -188,20 +182,41 @@ export default function SignUp() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: theme.background }]}
+    >
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : "height"} // Android uses height
         keyboardVerticalOffset={Platform.OS === "ios" ? 60 : 0}
       >
         <ScrollView
-          contentContainerStyle={styles.contentContainer}
+          contentContainerStyle={[
+            styles.contentContainer,
+            { paddingBottom: 40 + insets.bottom },
+          ]} // safe area bottom
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
-          <Text style={[globalStyles.welcomeText, { color: "#00A2FF", fontSize: 28, textAlign: "center" }]}>
+          <Text
+            style={[
+              globalStyles.welcomeText,
+              { color: "#00A2FF", fontSize: 28, textAlign: "center" },
+            ]}
+          >
             We're happy to have you!
           </Text>
-          <Text style={[globalStyles.cardText, { color: "#00A2FF", fontSize: 16, marginBottom: 30, textAlign: "center"}]}>
+          <Text
+            style={[
+              globalStyles.cardText,
+              {
+                color: "#00A2FF",
+                fontSize: 16,
+                marginBottom: 30,
+                textAlign: "center",
+              },
+            ]}
+          >
             Now let's set up your profile.
           </Text>
 
@@ -210,7 +225,7 @@ export default function SignUp() {
               label="First Name"
               placeholder="First Name"
               value={formData.firstName}
-              onChangeText={(text) => updateField('firstName', text)}
+              onChangeText={(text) => updateField("firstName", text)}
               errorMessage={errors.firstName}
               required
             />
@@ -219,7 +234,7 @@ export default function SignUp() {
               label="Last Name"
               placeholder="Last Name"
               value={formData.lastName}
-              onChangeText={(text) => updateField('lastName', text)}
+              onChangeText={(text) => updateField("lastName", text)}
               errorMessage={errors.lastName}
               required
             />
@@ -238,7 +253,7 @@ export default function SignUp() {
               label="Email Address"
               placeholder="Email address"
               value={formData.email}
-              onChangeText={(text) => updateField('email', text)}
+              onChangeText={(text) => updateField("email", text)}
               keyboardType="email-address"
               errorMessage={errors.email}
               required
@@ -248,7 +263,7 @@ export default function SignUp() {
               label="Password"
               placeholder="Password"
               value={formData.password}
-              onChangeText={(text) => updateField('password', text)}
+              onChangeText={(text) => updateField("password", text)}
               secureTextEntry
               errorMessage={errors.password}
               required
@@ -270,25 +285,20 @@ export default function SignUp() {
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1 
-  },
-  
+  container: { flex: 1 },
+
   contentContainer: {
     paddingHorizontal: 20,
-    paddingTop: 80, 
-    paddingBottom: 40,
+    paddingTop: 80,
     alignItems: "center",
-  },
-  
-  formContainer: { 
-    width: "100%", 
-    alignItems: "center" 
+    flexGrow: 1, // ensures ScrollView fills screen for proper keyboard behavior
   },
 
-  errorText: { 
-    color: "#FF4D4D", 
-    fontSize: 14, 
-    marginTop: 10 
+  formContainer: { width: "100%", alignItems: "center" },
+
+  errorText: {
+    color: "#FF4D4D",
+    fontSize: 14,
+    marginTop: 10,
   },
 });

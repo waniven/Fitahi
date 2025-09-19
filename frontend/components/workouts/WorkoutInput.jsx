@@ -12,7 +12,6 @@ import {
   Text,
   TouchableOpacity,
   useColorScheme,
-  Alert,
 } from "react-native";
 
 const DAYS = ["M", "T", "W", "T", "F", "S", "S"];
@@ -82,11 +81,6 @@ function WorkoutInput(props) {
       if (!isNameValid) missing.push("workout name");
       if (!isTypeValid) missing.push("workout type");
       if (!isDaysValid) missing.push("workout days");
-
-      Alert.alert(
-        "Complete all fields",
-        `Please provide: ${missing.join(", ")}`
-      );
       return;
     }
 
@@ -115,7 +109,6 @@ function WorkoutInput(props) {
     for (let i = 0; i < exercisesPayload.length; i++) {
       const ex = exercisesPayload[i];
       if (!ex.exerciseName || ex.exerciseName.trim() === "") {
-        alert(`Exercise #${i + 1} is missing a name.`);
         return;
       }
     }
@@ -167,6 +160,7 @@ function WorkoutInput(props) {
             What will you be working on?
           </Text>
 
+          {/* name input */}
           <Text
             style={[styles.textTitle, TextFont, { fontFamily: Font.semibold }]}
           >
@@ -196,6 +190,7 @@ function WorkoutInput(props) {
             </Text>
           )}
 
+          {/* type selection */}
           <Text
             style={[styles.textTitle, TextFont, { fontFamily: Font.semibold }]}
           >
@@ -265,6 +260,7 @@ function WorkoutInput(props) {
             )}
           </View>
 
+          {/* day selection */}
           <Text
             style={[
               styles.text,
@@ -331,6 +327,7 @@ function WorkoutInput(props) {
             </Text>
           )}
 
+          {/* exercise modal */}
           <ExerciseInput
             visible={modalIsVisible}
             workout={workout}
@@ -338,6 +335,7 @@ function WorkoutInput(props) {
             onSave={onSaveExercises}
           />
 
+          {/* floating Next button */}
           <PrimaryButton
             title="Next"
             onPress={addWorkoutHandler}

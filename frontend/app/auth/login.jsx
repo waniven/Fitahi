@@ -1,18 +1,29 @@
 import React, { useState } from "react";
-import { ScrollView, StyleSheet, Text, View, KeyboardAvoidingView, Platform } from "react-native";
-import { SafeAreaView } from 'react-native-safe-area-context';
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  KeyboardAvoidingView,
+  Platform,
+} from "react-native";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Colors } from "../../constants/Colors";
 import FitahiLogo from "../../constants/FitahiLogo";
 import CustomInput from "../../components/common/CustomInput";
 import CustomButton from "../../components/common/CustomButton";
 import CustomToast from "../../components/common/CustomToast";
-import globalStyles from "../../styles/globalStyles"; 
+import globalStyles from "../../styles/globalStyles";
 import { login } from "../../services/authService";
 
 export default function Login() {
   const router = useRouter();
   const theme = Colors["dark"];
+  const insets = useSafeAreaInsets();
 
   //for state
   const [formData, setFormData] = useState({ email: "", password: "" });
@@ -21,38 +32,31 @@ export default function Login() {
 
   // Email validation function
   const validateEmail = (email) => {
-    if (!email || !email.trim()) return 'Email is required';
+    if (!email || !email.trim()) return "Email is required";
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email.trim())) return 'Please enter a valid email address';
+    if (!emailRegex.test(email.trim()))
+      return "Please enter a valid email address";
     return email.trim();
   };
 
   // Password validation function
   const validatePassword = (password) => {
-    if (!password || !password.trim()) return 'Password is required';
+    if (!password || !password.trim()) return "Password is required";
     return password;
   };
 
   // Update form field and clear errors if user has attempted login
   const updateField = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    
-    // Clear specific field error if user has attempted login and field is now valid
+    setFormData((prev) => ({ ...prev, [field]: value }));
+
     if (hasAttemptedLogin && errors[field]) {
       let fieldError = null;
-      
-      if (field === 'email') {
-        fieldError = validateEmail(value);
-      } else if (field === 'password') {
-        fieldError = validatePassword(value);
-      }
-      
-      if (!fieldError) {
-        CustomToast.error(prev => ({ ...prev, [field]: null }));
-      }
+      if (field === "email") fieldError = validateEmail(value);
+      else if (field === "password") fieldError = validatePassword(value);
+      if (!fieldError)
+        CustomToast.error((prev) => ({ ...prev, [field]: null }));
     }
   };
-
 
   //validation and navigation
   const handleLogin = async () => {
@@ -65,35 +69,62 @@ export default function Login() {
       CustomToast.success("Welcome Back!", "Login successful");
       router.replace("/home");
     } catch (err) {
-        const status = err?.response?.status;
-        const serverMsg = err?.response?.data?.error;
-        const msg = serverMsg || `Login failed${status ? ` (${status})` : ""}`;
-        CustomToast.error(msg);
-        if (!serverMsg) console.log("LOGIN ERROR:", { status, data: err?.response?.data, message: err?.message, code: err?.code });
+      const status = err?.response?.status;
+      const serverMsg = err?.response?.data?.error;
+      const msg = serverMsg || `Login failed${status ? ` (${status})` : ""}`;
+      CustomToast.error(msg);
+      if (!serverMsg)
+        console.log("LOGIN ERROR:", {
+          status,
+          data: err?.response?.data,
+          message: err?.message,
+          code: err?.code,
+        });
     } finally {
       setBusy(false);
     }
-  }
+  };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: theme.background }]}
+    >
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 60 : 0}
+        behavior={Platform.OS === "ios" ? "padding" : "height"} // changed to "height" on Android
+        keyboardVerticalOffset={Platform.OS === "ios" ? 60 : 0} // ios tweak
       >
         <ScrollView
-          contentContainerStyle={styles.contentContainer}
+          contentContainerStyle={[
+            styles.contentContainer,
+            { paddingBottom: 40 + insets.bottom },
+          ]} // added safe area bottom
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled" // added for input taps
         >
           <View style={styles.logoContainer}>
             <FitahiLogo width={260} height={100} fill="#FFFFFF" />
           </View>
 
-          <Text style={[globalStyles.welcomeText, { color: "#00A2FF", fontSize: 28, textAlign: "center" }]}>
+          <Text
+            style={[
+              globalStyles.welcomeText,
+              { color: "#00A2FF", fontSize: 28, textAlign: "center" },
+            ]}
+          >
             Welcome back!
           </Text>
-          <Text style={[globalStyles.cardText, { color: "#00A2FF", fontSize: 16, marginBottom: 30, textAlign: "center"}]}>
+          <Text
+            style={[
+              globalStyles.cardText,
+              {
+                color: "#00A2FF",
+                fontSize: 16,
+                marginBottom: 30,
+                textAlign: "center",
+              },
+            ]}
+          >
             Please log in with your email and password
           </Text>
 
@@ -132,23 +163,16 @@ export default function Login() {
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1 
-  },
-  
+  container: { flex: 1 },
+
   contentContainer: {
     paddingHorizontal: 20,
-    paddingTop: 80, 
-    paddingBottom: 40,
+    paddingTop: 80,
     alignItems: "center",
+    flexGrow: 1, // ensures ScrollView fills screen for proper keyboard behavior
   },
-  
-  logoContainer: { 
-    marginBottom: 30 
-  },
-  
-  formContainer: { 
-    width: "100%", 
-    alignItems: "center" 
-  },
+
+  logoContainer: { marginBottom: 30 },
+
+  formContainer: { width: "100%", alignItems: "center" },
 });
