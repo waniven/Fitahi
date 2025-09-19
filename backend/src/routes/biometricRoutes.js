@@ -1,5 +1,6 @@
 const express = require('express');
 const Biometric = require('../models/Biometric');
+const User = require('../models/User');
 const validateId = require('../helpers/validateId');
 const router = express.Router();
 const auth = require('../middleware/auth');
@@ -15,6 +16,16 @@ router.post('/', auth, async (req, res, next) => {
             ...req.body,
             userId: req.user.id,
         });
+
+        // update user's quiz.Height and quiz.Weight with latest values
+        if (req.body.height || req.body.weight) {
+            await User.findByIdAndUpdate(req.user.id, {
+                $set: {
+                    ...(req.body.height ? { "quiz.Height": req.body.height } : {}),
+                    ...(req.body.weight ? { "quiz.Weight": req.body.weight } : {}),
+                }
+            });
+        }
 
         // return created biometric entry
         return res.status(201).json(biometric);

@@ -207,10 +207,10 @@ export default function Quiz() {
       {currentIndex === 0 && (
         <View style={styles.headerContainer}>
           <Text style={[styles.headerTitle, { color: theme.tint }]}>
-            Nice to meet you,
+            We're happy to have you onboard 💪
           </Text>
           <Text style={[styles.headerSubtitle, { color: "#fff" }]}>
-            Now, let’s get to know you!
+            Now, let's get to know you!
           </Text>
         </View>
       )}
