@@ -462,16 +462,14 @@ export default function ReminderModal({
               {/* Action buttons section */}
               <View style={styles.actionButtonsSection}>
                 {currentReminder.id && (
-                  <TouchableOpacity
-                    style={styles.deleteButton}
+                  <CustomButton
+                    title="Delete Reminder"
                     onPress={handleDelete}
-                  >
-                    <Text
-                      style={[textStyles.bodyMedium, styles.deleteButtonText]}
-                    >
-                      Delete Reminder
-                    </Text>
-                  </TouchableOpacity>
+                    variant="error"
+                    size="large"
+                    rounded
+                    style={{ width: "100%", marginBottom: 12 }}
+                  />
                 )}
 
                 <CustomButton
@@ -479,7 +477,8 @@ export default function ReminderModal({
                   onPress={submitReminder}
                   variant="primary"
                   size="large"
-                  style={styles.submitButton}
+                  rounded
+                  style={{ width: "100%" }}
                 />
               </View>
             </View>
@@ -730,8 +729,8 @@ const styles = StyleSheet.create({
     borderColor: "transparent",
   },
   repeatButtonSelected: {
-    backgroundColor: Colors.light.primary,
-    borderColor: Colors.light.primary,
+    backgroundColor: Colors.dark.tint,
+    borderColor: Colors.dark.tint,
   },
   repeatButtonText: {
     fontWeight: "600",
