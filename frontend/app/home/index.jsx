@@ -19,6 +19,7 @@ import globalStyles from "../../styles/globalStyles";
 import BottomNav from "@/components/navbar/BottomNav";
 import ReminderModal from "@/components/reminders/ReminderModal";
 import LogCards from "@/components/logcards/LogCards";
+import { useCalendarLogic } from "@/hooks/useCalendarLogic";
 
 export default function Home() {
   const theme = Colors["dark"];
@@ -34,110 +35,25 @@ export default function Home() {
     return () => subscription.remove();
   }, []);
 
-  // Premium banner for premium button
-  const [showPremium, setShowPremium] = useState(true);
-  // Reminder state - will require API fetch
-  const [reminders, setReminders] = useState([]);
+  // Premium banner for premium button (unused for now)
+  // const [showPremium, setShowPremium] = useState(true);
   // Modal control
   const [modalVisible, setModalVisible] = useState(false);
-  // Date viewing and selection
-  const [viewingDate, setViewingDate] = useState(
-    new Date().toISOString().split("T")[0]
-  );
-  const [editingReminder, setEditingReminder] = useState(null);
 
-  // Today's date formatted
-  const formattedToday = new Date().toISOString().split("T")[0];
-
-  // Enhanced marked dates with better visual indicators
-  const markedDates = reminders.reduce(
-    (acc, r) => {
-      acc[r.date] = { marked: true, dotColor: theme.tint };
-      return acc;
-    },
-    {
-      // Highlight today
-      [formattedToday]: {
-        selected: true,
-        selectedColor: theme.tint + "40",
-      },
-    }
-  );
-
-  // Get reminders for the currently viewing date
-  const getRemindersForDate = (date) => {
-    return reminders.filter((r) => r.date === date);
-  };
-
-  // Handle calendar day press - just for viewing and prevent selecting past dates
-  const handleDayPress = (day) => {
-    const today = new Date();
-    const selected = new Date(day.dateString);
-    if (selected < new Date(formattedToday)) return;
-
-    setViewingDate(day.dateString);
-  };
-
-  // Handle creating new reminder
-  const handleCreateReminder = () => {
-    setEditingReminder(null);
-    setModalVisible(true);
-  };
-
-  // Handle editing existing reminder
-  const handleEditReminder = (reminder) => {
-    setEditingReminder(reminder);
-    setModalVisible(true);
-  };
-
-  // Save or update a reminder
-  const handleSaveReminder = (reminderData) => {
-    const now = new Date();
-    const selected = new Date(
-      reminderData.date + "T" + (reminderData.time || "00:00")
-    );
-
-    // Prevent past reminders
-    if (selected < now) {
-      Toast.show({
-        type: "error",
-        text1: "Invalid Reminder",
-        text2: "Cannot set a reminder in the past",
-      });
-      return;
-    }
-
-    if (reminderData.id && reminders.find((r) => r.id === reminderData.id)) {
-      // Update existing reminder
-      setReminders((prev) =>
-        prev.map((r) => (r.id === reminderData.id ? reminderData : r))
-      );
-      Toast.show({
-        type: "success",
-        text1: "Reminder Updated",
-        text2: reminderData.title,
-      });
-    } else {
-      // Add new reminder
-      setReminders((prev) => [...prev, reminderData]);
-      Toast.show({
-        type: "success",
-        text1: "Reminder Added",
-        text2: reminderData.title,
-      });
-    }
-  };
-
-  // Delete reminder by ID
-  const handleDeleteReminder = (id) => {
-    const deleted = reminders.find((r) => r.id === id);
-    setReminders((prev) => prev.filter((r) => r.id !== id));
-    Toast.show({
-      type: "info",
-      text1: "Reminder Deleted",
-      text2: deleted?.title || "",
-    });
-  };
+  // Use the custom calendar & reminder hook
+  const {
+    reminders,
+    viewingDate,
+    editingReminder,
+    formattedToday,
+    getMarkedDates,
+    getRemindersForDate,
+    handleDayPress,
+    handleCreateReminder,
+    handleEditReminder,
+    handleSaveReminder,
+    handleDeleteReminder,
+  } = useCalendarLogic();
 
   // Quick log cards data
   const quickLogCards = [
@@ -219,7 +135,7 @@ export default function Home() {
             hideExtraDays
             firstDay={1}
             enableSwipeMonths={true} // Scrollable months
-            markedDates={markedDates}
+            markedDates={getMarkedDates(theme)}
             minDate={formattedToday} // Prevent selecting past dates
             onDayPress={handleDayPress}
           />
@@ -241,7 +157,10 @@ export default function Home() {
             </Text>
             <TouchableOpacity
               style={styles.addReminderButton}
-              onPress={handleCreateReminder}
+              onPress={() => {
+                handleCreateReminder();
+                setModalVisible(true);
+              }}
             >
               <Ionicons name="add" size={16} color={theme.tint} />
               <Text style={styles.addReminderText}>Add reminder</Text>
@@ -270,9 +189,12 @@ export default function Home() {
               }
               return dayReminders.slice(0, 3).map((reminder) => (
                 <TouchableOpacity
-                  key={reminder.id}
+                  key={reminder._id}
                   style={styles.reminderItem}
-                  onPress={() => handleEditReminder(reminder)}
+                  onPress={() => {
+                    handleEditReminder(reminder);
+                    setModalVisible(true);
+                  }}
                 >
                   <View style={styles.reminderContent}>
                     <View style={styles.reminderHeader}>
@@ -324,7 +246,11 @@ export default function Home() {
       {/* Reminder Modal */}
       <ReminderModal
         visible={modalVisible}
-        onClose={() => setModalVisible(false)}
+        onClose={() => {
+          setModalVisible(false);
+          // reset editing state when closing
+          handleEditReminder(null);
+        }}
         onSave={handleSaveReminder}
         onDelete={handleDeleteReminder}
         reminder={editingReminder}

@@ -1,38 +1,26 @@
-// components/reminders/ReminderModal.jsx
-import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  Alert,
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
   TouchableOpacity,
   TextInput,
   Modal,
   ScrollView,
-  Platform
-} from 'react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '../../constants/Colors';
-import { Font, Type, TextVariants } from '../../constants/Font';
-import CustomButton from '../common/CustomButton';
-import CustomToast from '../common/CustomToast';
+  Platform,
+} from "react-native";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import { Ionicons } from "@expo/vector-icons";
+import { Colors } from "../../constants/Colors";
+import { Type } from "../../constants/Font";
+import CustomButton from "../common/CustomButton";
+import CustomToast from "../common/CustomToast";
+import Toast from "react-native-toast-message";
 
 // Configuration constants
 const VALIDATION_CONFIG = {
-  title: {
-    minLength: 2,
-    maxLength: 100
-  }
-};
-
-const ALERT_MESSAGES = {
-  exitConfirmation: {
-    title: 'Are you sure you want to exit?',
-    message: 'Your entered data will be lost.',
-    cancelText: 'Cancel',
-    confirmText: 'Exit'
-  }
+  title: { minLength: 2, maxLength: 100 },
+  time: { required: true },
 };
 
 // Local text styles using Font constants
@@ -47,14 +35,14 @@ const textStyles = {
  * ReminderModal - Modal for entering reminder data
  * Shows title, notes, date, time, and repeat options
  */
-export default function ReminderModal({ 
-  visible, 
-  onClose, 
+export default function ReminderModal({
+  visible,
+  onClose,
   onSave,
   onDelete,
   reminder = null,
   selectedDate = null,
-  validationConfig = VALIDATION_CONFIG 
+  validationConfig = VALIDATION_CONFIG,
 }) {
   const [currentReminder, setCurrentReminder] = useState({
     id: "",
@@ -72,10 +60,20 @@ export default function ReminderModal({
   useEffect(() => {
     if (visible) {
       if (reminder) {
-        // Editing existing reminder
-        setCurrentReminder(reminder);
+        // consistent id field
+        setCurrentReminder({
+          id: reminder._id || reminder.id || "",
+          title: reminder.title || "",
+          notes: reminder.notes || "",
+          date:
+            reminder.date ||
+            selectedDate ||
+            new Date().toISOString().split("T")[0],
+          time: reminder.time || "",
+          repeat: reminder.repeat || "None",
+        });
       } else {
-        // Creating new reminder
+        // creating new reminder
         setCurrentReminder({
           id: "",
           title: "",
@@ -92,9 +90,9 @@ export default function ReminderModal({
    * Clears validation errors for title
    */
   const handleTitleChange = (value) => {
-    setCurrentReminder(prev => ({ ...prev, title: value }));
+    setCurrentReminder((prev) => ({ ...prev, title: value }));
     if (validationErrors.title) {
-      setValidationErrors(prev => ({ ...prev, title: null }));
+      setValidationErrors((prev) => ({ ...prev, title: null }));
     }
   };
 
@@ -102,7 +100,7 @@ export default function ReminderModal({
    * Validates title input
    */
   const validateTitle = (value) => {
-    if (!value?.trim()) return 'Title is required';
+    if (!value?.trim()) return "Title is required";
     if (value.trim().length < validationConfig.title.minLength) {
       return `Title must be at least ${validationConfig.title.minLength} characters`;
     }
@@ -118,10 +116,10 @@ export default function ReminderModal({
   const formatDisplayDate = (dateString) => {
     if (!dateString) return "Pick Date";
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric', 
-      year: 'numeric' 
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
     });
   };
 
@@ -130,9 +128,9 @@ export default function ReminderModal({
    */
   const formatDisplayTime = (timeString) => {
     if (!timeString) return "Pick Time";
-    const [hours, minutes] = timeString.split(':');
+    const [hours, minutes] = timeString.split(":");
     const hour12 = hours % 12 || 12;
-    const ampm = hours >= 12 ? 'PM' : 'AM';
+    const ampm = hours >= 12 ? "PM" : "AM";
     return `${hour12}:${minutes} ${ampm}`;
   };
 
@@ -140,13 +138,13 @@ export default function ReminderModal({
    * Handle date picker changes
    */
   const handleDateChange = (event, selectedDateObj) => {
-    if (Platform.OS === 'android') {
+    if (Platform.OS === "android") {
       setShowDatePicker(false);
     }
-    
-    if (event.type === 'set' && selectedDateObj) {
+
+    if (event.type === "set" && selectedDateObj) {
       const formattedDate = selectedDateObj.toISOString().split("T")[0];
-      setCurrentReminder(prev => ({ ...prev, date: formattedDate }));
+      setCurrentReminder((prev) => ({ ...prev, date: formattedDate }));
     }
   };
 
@@ -154,16 +152,24 @@ export default function ReminderModal({
    * Handle time picker changes
    */
   const handleTimeChange = (event, selectedTimeObj) => {
-    if (Platform.OS === 'android') {
+    if (Platform.OS === "android") {
       setShowTimePicker(false);
     }
-    
-    if (event.type === 'set' && selectedTimeObj) {
+
+    if (event.type === "set" && selectedTimeObj) {
       const hours = selectedTimeObj.getHours().toString().padStart(2, "0");
       const minutes = selectedTimeObj.getMinutes().toString().padStart(2, "0");
       const formattedTime = `${hours}:${minutes}`;
-      setCurrentReminder(prev => ({ ...prev, time: formattedTime }));
+      setCurrentReminder((prev) => ({ ...prev, time: formattedTime }));
     }
+  };
+
+  /**
+   * Validate that time has been selected
+   */
+  const validateTime = (value) => {
+    if (!value || !value.trim()) return "Time is required";
+    return null;
   };
 
   /**
@@ -184,31 +190,11 @@ export default function ReminderModal({
    * Checks if user has entered any data
    */
   const hasUserData = () => {
-    return currentReminder.title.trim() || 
-           currentReminder.notes.trim() ||
-           currentReminder.time;
-  };
-
-  /**
-   * Handles modal close with confirmation if user has entered data
-   */
-  const requestCloseConfirmation = () => {
-    if (hasUserData()) {
-      Alert.alert(
-        ALERT_MESSAGES.exitConfirmation.title,
-        ALERT_MESSAGES.exitConfirmation.message,
-        [
-          { text: ALERT_MESSAGES.exitConfirmation.cancelText, style: 'cancel' },
-          { 
-            text: ALERT_MESSAGES.exitConfirmation.confirmText, 
-            style: 'destructive',
-            onPress: () => closeModal()
-          }
-        ]
-      );
-    } else {
-      closeModal();
-    }
+    return (
+      currentReminder.title.trim() ||
+      currentReminder.notes.trim() ||
+      currentReminder.time
+    );
   };
 
   /**
@@ -232,10 +218,13 @@ export default function ReminderModal({
    */
   const validateForm = () => {
     const errors = {};
-    
+
     const titleError = validateTitle(currentReminder.title);
     if (titleError) errors.title = titleError;
-    
+
+    const timeError = validateTime(currentReminder.time);
+    if (timeError) errors.time = timeError;
+
     return errors;
   };
 
@@ -245,16 +234,18 @@ export default function ReminderModal({
   const submitReminder = () => {
     const currentValidationErrors = validateForm();
     setValidationErrors(currentValidationErrors);
-    
+
     if (Object.keys(currentValidationErrors).length === 0) {
+      // Only include id if editing
       const reminderToSave = {
-        ...currentReminder,
-        id: currentReminder.id || Date.now().toString(),
-        title: currentReminder.title.trim()
+        title: currentReminder.title.trim(),
+        notes: currentReminder.notes,
+        date: currentReminder.date,
+        time: currentReminder.time,
+        repeat: currentReminder.repeat,
+        ...(currentReminder.id ? { _id: currentReminder.id } : {}),
       };
-      
-      CustomToast.reminderSaved(currentReminder.title.trim());
-      
+
       if (onSave) {
         onSave(reminderToSave);
       }
@@ -279,19 +270,19 @@ export default function ReminderModal({
       visible={visible}
       animationType="slide"
       transparent={true}
-      onRequestClose={requestCloseConfirmation}
+      onRequestClose={closeModal}
     >
       {/* Background overlay */}
       <View style={styles.modalOverlay}>
-        <TouchableOpacity 
-          style={styles.backgroundTouchable} 
+        <TouchableOpacity
+          style={styles.backgroundTouchable}
           activeOpacity={1}
-          onPress={requestCloseConfirmation}
+          onPress={closeModal}
         />
-        
+
         {/* Modal content */}
         <View style={styles.modalContainer}>
-          <ScrollView 
+          <ScrollView
             style={styles.scrollView}
             showsVerticalScrollIndicator={false}
             bounces={false}
@@ -302,7 +293,10 @@ export default function ReminderModal({
                 <Text style={[textStyles.heading1, styles.modalTitleText]}>
                   {currentReminder.id ? "Edit Reminder" : "Add Reminder"}
                 </Text>
-                <TouchableOpacity onPress={requestCloseConfirmation} style={styles.closeButton}>
+                <TouchableOpacity
+                  onPress={closeModal}
+                  style={styles.closeButton}
+                >
                   <Ionicons name="close" size={28} color="#666" />
                 </TouchableOpacity>
               </View>
@@ -313,8 +307,15 @@ export default function ReminderModal({
 
               {/* Title input section */}
               <View style={styles.inputSection}>
-                <Text style={[textStyles.bodyMedium, styles.inputLabel]}>REMINDER TITLE *</Text>
-                <View style={[styles.inputContainer, validationErrors.title && styles.inputError]}>
+                <Text style={[textStyles.bodyMedium, styles.inputLabel]}>
+                  REMINDER TITLE *
+                </Text>
+                <View
+                  style={[
+                    styles.inputContainer,
+                    validationErrors.title && styles.inputError,
+                  ]}
+                >
                   <TextInput
                     style={[textStyles.bodySmall, styles.textInput]}
                     placeholder="Enter reminder title"
@@ -333,14 +334,22 @@ export default function ReminderModal({
 
               {/* Notes input section */}
               <View style={styles.inputSection}>
-                <Text style={[textStyles.bodyMedium, styles.inputLabel]}>NOTES (OPTIONAL)</Text>
+                <Text style={[textStyles.bodyMedium, styles.inputLabel]}>
+                  NOTES (OPTIONAL)
+                </Text>
                 <View style={[styles.inputContainer, styles.notesContainer]}>
                   <TextInput
-                    style={[textStyles.bodySmall, styles.textInput, styles.notesInput]}
+                    style={[
+                      textStyles.bodySmall,
+                      styles.textInput,
+                      styles.notesInput,
+                    ]}
                     placeholder="Add additional notes"
                     placeholderTextColor="#A0A0A0"
                     value={currentReminder.notes}
-                    onChangeText={(text) => setCurrentReminder(prev => ({ ...prev, notes: text }))}
+                    onChangeText={(text) =>
+                      setCurrentReminder((prev) => ({ ...prev, notes: text }))
+                    }
                     multiline
                     textAlignVertical="top"
                     returnKeyType="done"
@@ -350,19 +359,27 @@ export default function ReminderModal({
 
               {/* Date and Time picker section */}
               <View style={styles.dateTimeSection}>
-                <Text style={[textStyles.bodyMedium, styles.inputLabel]}>DATE & TIME</Text>
-                
+                <Text style={[textStyles.bodyMedium, styles.inputLabel]}>
+                  DATE & TIME
+                </Text>
+
                 <View style={styles.dateTimeRow}>
                   {/* Date picker */}
                   <View style={styles.dateTimeColumn}>
-                    <Text style={[textStyles.caption, styles.dateTimeLabel]}>DATE</Text>
-                    <TouchableOpacity 
+                    <Text style={[textStyles.caption, styles.dateTimeLabel]}>
+                      DATE
+                    </Text>
+                    <TouchableOpacity
                       style={styles.pickerContainer}
                       onPress={() => setShowDatePicker(true)}
                       activeOpacity={0.7}
                     >
                       <View style={styles.pickerContent}>
-                        <Ionicons name="calendar-outline" size={20} color="#4A90E2" />
+                        <Ionicons
+                          name="calendar-outline"
+                          size={20}
+                          color="#4A90E2"
+                        />
                         <Text style={[textStyles.bodySmall, styles.pickerText]}>
                           {formatDisplayDate(currentReminder.date)}
                         </Text>
@@ -372,41 +389,69 @@ export default function ReminderModal({
 
                   {/* Time picker */}
                   <View style={styles.dateTimeColumn}>
-                    <Text style={[textStyles.caption, styles.dateTimeLabel]}>TIME</Text>
-                    <TouchableOpacity 
-                      style={styles.pickerContainer}
+                    <Text style={[textStyles.caption, styles.dateTimeLabel]}>
+                      TIME
+                    </Text>
+
+                    <TouchableOpacity
+                      style={[
+                        styles.pickerContainer,
+                        validationErrors.time && styles.inputError,
+                      ]}
                       onPress={() => setShowTimePicker(true)}
                       activeOpacity={0.7}
                     >
                       <View style={styles.pickerContent}>
-                        <Ionicons name="time-outline" size={20} color="#4A90E2" />
+                        <Ionicons
+                          name="time-outline"
+                          size={20}
+                          color="#4A90E2"
+                        />
                         <Text style={[textStyles.bodySmall, styles.pickerText]}>
                           {formatDisplayTime(currentReminder.time)}
                         </Text>
                       </View>
                     </TouchableOpacity>
+
+                    {/* Error message below, like title field */}
+                    {validationErrors.time && (
+                      <Text style={[textStyles.bodySmall, styles.errorText]}>
+                        {validationErrors.time}
+                      </Text>
+                    )}
                   </View>
                 </View>
               </View>
 
               {/* Repeat options section */}
               <View style={styles.inputSection}>
-                <Text style={[textStyles.bodyMedium, styles.inputLabel]}>REPEAT</Text>
+                <Text style={[textStyles.bodyMedium, styles.inputLabel]}>
+                  REPEAT
+                </Text>
                 <View style={styles.repeatContainer}>
                   {["None", "Daily", "Weekly", "Monthly"].map((option) => (
                     <TouchableOpacity
                       key={option}
                       style={[
                         styles.repeatButton,
-                        currentReminder.repeat === option && styles.repeatButtonSelected
+                        currentReminder.repeat === option &&
+                          styles.repeatButtonSelected,
                       ]}
-                      onPress={() => setCurrentReminder(prev => ({ ...prev, repeat: option }))}
+                      onPress={() =>
+                        setCurrentReminder((prev) => ({
+                          ...prev,
+                          repeat: option,
+                        }))
+                      }
                     >
-                      <Text style={[
-                        textStyles.bodySmall,
-                        styles.repeatButtonText,
-                        currentReminder.repeat === option && styles.repeatButtonTextSelected
-                      ]}>
+                      <Text
+                        style={[
+                          textStyles.bodySmall,
+                          styles.repeatButtonText,
+                          currentReminder.repeat === option &&
+                            styles.repeatButtonTextSelected,
+                        ]}
+                      >
                         {option}
                       </Text>
                     </TouchableOpacity>
@@ -417,17 +462,23 @@ export default function ReminderModal({
               {/* Action buttons section */}
               <View style={styles.actionButtonsSection}>
                 {currentReminder.id && (
-                  <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
-                    <Text style={[textStyles.bodyMedium, styles.deleteButtonText]}>Delete Reminder</Text>
-                  </TouchableOpacity>
+                  <CustomButton
+                    title="Delete Reminder"
+                    onPress={handleDelete}
+                    variant="error"
+                    size="large"
+                    rounded
+                    style={{ width: "100%", marginBottom: 12 }}
+                  />
                 )}
-                
+
                 <CustomButton
                   title={currentReminder.id ? "Save Changes" : "Add Reminder"}
                   onPress={submitReminder}
                   variant="primary"
                   size="large"
-                  style={styles.submitButton}
+                  rounded
+                  style={{ width: "100%" }}
                 />
               </View>
             </View>
@@ -435,19 +486,41 @@ export default function ReminderModal({
         </View>
 
         {/* iOS Date Picker Modal */}
-        {showDatePicker && Platform.OS === 'ios' && (
+        {showDatePicker && Platform.OS === "ios" && (
           <View style={styles.pickerOverlay}>
             <View style={styles.pickerModal}>
               <View style={styles.pickerHeader}>
-                <TouchableOpacity onPress={() => setShowDatePicker(false)} style={styles.pickerButton}>
-                  <Text style={[textStyles.bodyMedium, styles.pickerButtonText]}>Cancel</Text>
+                <TouchableOpacity
+                  onPress={() => setShowDatePicker(false)}
+                  style={styles.pickerButton}
+                >
+                  <Text
+                    style={[textStyles.bodyMedium, styles.pickerButtonText]}
+                  >
+                    Cancel
+                  </Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={handleDateConfirm} style={styles.pickerButton}>
-                  <Text style={[textStyles.bodyMedium, styles.pickerButtonText, styles.confirmButton]}>Done</Text>
+                <TouchableOpacity
+                  onPress={handleDateConfirm}
+                  style={styles.pickerButton}
+                >
+                  <Text
+                    style={[
+                      textStyles.bodyMedium,
+                      styles.pickerButtonText,
+                      styles.confirmButton,
+                    ]}
+                  >
+                    Done
+                  </Text>
                 </TouchableOpacity>
               </View>
               <DateTimePicker
-                value={currentReminder.date ? new Date(currentReminder.date) : new Date()}
+                value={
+                  currentReminder.date
+                    ? new Date(currentReminder.date)
+                    : new Date()
+                }
                 mode="date"
                 display="spinner"
                 onChange={handleDateChange}
@@ -460,21 +533,42 @@ export default function ReminderModal({
         )}
 
         {/* iOS Time Picker Modal */}
-        {showTimePicker && Platform.OS === 'ios' && (
+        {showTimePicker && Platform.OS === "ios" && (
           <View style={styles.pickerOverlay}>
             <View style={styles.pickerModal}>
               <View style={styles.pickerHeader}>
-                <TouchableOpacity onPress={() => setShowTimePicker(false)} style={styles.pickerButton}>
-                  <Text style={[textStyles.bodyMedium, styles.pickerButtonText]}>Cancel</Text>
+                <TouchableOpacity
+                  onPress={() => setShowTimePicker(false)}
+                  style={styles.pickerButton}
+                >
+                  <Text
+                    style={[textStyles.bodyMedium, styles.pickerButtonText]}
+                  >
+                    Cancel
+                  </Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={handleTimeConfirm} style={styles.pickerButton}>
-                  <Text style={[textStyles.bodyMedium, styles.pickerButtonText, styles.confirmButton]}>Done</Text>
+                <TouchableOpacity
+                  onPress={handleTimeConfirm}
+                  style={styles.pickerButton}
+                >
+                  <Text
+                    style={[
+                      textStyles.bodyMedium,
+                      styles.pickerButtonText,
+                      styles.confirmButton,
+                    ]}
+                  >
+                    Done
+                  </Text>
                 </TouchableOpacity>
               </View>
               <DateTimePicker
-                value={currentReminder.time ? 
-                  new Date(`${currentReminder.date}T${currentReminder.time}`) : 
-                  new Date()
+                value={
+                  currentReminder.time
+                    ? new Date(
+                        `${currentReminder.date}T${currentReminder.time}`
+                      )
+                    : new Date()
                 }
                 mode="time"
                 display="spinner"
@@ -488,9 +582,11 @@ export default function ReminderModal({
         )}
 
         {/* Android Date Picker */}
-        {showDatePicker && Platform.OS === 'android' && (
+        {showDatePicker && Platform.OS === "android" && (
           <DateTimePicker
-            value={currentReminder.date ? new Date(currentReminder.date) : new Date()}
+            value={
+              currentReminder.date ? new Date(currentReminder.date) : new Date()
+            }
             mode="date"
             display="default"
             onChange={handleDateChange}
@@ -498,11 +594,12 @@ export default function ReminderModal({
         )}
 
         {/* Android Time Picker */}
-        {showTimePicker && Platform.OS === 'android' && (
+        {showTimePicker && Platform.OS === "android" && (
           <DateTimePicker
-            value={currentReminder.time ? 
-              new Date(`${currentReminder.date}T${currentReminder.time}`) : 
-              new Date()
+            value={
+              currentReminder.time
+                ? new Date(`${currentReminder.date}T${currentReminder.time}`)
+                : new Date()
             }
             mode="time"
             display="default"
@@ -510,6 +607,7 @@ export default function ReminderModal({
           />
         )}
       </View>
+      <Toast />
     </Modal>
   );
 }
@@ -517,17 +615,17 @@ export default function ReminderModal({
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-end",
   },
   backgroundTouchable: {
     flex: 1,
   },
   modalContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    maxHeight: '90%',
+    maxHeight: "90%",
   },
   scrollView: {
     paddingHorizontal: 24,
@@ -537,42 +635,42 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   modalHeaderSection: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 16,
   },
   modalTitleText: {
-    color: '#000',
+    color: "#000",
   },
   closeButton: {
     padding: 4,
   },
   modalSubtitleText: {
-    color: '#666',
+    color: "#666",
     marginBottom: 32,
   },
   inputSection: {
     marginBottom: 24,
   },
   inputLabel: {
-    color: '#000',
+    color: "#000",
     marginBottom: 8,
   },
   inputContainer: {
-    backgroundColor: '#E4F8FF',
+    backgroundColor: "#E4F8FF",
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 18,
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: "transparent",
     minHeight: 56,
   },
   notesContainer: {
     minHeight: 80,
   },
   textInput: {
-    color: '#000',
+    color: "#000",
     padding: 0,
     margin: 0,
     flex: 1,
@@ -580,132 +678,132 @@ const styles = StyleSheet.create({
   },
   notesInput: {
     minHeight: 44,
-    textAlignVertical: 'top',
+    textAlignVertical: "top",
   },
   dateTimeSection: {
     marginBottom: 24,
   },
   dateTimeRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 12,
   },
   dateTimeColumn: {
     flex: 1,
   },
   dateTimeLabel: {
-    color: '#000',
+    color: "#000",
     marginBottom: 8,
   },
   pickerContainer: {
-    backgroundColor: '#E4F8FF',
+    backgroundColor: "#E4F8FF",
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 18,
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: "transparent",
     minHeight: 56,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   pickerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 8,
   },
   pickerText: {
-    color: '#000',
+    color: "#000",
     flex: 1,
   },
   repeatContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: 12,
   },
   repeatButton: {
-    backgroundColor: '#E4F8FF',
+    backgroundColor: "#E4F8FF",
     borderRadius: 12,
     paddingHorizontal: 24,
     paddingVertical: 16,
-    minWidth: '47%',
-    alignItems: 'center',
+    minWidth: "47%",
+    alignItems: "center",
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: "transparent",
   },
   repeatButtonSelected: {
-    backgroundColor: Colors.light.primary,
-    borderColor: Colors.light.primary,
+    backgroundColor: Colors.dark.tint,
+    borderColor: Colors.dark.tint,
   },
   repeatButtonText: {
-    fontWeight: '600',
-    color: '#000',
+    fontWeight: "600",
+    color: "#000",
   },
   repeatButtonTextSelected: {
-    color: '#fff',
+    color: "#fff",
   },
   actionButtonsSection: {
     marginTop: 16,
     paddingBottom: 20,
   },
   deleteButton: {
-    backgroundColor: '#FF4D4D',
+    backgroundColor: "#FF4D4D",
     borderRadius: 12,
     paddingVertical: 12,
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 12,
   },
   deleteButtonText: {
-    color: '#fff',
+    color: "#fff",
   },
   submitButton: {
-    width: '100%',
+    width: "100%",
     minHeight: 50,
   },
   inputError: {
-    borderColor: '#FF5252',
+    borderColor: "#FF5252",
     borderWidth: 2,
   },
   errorText: {
-    color: '#FF5252',
+    color: "#FF5252",
     marginTop: 4,
   },
   pickerOverlay: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-end",
     zIndex: 1000,
   },
   pickerModal: {
-    backgroundColor: '#F8F9FA',
+    backgroundColor: "#F8F9FA",
     borderTopLeftRadius: 12,
     borderTopRightRadius: 12,
     paddingBottom: 34,
   },
   pickerHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5E7',
-    backgroundColor: '#F8F9FA',
+    borderBottomColor: "#E5E5E7",
+    backgroundColor: "#F8F9FA",
   },
   pickerButton: {
     paddingVertical: 8,
     paddingHorizontal: 12,
   },
   pickerButtonText: {
-    color: '#007AFF',
+    color: "#007AFF",
   },
   confirmButton: {
-    fontWeight: '600',
+    fontWeight: "600",
   },
   picker: {
-    backgroundColor: '#F8F9FA',
+    backgroundColor: "#F8F9FA",
     height: 216,
-    alignSelf: 'center',
-    width: '100%',
+    alignSelf: "center",
+    width: "100%",
   },
 });
