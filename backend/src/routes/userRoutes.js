@@ -62,6 +62,7 @@ router.patch('/me', auth, async (req, res, next) => {
         if (typeof req.body.dateofbirth === 'string') updates.dateofbirth = req.body.dateofbirth;
         if (typeof req.body.password === 'string') updates.password = req.body.password;
         if (typeof req.body.pfp === 'string') updates.pfp = req.body.pfp;
+        if (typeof req.body.quiz === 'object') updates.quiz = req.body.quiz;
 
         //check if whitelist object is empty, if so dont update anything
         if (Object.keys(updates).length === 0) {

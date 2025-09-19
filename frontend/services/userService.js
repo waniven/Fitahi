@@ -25,7 +25,15 @@ export async function getMe() {
 }
 
 //update user profile 
-export async function updateMe({ firstname, lastname, email, dateofbirth, password, pfp }) {
+export async function updateMe({
+    firstname,
+    lastname,
+    email,
+    dateofbirth,
+    password,
+    pfp,
+    quiz,
+}) {
     const res = await api.patch('users/me', {
         firstname,
         lastname,
@@ -33,6 +41,7 @@ export async function updateMe({ firstname, lastname, email, dateofbirth, passwo
         dateofbirth,
         ...(password ? { password } : {}),
         ...(pfp ? { pfp } : {}),
+        ...(quiz ? { quiz } : {}),
     });
     return res.data;
 }
