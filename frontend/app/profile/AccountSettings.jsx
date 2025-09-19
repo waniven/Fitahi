@@ -23,6 +23,7 @@ import CustomToast from "@/components/common/CustomToast";
 import Toast from "react-native-toast-message";
 import { Font } from "@/constants/Font";
 import CustomButton from "../../components/common/CustomButton";
+import { getBiometrics } from "@/services/biometricService";
 
 export default function AccountSettings() {
   const theme = Colors["dark"];
@@ -57,7 +58,8 @@ export default function AccountSettings() {
   //Fetch profile on mount and prefill form
   useEffect(() => {
     let alive = true;
-    (async () => {
+
+    const fetchProfileAndBiometrics = async () => {
       try {
         setLoading(true);
         const me = await getMe();
@@ -76,23 +78,33 @@ export default function AccountSettings() {
           trainingDays: me.quiz?.TrainingDays ?? "",
           trainingTime: me.quiz?.TrainingTime ?? "",
           diet: me.quiz?.Diet ?? "",
-          height: me.quiz?.Height?.toString() ?? "",
-          weight: me.quiz?.Weight?.toString() ?? "",
         }));
-
         setSelectedDob(fromYmd(dobStr));
+        if (me.pfp) setProfileImage({ uri: me.pfp });
 
-        if (me.pfp) {
-          setProfileImage({ uri: me.pfp });
-        }
-      } catch (e) {
+        // fetch latest biometric log
+        const biometrics = await getBiometrics();
         if (!alive) return;
-        const msg = e?.response?.data?.error || "Failed to load profile";
-        setLoadError(msg);
+        if (biometrics.length > 0) {
+          const latest = biometrics[0];
+          setForm((prev) => ({
+            ...prev,
+            height: latest.height?.toString() ?? prev.height,
+            weight: latest.weight?.toString() ?? prev.weight,
+          }));
+        }
+      } catch (err) {
+        if (!alive) return;
+        CustomToast.error(
+          "Fetching information failed",
+          "Please try again later."
+        );
       } finally {
         if (alive) setLoading(false);
       }
-    })();
+    };
+
+    fetchProfileAndBiometrics();
     return () => {
       alive = false;
     };
@@ -137,9 +149,9 @@ export default function AccountSettings() {
       const a = result.assets[0];
       const manip = await ImageManipulator.manipulateAsync(
         a.uri,
-        [{ resize: { width: 512 } }],
+        [{ resize: { width: 256 } }],
         {
-          compress: 0.7,
+          compress: 0.5,
           format: ImageManipulator.SaveFormat.JPEG,
           base64: true,
         }
@@ -199,8 +211,7 @@ export default function AccountSettings() {
       // Show success toast when info saved
       CustomToast.success("Saved!", "Your information has been updated.");
     } catch (e) {
-      const msg = e?.response?.data?.error || "Update failed";
-      console.log(msg);
+      CustomToast.error("Save Failed", "Please try again later.");
     }
   };
 

@@ -12,6 +12,7 @@ import { Colors } from "@/constants/Colors";
 import { Font } from "@/constants/Font";
 import PrimaryButton from "@/components/PrimaryButton";
 import { createWorkoutResult } from "@/services/workoutResultService";
+import CustomToast from "@/components/common/CustomToast";
 
 // StartWorkoutScreen lets user click Start on the Workout Log and go to WorkoutScreen
 export default function StartWorkoutScreen({ route, navigation }) {
@@ -119,16 +120,7 @@ export default function StartWorkoutScreen({ route, navigation }) {
       const saved = await createWorkoutResult(payload);
       navigation.replace("WorkoutResult", { result: saved, workout });
     } catch (err) {
-      console.error("Failed to save workout:", err);
-      // fallback so UI still works even if backend fails
-      const fallback = new WorkoutResult(
-        Date.now().toString(),
-        totalElapsed,
-        completedNow,
-        new Date().toISOString(),
-        workout?._id ?? workout?.id
-      );
-      navigation.replace("WorkoutResult", { result: fallback, workout });
+      CustomToast.error("Save Failed", "Workout couldn’t be saved, try again.");
     }
   };
 
@@ -402,7 +394,7 @@ const styles = StyleSheet.create({
     gap: 12,
     justifyContent: "center",
   },
-  
+
   nextBtn: {
     paddingVertical: 14,
     paddingHorizontal: 24,
