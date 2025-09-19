@@ -19,6 +19,7 @@ import CustomButtonThree from "../../components/common/CustomButtonThree";
 import { AIContext } from "../ai/AIContext";
 import BottomNav from "@/components/navbar/BottomNav";
 import LoadingProgress from "@/components/LoadingProgress";
+import CustomToast from "../../components/common/CustomToast";
 
 // CreateWorkout creates a workout which pops up a workout input and display the created workout
 function CreateWorkout({ navigation }) {
@@ -85,9 +86,9 @@ function CreateWorkout({ navigation }) {
         setWorkout(data);
         setLoadingProgress(1); // complete
       } catch (err) {
-        console.error(
-          "Failed to fetch workouts:",
-          err.response?.data || err.message
+        CustomToast.error(
+          "Fetch Failed",
+          "Unable to load workouts, try again soon."
         );
       } finally {
         // wait a short tick so users see the bar finish
@@ -127,7 +128,7 @@ function CreateWorkout({ navigation }) {
       setSelectedWorkout(null);
       endaddWorkoutName();
     } catch (err) {
-      console.error("Failed to save workout:", err);
+      CustomToast.error("Save Failed", "Workout couldn’t be saved, try again.");
     }
   }
 
@@ -137,7 +138,10 @@ function CreateWorkout({ navigation }) {
       await workoutService.deleteWorkout(id);
       setWorkout((current) => current.filter((w) => w._id !== id));
     } catch (err) {
-      console.error("Failed to delete workout:", err);
+      CustomToast.error(
+        "Deletion Failed",
+        "Workout couldn’t be deleted, try again."
+      );
     }
   }
 

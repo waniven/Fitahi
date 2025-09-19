@@ -15,6 +15,7 @@ import { Colors } from "../../constants/Colors";
 import { Font } from "../../constants/Font";
 import * as messageService from "../../services/messageService";
 import CustomToast from "@/components/common/CustomToast";
+import Toast from "react-native-toast-message";
 
 // const { height: SCREEN_HEIGHT } = Dimensions.get("window"); unused for now
 
@@ -118,7 +119,10 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
       const convos = await messageService.getConversations();
       setConversations(convos);
     } catch (err) {
-      console.error("Failed to load conversations:", err);
+      CustomToast.error(
+        "Load Failed",
+        "Unable to load conversations, try again."
+      );
     }
   };
 
@@ -127,19 +131,30 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
   }, [historyVisible]);
 
   const selectConversation = async (convo) => {
-    setActiveConvo(convo);
-    const msgs = await messageService.getMessagesByConversation(convo._id);
-    setChatMessages(msgs);
-    setMessages(msgs);
-    setHistoryVisible(false);
+    try {
+      setActiveConvo(convo);
+      const msgs = await messageService.getMessagesByConversation(convo._id);
+      setChatMessages(msgs);
+      setMessages(msgs);
+      setHistoryVisible(false);
+    } catch {
+      CustomToast.error("Load Failed", "Unable to load messages, try again.");
+    }
   };
 
   const newConversation = async () => {
-    const convo = await messageService.createConversation();
-    setActiveConvo(convo);
-    setChatMessages([]);
-    setMessages([]);
-    setHistoryVisible(false);
+    try {
+      const convo = await messageService.createConversation();
+      setActiveConvo(convo);
+      setChatMessages([]);
+      setMessages([]);
+      setHistoryVisible(false);
+    } catch {
+      CustomToast.error(
+        "Conversation Not Created",
+        "Unable to create conversation."
+      );
+    }
   };
 
   const deleteConversation = async (convoId) => {
@@ -155,7 +170,7 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
         setLoading(false);
       }
     } catch (err) {
-      console.error("Failed to delete conversation:", err);
+      CustomToast.error("Deletion Failed", "Unable to delete conversation.");
     }
   };
 
@@ -373,6 +388,7 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
           </View>
         </View>
       </Modal>
+      <Toast />
     </Modal>
   );
 }
