@@ -24,9 +24,8 @@ import CustomButtonThree from "../../components/common/CustomButtonThree";
 import { Colors } from "@/constants/Colors";
 import { Font } from "@/constants/Font";
 import { AIContext } from "../ai/AIContext";
-import { EXPO_PUBLIC_GOOGLE_MAPS_API_KEY } from "@env";
 
-const GOOGLE_KEY = EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
+const GOOGLE_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
 
 // ShowGymsFinder helps user locate nearest gyms to their locations
 export default function ShowGymsFinder({ navigation }) {
