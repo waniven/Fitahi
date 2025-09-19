@@ -18,7 +18,8 @@ const userSchema = new Schema(
             Diet: { type: String, default: null },
             Height: { type: Number, default: null },
             Weight: { type: Number, default: null },
-        }
+        },
+        pushToken: { type: String, default: '' } // store Expo push token
     },
     { timestamps: true } //will automatically add a timestamp
 )

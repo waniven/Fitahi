@@ -14,6 +14,7 @@ const waterRoutes = require("./src/routes/waterRoutes");
 const nutritionRoutes = require("./src/routes/nutritionRoutes");
 const biometricRoutes = require("./src/routes/biometricRoutes")
 const reminderRoutes = require("./src/routes/reminderRoutes");
+const notificationRoutes = require("./src/routes/notificationsRoutes"); // FOR TESTING - TO REMOVE
 
 const app = express();
 
@@ -31,6 +32,7 @@ app.use("/api/water", waterRoutes);
 app.use("/api/nutrition", nutritionRoutes);
 app.use("/api/biometrics", biometricRoutes);
 app.use("/api/reminders", reminderRoutes);
+app.use("/api/notifications", notificationRoutes); // FOR TESTING - TO REMOVE
 
 //global error handing
 app.use((err, _req, res, _next) => {
