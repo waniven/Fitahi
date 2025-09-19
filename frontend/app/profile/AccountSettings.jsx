@@ -71,6 +71,13 @@ export default function AccountSettings() {
           lastName: me.lastname ?? "",
           email: me.email ?? "",
           dob: dobStr,
+          fitnessGoal: me.quiz?.FitnessGoal ?? "",
+          fitnessLevel: me.quiz?.FitnessLevel ?? "",
+          trainingDays: me.quiz?.TrainingDays ?? "",
+          trainingTime: me.quiz?.TrainingTime ?? "",
+          diet: me.quiz?.Diet ?? "",
+          height: me.quiz?.Height?.toString() ?? "",
+          weight: me.quiz?.Weight?.toString() ?? "",
         }));
 
         setSelectedDob(fromYmd(dobStr));
@@ -176,16 +183,25 @@ export default function AccountSettings() {
         ? `data:${profileImage.mime};base64,${profileImage.base64}`
         : undefined;
 
-      //updates the user in the DB via API
+      const quiz = {
+        FitnessGoal: form.fitnessGoal || null,
+        FitnessLevel: form.fitnessLevel || null,
+        TrainingDays: form.trainingDays || null,
+        TrainingTime: form.trainingTime || null,
+        Diet: form.diet || null,
+        Height: form.height ? Number(form.height.replace(/\D/g, "")) : null, // strip 'cm'
+        Weight: form.weight ? Number(form.weight.replace(/\D/g, "")) : null, // strip 'kg'
+      };
+
+      // send to backend
       await updateMe({
         firstname,
         lastname,
         email,
         dateofbirth,
-
-        //only include password if the user actually changed it
         ...(form.password ? { password: form.password } : {}),
         ...(pfp ? { pfp } : {}),
+        quiz, // <--- add this
       });
 
       // Show success toast when info saved
@@ -263,7 +279,6 @@ export default function AccountSettings() {
               errorMessage={errors.firstName}
               required
             />
-
             <CustomInput
               label="Last Name"
               placeholder="Last Name"
@@ -272,7 +287,6 @@ export default function AccountSettings() {
               errorMessage={errors.lastName}
               required
             />
-
             <CustomInput
               label="Date of Birth"
               placeholder="Choose a date"
@@ -281,7 +295,6 @@ export default function AccountSettings() {
               onDateChange={handleDobChange}
               required
             />
-
             <CustomInput
               label="Email Address"
               placeholder="Email address"
@@ -301,64 +314,67 @@ export default function AccountSettings() {
               secureTextEntry
             />
 
+            {/* Quiz Questions */}
+            <Text style={[styles.title, { color: "#fff" }]}>
+              Quiz Questions
+            </Text>
+
             <CustomInput
               label="Fitness Goal"
               placeholder="e.g. Lose weight"
               value={form.fitnessGoal}
               onChangeText={(text) => handleChange("fitnessGoal", text)}
             />
-
             <CustomInput
               label="Fitness Level"
               placeholder="Beginner/Intermediate/Advanced"
               value={form.fitnessLevel}
               onChangeText={(text) => handleChange("fitnessLevel", text)}
             />
-
             <CustomInput
-              label="Training Days"
+              label="Days spent training (per week) "
               placeholder="e.g. 3 days/week"
               value={form.trainingDays}
               onChangeText={(text) => handleChange("trainingDays", text)}
             />
-
             <CustomInput
-              label="Training Time"
+              label="Time spent training (per session)"
               placeholder="e.g. 1 hour/session"
               value={form.trainingTime}
               onChangeText={(text) => handleChange("trainingTime", text)}
             />
-
             <CustomInput
-              label="Diet"
+              label="Dietary Preference"
               placeholder="e.g. Vegetarian"
               value={form.diet}
               onChangeText={(text) => handleChange("diet", text)}
             />
-
             <CustomInput
-              label="Height"
-              placeholder="e.g. 168 cm"
+              label="Height (cm)"
+              placeholder="e.g. 168"
               value={form.height}
-              onChangeText={(text) => handleChange("height", text)}
+              onChangeText={
+                (text) => handleChange("height", text.replace(/\D/g, "")) // allow only numbers
+              }
+              keyboardType="numeric"
             />
-
             <CustomInput
-              label="Weight"
-              placeholder="e.g. 60 kg"
+              label="Weight (kg)"
+              placeholder="e.g. 60"
               value={form.weight}
-              onChangeText={(text) => handleChange("weight", text)}
+              onChangeText={
+                (text) => handleChange("weight", text.replace(/\D/g, "")) // allow only numbers
+              }
+              keyboardType="numeric"
             />
-
             <CustomInput
-              label="Water Intake Goal"
+              label="Water Intake Goal (millilitres)"
               placeholder="e.g. 2L per day"
               value={form.waterGoal}
               onChangeText={(text) => handleChange("waterGoal", text)}
             />
-
             <CustomInput
-              label="Calories Intake Goal"
+              label="Calories Intake Goal (kcal)"
               placeholder="e.g. 2000 kcal"
               value={form.caloriesGoal}
               onChangeText={(text) => handleChange("caloriesGoal", text)}

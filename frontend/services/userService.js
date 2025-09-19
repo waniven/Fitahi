@@ -25,7 +25,15 @@ export async function getMe() {
 }
 
 //update user profile 
-export async function updateMe({ firstname, lastname, email, dateofbirth, password, pfp }) {
+export async function updateMe({
+    firstname,
+    lastname,
+    email,
+    dateofbirth,
+    password,
+    pfp,
+    quiz,
+}) {
     const res = await api.patch('users/me', {
         firstname,
         lastname,
@@ -33,6 +41,7 @@ export async function updateMe({ firstname, lastname, email, dateofbirth, passwo
         dateofbirth,
         ...(password ? { password } : {}),
         ...(pfp ? { pfp } : {}),
+        ...(quiz ? { quiz } : {}),
     });
     return res.data;
 }
@@ -40,4 +49,11 @@ export async function updateMe({ firstname, lastname, email, dateofbirth, passwo
 //delete user
 export async function deleteMe() {
     await api.delete("users/me");
+}
+
+// save quiz answers from user upon sign-up
+export async function saveQuiz(quiz) {
+    console.log(quiz)
+    const res = await api.patch("users/me/quiz", { quiz });
+    return res.data;
 }

@@ -6,7 +6,7 @@ const auth = require('../middleware/auth');
 const router = express.Router();
 
 //helper to validate MongoDB objectId
-const isValidId= (id) => mongoose.Types.ObjectId.isValid(id);
+const isValidId = (id) => mongoose.Types.ObjectId.isValid(id);
 
 /*
  * POST /api/users/
@@ -25,14 +25,14 @@ router.post('/', async (req, res, next) => {
 
         //create a new user 
         const user = await User.create({ firstname, lastname, email, dateofbirth, password });
-        
+
         //return new user
         return res.status(201).json(user);
 
     } catch (err) {
 
         //duplicate email 
-        if(err.code === 11000) {
+        if (err.code === 11000) {
             return res.status(409).json({ error: 'Email already exists' });
         }
 
@@ -48,12 +48,12 @@ router.post('/', async (req, res, next) => {
  * auth needed
  */
 router.patch('/me', auth, async (req, res, next) => {
-    try{
+    try {
         //id from users session
         const id = req.user.id;
 
         //whitelist object, will add allowed fields
-        const updates = {}; 
+        const updates = {};
 
         //check data type and add to updates whitelist object
         if (typeof req.body.firstname === 'string') updates.firstname = req.body.firstname;
@@ -62,9 +62,10 @@ router.patch('/me', auth, async (req, res, next) => {
         if (typeof req.body.dateofbirth === 'string') updates.dateofbirth = req.body.dateofbirth;
         if (typeof req.body.password === 'string') updates.password = req.body.password;
         if (typeof req.body.pfp === 'string') updates.pfp = req.body.pfp;
+        if (typeof req.body.quiz === 'object') updates.quiz = req.body.quiz;
 
         //check if whitelist object is empty, if so dont update anything
-        if(Object.keys(updates).length === 0) {
+        if (Object.keys(updates).length === 0) {
             return res.status(400).json({ error: 'No valid fields to update' });
         }
 
@@ -75,7 +76,7 @@ router.patch('/me', auth, async (req, res, next) => {
         });
 
         //not found
-        if(!updated) {
+        if (!updated) {
             return res.status(404).json({ error: 'User not found' });
         }
 
@@ -84,7 +85,7 @@ router.patch('/me', auth, async (req, res, next) => {
 
     } catch (err) {
         //duplicate email 
-        if(err.code === 11000) {
+        if (err.code === 11000) {
             return res.status(409).json({ error: 'Email already exists' });
         }
 
@@ -97,12 +98,12 @@ router.patch('/me', auth, async (req, res, next) => {
  * Delete a user
  */
 router.delete('/me', auth, async (req, res, next) => {
-    try{
+    try {
         //id from users session
-        const id = req.user.id; 
+        const id = req.user.id;
 
         //check if id is valid
-        if(!isValidId(id)) {
+        if (!isValidId(id)) {
             return res.status(400).json({ error: 'Invalid user id' });
         }
 
@@ -111,7 +112,7 @@ router.delete('/me', auth, async (req, res, next) => {
 
         //return error if user document not found
         if (!deleted) {
-            return res.status(404).json({ error: 'User not found'})
+            return res.status(404).json({ error: 'User not found' })
         }
 
         return res.status(204).send();
@@ -126,11 +127,11 @@ router.delete('/me', auth, async (req, res, next) => {
  * users own profile
  * need to auth their token
 **/
-router.get('/me', auth , async (req, res, next) => {
+router.get('/me', auth, async (req, res, next) => {
     try {
         //get users own profile
         const me = await User.findById(req.user.id);
-        
+
         //return error if user profile not found
         if (!me) {
             return res.status(404).json({ error: 'User not found' });
@@ -138,6 +139,37 @@ router.get('/me', auth , async (req, res, next) => {
 
         //return users own profile
         return res.json(me);
+    } catch (err) {
+        return next(err);
+    }
+});
+
+/**
+ * PATCH /api/users/me/quiz
+ * save user's sign-up quiz answers
+**/
+router.patch('/me/quiz', auth, async (req, res, next) => {
+    try {
+        const id = req.user.id;
+
+        // answers sent from frontend (can be partial due to skippable fields)
+        const { quiz } = req.body;
+
+        if (!quiz || typeof quiz !== 'object') {
+            return res.status(400).json({ error: 'Invalid quiz data' });
+        }
+
+        const updated = await User.findByIdAndUpdate(
+            id,
+            { $set: { quiz } },
+            { new: true, runValidators: true }
+        );
+
+        if (!updated) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        return res.json(updated);
     } catch (err) {
         return next(err);
     }

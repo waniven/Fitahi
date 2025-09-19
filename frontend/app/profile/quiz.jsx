@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState } from "react";
 import {
   Dimensions,
   FlatList,
@@ -8,18 +8,20 @@ import {
   TouchableOpacity,
   View,
   Picker,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import WheelPickerExpo from 'react-native-wheel-picker-expo';
-import { Colors } from '../../constants/Colors';
-import { questions } from '../../constants/quizData';
-import { Font } from '@/constants/Font'; 
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
+import WheelPickerExpo from "react-native-wheel-picker-expo";
+import { Colors } from "../../constants/Colors";
+import { questions } from "../../constants/quizData";
+import { Font } from "@/constants/Font";
+import { saveQuiz } from "../../services/userService";
+import CustomToast from "@/components/common/CustomToast";
 
-const { width } = Dimensions.get('window');
+const { width } = Dimensions.get("window");
 
 export default function Quiz() {
-  const theme = Colors['dark'];
+  const theme = Colors["dark"];
   const router = useRouter();
   const flatListRef = useRef(null);
 
@@ -27,7 +29,7 @@ export default function Quiz() {
   const [answers, setAnswers] = useState({});
 
   const currentQuestion = questions[currentIndex];
-  const isPicker = currentQuestion.type === 'picker';
+  const isPicker = currentQuestion.type === "picker";
   const isLastQuestion = currentIndex === questions.length - 1;
 
   // Go to next question
@@ -39,7 +41,7 @@ export default function Quiz() {
       });
       setCurrentIndex(currentIndex + 1);
     } else {
-      router.replace('/profile/thankyou');
+      router.replace("/profile/thankyou");
     }
   };
 
@@ -49,23 +51,44 @@ export default function Quiz() {
     goNext();
   };
 
-  // Skip button
-  const handleSkip = () => goNext();
+  // Skip button, last question triggers save
+  const handleSkip = () => {
+    if (isLastQuestion) {
+      handleFinish();
+    } else {
+      goNext();
+    }
+  };
+
+  // Send quiz answers to backend when done
+  const handleFinish = async () => {
+    try {
+      await saveQuiz(answers);
+      CustomToast.success("Quiz Completed!", "Your answers have been saved.");
+      router.replace("/profile/thankyou");
+    } catch (error) {
+      console.error("Failed to update quiz:", error);
+      CustomToast.error(
+        "Quiz Submission Failed",
+        "See account settings to update."
+      );
+    }
+  };
 
   const renderItem = ({ item }) => {
-    const slideIsPicker = item.type === 'picker';
+    const slideIsPicker = item.type === "picker";
 
     return (
       <View style={[styles.slide, { width }]}>
         {/* Question Text */}
-        <Text style={[styles.question, { color: '#fff' }]}>
+        <Text style={[styles.question, { color: "#fff" }]}>
           {item.question}
         </Text>
 
         {/* Picker Question */}
         {slideIsPicker ? (
           <View style={styles.pickerContainer}>
-            {Platform.OS === 'web' ? (
+            {Platform.OS === "web" ? (
               <Picker
                 selectedValue={answers[item.id] ?? item.min}
                 onValueChange={(value) =>
@@ -74,23 +97,20 @@ export default function Quiz() {
                 style={{
                   height: 200,
                   width: 250,
-                  color: '#fff',
-                  backgroundColor: '#000',
+                  color: "#fff",
+                  backgroundColor: "#000",
                 }}
               >
-                {Array.from(
-                  { length: item.max - item.min + 1 },
-                  (_, i) => {
-                    const num = item.min + i;
-                    return (
-                      <Picker.Item
-                        key={num}
-                        label={`${num} ${item.unit}`}
-                        value={num}
-                      />
-                    );
-                  },
-                )}
+                {Array.from({ length: item.max - item.min + 1 }, (_, i) => {
+                  const num = item.min + i;
+                  return (
+                    <Picker.Item
+                      key={num}
+                      label={`${num} ${item.unit}`}
+                      value={num}
+                    />
+                  );
+                })}
               </Picker>
             ) : (
               <WheelPickerExpo
@@ -103,23 +123,20 @@ export default function Quiz() {
                   backgroundColor: theme.tint,
                 }}
                 itemTextStyle={{
-                  color: '#fff',
+                  color: "#fff",
                   fontSize: 18,
-                  fontFamily: Font.bold, 
+                  fontFamily: Font.bold,
                 }}
                 items={Array.from(
                   { length: item.max - item.min + 1 },
                   (_, i) => {
                     const num = item.min + i;
                     return { label: `${num} ${item.unit}`, value: num };
-                  },
+                  }
                 )}
                 initialSelectedIndex={0}
                 onChange={({ item: selected }) =>
-                  setAnswers((prev) => ({
-                    ...prev,
-                    [item.id]: selected.value,
-                  }))
+                  setAnswers((prev) => ({ ...prev, [item.id]: selected.value }))
                 }
               />
             )}
@@ -135,21 +152,20 @@ export default function Quiz() {
                   key={option}
                   style={[
                     styles.optionButton,
-                    idx !== item.options.length - 1 &&
-                      styles.optionDivider,
+                    idx !== item.options.length - 1 && styles.optionDivider,
                     {
-                      width: '100%',
-                      backgroundColor: isSelected ? theme.tint : '#000',
+                      width: "100%",
+                      backgroundColor: isSelected ? theme.tint : "#000",
                       borderRadius: 12,
                       paddingVertical: 16,
                       paddingHorizontal: 12,
                       borderWidth: isSelected ? 2 : 1,
-                      borderColor: isSelected ? theme.tint : '#333',
-                      shadowColor: isSelected ? theme.tint : '#000',
+                      borderColor: isSelected ? theme.tint : "#333",
+                      shadowColor: isSelected ? theme.tint : "#000",
                       shadowOpacity: isSelected ? 0.4 : 0,
                       shadowRadius: isSelected ? 6 : 0,
                       shadowOffset: { width: 0, height: 2 },
-                      justifyContent: 'center',
+                      justifyContent: "center",
                     },
                   ]}
                   onPress={() => handleAnswer(item.id, option)}
@@ -158,7 +174,7 @@ export default function Quiz() {
                   <Text
                     style={[
                       styles.optionText,
-                      { color: isSelected ? '#000' : '#fff' },
+                      { color: isSelected ? "#000" : "#fff" },
                     ]}
                   >
                     {option}
@@ -173,9 +189,7 @@ export default function Quiz() {
   };
 
   return (
-    <SafeAreaView
-      style={[styles.container, { backgroundColor: '#151924' }]}
-    >
+    <SafeAreaView style={[styles.container, { backgroundColor: "#151924" }]}>
       {/* Progress Bar */}
       <View style={styles.progressBarBackground}>
         <View
@@ -195,7 +209,7 @@ export default function Quiz() {
           <Text style={[styles.headerTitle, { color: theme.tint }]}>
             Nice to meet you,
           </Text>
-          <Text style={[styles.headerSubtitle, { color: '#fff' }]}>
+          <Text style={[styles.headerSubtitle, { color: "#fff" }]}>
             Now, let’s get to know you!
           </Text>
         </View>
@@ -216,9 +230,7 @@ export default function Quiz() {
           index,
         })}
         onMomentumScrollEnd={(e) => {
-          const index = Math.round(
-            e.nativeEvent.contentOffset.x / width,
-          );
+          const index = Math.round(e.nativeEvent.contentOffset.x / width);
           setCurrentIndex(index);
         }}
         scrollEventThrottle={16}
@@ -230,7 +242,7 @@ export default function Quiz() {
           style={[styles.skipButton, { backgroundColor: theme.tint }]}
           onPress={handleSkip}
         >
-          <Text style={[styles.skipText, { color: '#000' }]}>Skip</Text>
+          <Text style={[styles.skipText, { color: "#000" }]}>Skip</Text>
         </TouchableOpacity>
 
         {isPicker && !isLastQuestion && (
@@ -238,16 +250,16 @@ export default function Quiz() {
             style={[styles.nextButton, { backgroundColor: theme.tint }]}
             onPress={goNext}
           >
-            <Text style={[styles.nextText, { color: '#000' }]}>Next</Text>
+            <Text style={[styles.nextText, { color: "#000" }]}>Next</Text>
           </TouchableOpacity>
         )}
 
         {isLastQuestion && (
           <TouchableOpacity
             style={[styles.nextButton, { backgroundColor: theme.tint }]}
-            onPress={() => router.replace('/profile/thankyou')}
+            onPress={handleFinish}
           >
-            <Text style={[styles.nextText, { color: '#000' }]}>Done</Text>
+            <Text style={[styles.nextText, { color: "#000" }]}>Done</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -272,15 +284,15 @@ const styles = StyleSheet.create({
   headerSubtitle: {
     fontSize: 18,
     lineHeight: 24,
-    fontFamily: Font.semibold, 
+    fontFamily: Font.semibold,
   },
 
   // Question Slide
   slide: {
     flex: 1,
     paddingHorizontal: 20,
-    justifyContent: 'center',
-    backgroundColor: '#151924',
+    justifyContent: "center",
+    backgroundColor: "#151924",
   },
   question: {
     fontSize: 22,
@@ -290,20 +302,20 @@ const styles = StyleSheet.create({
 
   // Picker
   pickerContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     flex: 1,
   },
 
   // Multiple Choice Options
   optionsBox: {
     marginVertical: 20,
-    width: '80%',
-    alignSelf: 'center',
+    width: "80%",
+    alignSelf: "center",
   },
   optionButton: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   optionDivider: {
     marginVertical: 8,
@@ -316,9 +328,9 @@ const styles = StyleSheet.create({
   // Progress Bar
   progressBarBackground: {
     height: 6,
-    backgroundColor: '#555',
-    width: '90%',
-    alignSelf: 'center',
+    backgroundColor: "#555",
+    width: "90%",
+    alignSelf: "center",
     borderRadius: 3,
     marginVertical: 10,
   },
@@ -329,33 +341,33 @@ const styles = StyleSheet.create({
 
   // Bottom Buttons
   bottomButtons: {
-    width: '100%',
-    alignItems: 'center',
-    position: 'absolute',
+    width: "100%",
+    alignItems: "center",
+    position: "absolute",
     bottom: 30,
   },
   skipButton: {
     paddingVertical: 12,
     paddingHorizontal: 100,
     borderRadius: 25,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginBottom: 10,
   },
   skipText: {
     fontSize: 16,
-    fontFamily: Font.bold, 
+    fontFamily: Font.bold,
   },
   nextButton: {
     paddingVertical: 12,
     paddingHorizontal: 100,
     borderRadius: 25,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginTop: 10,
   },
   nextText: {
     fontSize: 16,
-    fontFamily: Font.bold, 
+    fontFamily: Font.bold,
   },
 });
