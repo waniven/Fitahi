@@ -114,12 +114,6 @@ export default function AccountSettings() {
     if (form.password.length > 0 && form.password.length < 8) {
       newErrors.password = "Password must be at least 8 characters."; //password to be at least 8 characters
     }
-    if (form.height && !/^\d+(\s?cm)?$/.test(form.height.trim())) {
-      newErrors.height = "Height must be a number (e.g. 170 cm)."; //height in cm
-    }
-    if (form.weight && !/^\d+(\s?kg)?$/.test(form.weight.trim())) {
-      newErrors.weight = "Weight must be a number (e.g. 65 kg)."; //weight in kgs
-    }
     if (form.waterGoal && !/^\d+(\.\d+)?L$/i.test(form.waterGoal.trim())) {
       newErrors.waterGoal = "Water goal must be like '2L' or '2.5L'."; //water in L
     }
@@ -189,8 +183,6 @@ export default function AccountSettings() {
         TrainingDays: form.trainingDays || null,
         TrainingTime: form.trainingTime || null,
         Diet: form.diet || null,
-        Height: form.height ? Number(form.height.replace(/\D/g, "")) : null, // strip 'cm'
-        Weight: form.weight ? Number(form.weight.replace(/\D/g, "")) : null, // strip 'kg'
       };
 
       // send to backend
@@ -201,7 +193,7 @@ export default function AccountSettings() {
         dateofbirth,
         ...(form.password ? { password: form.password } : {}),
         ...(pfp ? { pfp } : {}),
-        quiz, // <--- add this
+        quiz,
       });
 
       // Show success toast when info saved
@@ -279,6 +271,7 @@ export default function AccountSettings() {
               errorMessage={errors.firstName}
               required
             />
+
             <CustomInput
               label="Last Name"
               placeholder="Last Name"
@@ -287,6 +280,7 @@ export default function AccountSettings() {
               errorMessage={errors.lastName}
               required
             />
+
             <CustomInput
               label="Date of Birth"
               placeholder="Choose a date"
@@ -295,6 +289,7 @@ export default function AccountSettings() {
               onDateChange={handleDobChange}
               required
             />
+
             <CustomInput
               label="Email Address"
               placeholder="Email address"
@@ -325,54 +320,58 @@ export default function AccountSettings() {
               value={form.fitnessGoal}
               onChangeText={(text) => handleChange("fitnessGoal", text)}
             />
+
             <CustomInput
               label="Fitness Level"
               placeholder="Beginner/Intermediate/Advanced"
               value={form.fitnessLevel}
               onChangeText={(text) => handleChange("fitnessLevel", text)}
             />
+
             <CustomInput
               label="Days spent training (per week) "
               placeholder="e.g. 3 days/week"
               value={form.trainingDays}
               onChangeText={(text) => handleChange("trainingDays", text)}
             />
+
             <CustomInput
               label="Time spent training (per session)"
               placeholder="e.g. 1 hour/session"
               value={form.trainingTime}
               onChangeText={(text) => handleChange("trainingTime", text)}
             />
+
             <CustomInput
               label="Dietary Preference"
               placeholder="e.g. Vegetarian"
               value={form.diet}
               onChangeText={(text) => handleChange("diet", text)}
             />
+
             <CustomInput
-              label="Height (cm)"
-              placeholder="e.g. 168"
+              label="Height in cm (editable via biometrics log)"
               value={form.height}
-              onChangeText={
-                (text) => handleChange("height", text.replace(/\D/g, "")) // allow only numbers
-              }
+              editable={false} // read-only
               keyboardType="numeric"
+              inputStyle={{ color: "white" }}
             />
+
             <CustomInput
-              label="Weight (kg)"
-              placeholder="e.g. 60"
+              label="Weight in kg (editable via biometrics log)"
               value={form.weight}
-              onChangeText={
-                (text) => handleChange("weight", text.replace(/\D/g, "")) // allow only numbers
-              }
+              editable={false} // read-only
               keyboardType="numeric"
+              inputStyle={{ color: "white" }}
             />
+
             <CustomInput
               label="Water Intake Goal (millilitres)"
               placeholder="e.g. 2L per day"
               value={form.waterGoal}
               onChangeText={(text) => handleChange("waterGoal", text)}
             />
+
             <CustomInput
               label="Calories Intake Goal (kcal)"
               placeholder="e.g. 2000 kcal"

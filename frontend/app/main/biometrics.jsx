@@ -1,67 +1,110 @@
-// app/main/biometrics.jsx
-import React, { useState } from 'react';
-import { View, StyleSheet, StatusBar, TouchableOpacity, Text } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import LogScreen from '../../components/common/LogScreen';
-import BiometricEntryModal from '../../components/biometrics/BiometricEntryModal';
-import BiometricsDashboard from '../../components/biometrics/BiometricsDashboard';
-import { Colors } from '../../constants/Colors';
-import { sampleEntries } from '../../components/common/SampleData';
+import React, { useState, useEffect } from "react";
+import { useRouter } from "expo-router";
+import LogScreen from "../../components/common/LogScreen";
+import BiometricEntryModal from "../../components/biometrics/BiometricEntryModal";
+import BiometricsDashboard from "../../components/biometrics/BiometricsDashboard";
+import LoadingProgress from "@/components/LoadingProgress";
+import {
+  getBiometrics,
+  createBiometric,
+  deleteBiometric,
+} from "../../services/biometricService";
+import CustomToast from "@/components/common/CustomToast";
 
-
-/**
- * Dedicated Biometrics Screen
- * Shows LogScreen when empty, BiometricsDashboard when entries exist
- */
 export default function BiometricsScreen() {
   const router = useRouter();
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [biometricEntries, setBiometricEntries] = useState(sampleEntries.biometricEntries);
+  const [biometricEntries, setBiometricEntries] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [progress, setProgress] = useState(0); // animated progress
 
+  useEffect(() => {
+    const fetchEntries = async () => {
+      try {
+        // Start progress at 30%
+        setProgress(0.3);
 
-  // Handle back navigation to home screen
-  const handleBackPress = () => {
-    router.back();
+        // fetch biometrics
+        const data = await getBiometrics();
+
+        // update progress to 70% after fetch
+        setProgress(0.7);
+
+        // set data
+        setBiometricEntries(data);
+
+        // complete progress
+        setProgress(1);
+      } catch (err) {
+        console.error("Failed to fetch biometrics:", err);
+        CustomToast.error("Error", "Could not fetch biometrics.");
+      } finally {
+        // add a short delay so users see the progress complete
+        setTimeout(() => setLoading(false), 300);
+      }
+    };
+
+    fetchEntries();
+  }, []);
+
+  const handleBackPress = () => router.back();
+  const handleAddBiometric = () => setIsModalVisible(true);
+  const handleCloseModal = () => setIsModalVisible(false);
+
+  // handle biometric entry creation
+  const handleSaveEntry = async (entryData) => {
+    try {
+      const created = await createBiometric(entryData);
+      setBiometricEntries((prev) => [created, ...prev]);
+      setIsModalVisible(false);
+    } catch (err) {
+      CustomToast.error("Error", "Could not add new entry.");
+    }
   };
 
-  // Handle add biometric entry action
-  const handleAddBiometric = () => {
-    setIsModalVisible(true);
+  // handle biometric entry deletion
+  const handleDeleteEntry = async (entryId) => {
+    try {
+      // Find the entry so we can get its weight
+      const entry = biometricEntries.find((e) => e._id === entryId);
+      if (!entry) return;
+
+      await deleteBiometric(entryId);
+
+      // Show toast after successful deletion
+      CustomToast.info(
+        "Measurement Removed",
+        `${entry.weight?.toFixed(1) || "?"}kg entry deleted from your log`
+      );
+
+      // Update state to remove deleted entry
+      setBiometricEntries((prev) => prev.filter((e) => e._id !== entryId));
+    } catch (err) {
+      console.error("Failed to delete biometric:", err);
+      CustomToast.error("Error", "Could not delete entry.");
+    }
   };
 
-  // Handle modal close
-  const handleCloseModal = () => {
-    setIsModalVisible(false);
-  };
+  // Show loading overlay while fetching
+  if (loading) {
+    return (
+      <LoadingProgress progress={progress} message="Fetching biometrics..." />
+    );
+  }
 
-  // Handle saving new biometric entry
-  const handleSaveEntry = (entryData) => {
-    setBiometricEntries(previousEntries => [entryData, ...previousEntries]);
-    setIsModalVisible(false);
-  };
-
-  // Handle entry deletion
-  const handleDeleteEntry = (entryId) => {
-    setBiometricEntries(previousEntries => 
-      previousEntries.filter(entry => entry.id !== entryId));
-  };
-
-  // Render empty state with LogScreen
+  // Show empty state if no entries
   if (biometricEntries.length === 0) {
     return (
       <>
         <LogScreen
           title="Biometrics Log"
-          subtitle="Track Your Biometrics"
+          subtitle="Track your biometrics"
           showBackButton={true}
           showAddButton={true}
           onBackPress={handleBackPress}
           onAddPress={handleAddBiometric}
         />
-        
-        <BiometricEntryModal 
+        <BiometricEntryModal
           visible={isModalVisible}
           onClose={handleCloseModal}
           onSave={handleSaveEntry}
@@ -70,6 +113,7 @@ export default function BiometricsScreen() {
     );
   }
 
+  // Show dashboard if entries exist
   return (
     <>
       <BiometricsDashboard
@@ -78,8 +122,7 @@ export default function BiometricsScreen() {
         onAddEntry={handleAddBiometric}
         onBackPress={handleBackPress}
       />
-
-      <BiometricEntryModal 
+      <BiometricEntryModal
         visible={isModalVisible}
         onClose={handleCloseModal}
         onSave={handleSaveEntry}

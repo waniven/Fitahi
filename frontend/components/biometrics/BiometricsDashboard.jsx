@@ -1,21 +1,37 @@
-// components/biometrics/BiometricsDashboard.jsx
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Modal, StatusBar } from 'react-native';
-import Svg, { Path, Circle, Line, Text as SvgText, Defs, LinearGradient, Stop } from 'react-native-svg';
-import { Colors } from '../../constants/Colors';
-import { Font, Type, TextVariants } from '../../constants/Font';
-import CustomButton from '../common/CustomButton';
-import CustomButtonThree from '../common/CustomButtonThree';
-import BiometricDataCard from '../biometrics/BiometricDataCard';
-import FloatingAIButton from '../../app/ai/FloatingAIButton';
-import BottomNav from '../navbar/BottomNav';
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Dimensions,
+  Modal,
+  StatusBar,
+} from "react-native";
+import Svg, {
+  Path,
+  Circle,
+  Line,
+  Text as SvgText,
+  Defs,
+  LinearGradient,
+  Stop,
+} from "react-native-svg";
+import { Colors } from "../../constants/Colors";
+import { Type } from "../../constants/Font";
+import CustomButton from "../common/CustomButton";
+import CustomButtonThree from "../common/CustomButtonThree";
+import BiometricDataCard from "../biometrics/BiometricDataCard";
+import FloatingAIButton from "../../app/ai/FloatingAIButton";
+import BottomNav from "../navbar/BottomNav";
 
 // Local text styles using Font constants
 const textStyles = {
   heading1: { fontSize: 28, ...Type.bold },
   heading2: { fontSize: 24, ...Type.bold },
   heading3: { fontSize: 20, ...Type.bold },
-  welcomeText: { fontSize: 18, fontWeight: '600', ...Type.bold },
+  welcomeText: { fontSize: 18, fontWeight: "600", ...Type.bold },
   bodyMedium: { fontSize: 16, ...Type.regular },
   bodySmall: { fontSize: 14, ...Type.regular },
   captionSmall: { fontSize: 10, ...Type.regular },
@@ -25,8 +41,13 @@ const textStyles = {
  * BiometricsDashboard - Body metrics tracking with interactive chart visualization
  * Displays BMI calculations, weight/height comparisons, and trend analysis
  */
-const BiometricsDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress }) => {
-  const [activeView, setActiveView] = useState('entries');
+const BiometricsDashboard = ({
+  entries,
+  onDeleteEntry,
+  onAddEntry,
+  onBackPress,
+}) => {
+  const [activeView, setActiveView] = useState("entries");
   const [showPopup, setShowPopup] = useState(false);
   const [selectedDataPoint, setSelectedDataPoint] = useState(null);
 
@@ -49,14 +70,14 @@ const BiometricsDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress }
    */
   const formatPopupTimestamp = (timestamp) => {
     const date = new Date(timestamp);
-    const day = date.getDate().toString().padStart(2, '0');
-    const month = date.toLocaleDateString('en-US', { month: 'long' });
+    const day = date.getDate().toString().padStart(2, "0");
+    const month = date.toLocaleDateString("en-US", { month: "long" });
     let hours = date.getHours();
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    const ampm = hours >= 12 ? 'pm' : 'am';
+    const minutes = date.getMinutes().toString().padStart(2, "0");
+    const ampm = hours >= 12 ? "pm" : "am";
     hours = hours % 12;
     hours = hours ? hours : 12;
-    
+
     return `${day} ${month}, ${hours}:${minutes}${ampm}`;
   };
 
@@ -64,7 +85,7 @@ const BiometricsDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress }
    * Handles chart data point interaction for detailed view
    */
   const handleDataPointClick = (entry, index) => {
-    console.log('Data point clicked:', entry, 'at index:', index);
+    console.log("Data point clicked:", entry, "at index:", index);
     setSelectedDataPoint({ entry });
     setShowPopup(true);
   };
@@ -86,23 +107,29 @@ const BiometricsDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress }
         statusBarTranslucent={true}
         hardwareAccelerated={true}
       >
-        <TouchableOpacity 
-          style={styles.popupOverlay} 
+        <TouchableOpacity
+          style={styles.popupOverlay}
           activeOpacity={1}
           onPress={() => setShowPopup(false)}
           accessible={false}
         >
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.popupContainer}
             activeOpacity={1}
             onPress={(e) => e.stopPropagation()}
           >
-            <Text style={[textStyles.bodyMedium, styles.popupTitle]}>DATE & TIME LOGGED</Text>
+            <Text style={[textStyles.bodyMedium, styles.popupTitle]}>
+              DATE & TIME LOGGED
+            </Text>
             <Text style={[textStyles.heading2, styles.popupDate]}>
               {formatPopupTimestamp(entry.timestamp)}
             </Text>
-            <Text style={[textStyles.heading3, styles.popupData]}>Height = {entry.height} cm</Text>
-            <Text style={[textStyles.heading3, styles.popupData]}>Weight = {entry.weight} kg</Text>
+            <Text style={[textStyles.heading3, styles.popupData]}>
+              Height = {entry.height} cm
+            </Text>
+            <Text style={[textStyles.heading3, styles.popupData]}>
+              Weight = {entry.weight} kg
+            </Text>
           </TouchableOpacity>
         </TouchableOpacity>
       </Modal>
@@ -118,7 +145,7 @@ const BiometricsDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress }
     const innerHeight = chartHeight - padding.top - padding.bottom;
 
     // Calculate optimal scale ranges for weight data
-    const weights = chartData.map(d => d.weight);
+    const weights = chartData.map((d) => d.weight);
     const minWeight = Math.min(...weights);
     const maxWeight = Math.max(...weights);
     const weightRange = maxWeight - minWeight;
@@ -128,15 +155,19 @@ const BiometricsDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress }
     const yRange = yMax - yMin;
 
     // Scale functions for coordinate mapping
-    const xScale = (index) => padding.left + (index / (chartData.length - 1)) * innerWidth;
-    const yScale = (weight) => padding.top + ((yMax - weight) / yRange) * innerHeight;
+    const xScale = (index) =>
+      padding.left + (index / (chartData.length - 1)) * innerWidth;
+    const yScale = (weight) =>
+      padding.top + ((yMax - weight) / yRange) * innerHeight;
 
     // Generate SVG path data for line chart
-    const pathData = chartData.map((point, index) => {
-      const x = xScale(index);
-      const y = yScale(point.weight);
-      return index === 0 ? `M ${x} ${y}` : `L ${x} ${y}`;
-    }).join(' ');
+    const pathData = chartData
+      .map((point, index) => {
+        const x = xScale(index);
+        const y = yScale(point.weight);
+        return index === 0 ? `M ${x} ${y}` : `L ${x} ${y}`;
+      })
+      .join(" ");
 
     /**
      * Generates optimal Y-axis tick marks based on data range
@@ -154,9 +185,9 @@ const BiometricsDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress }
 
       const ticks = [];
       for (let value = niceMin; value <= niceMax; value += step) {
-        ticks.push({ 
+        ticks.push({
           value: Math.round(value),
-          y: yScale(value) 
+          y: yScale(value),
         });
       }
       return ticks;
@@ -169,19 +200,27 @@ const BiometricsDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress }
       x: xScale(index),
       y: yScale(point.weight),
       entry: point.entry,
-      index
+      index,
     }));
 
     return (
       <View style={styles.perfectChartContainer}>
-        <Text style={[textStyles.heading2, styles.chartTitle]}>Weight Progression</Text>
-        
+        <Text style={[textStyles.heading2, styles.chartTitle]}>
+          Weight Progression
+        </Text>
+
         <View style={styles.centeredChartArea}>
           <Svg width={chartWidth} height={chartHeight}>
             <Defs>
-              <LinearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                <Stop offset="0%" stopColor={'#4F9AFF'} stopOpacity="0.9" />
-                <Stop offset="100%" stopColor={'#4F9AFF'} stopOpacity="1" />
+              <LinearGradient
+                id="lineGradient"
+                x1="0%"
+                y1="0%"
+                x2="100%"
+                y2="0%"
+              >
+                <Stop offset="0%" stopColor={"#4F9AFF"} stopOpacity="0.9" />
+                <Stop offset="100%" stopColor={"#4F9AFF"} stopOpacity="1" />
               </LinearGradient>
             </Defs>
 
@@ -250,7 +289,7 @@ const BiometricsDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress }
                 cy={point.y}
                 r="8"
                 fill="#ffffff"
-                stroke={'#4F9AFF'}
+                stroke={"#4F9AFF"}
                 strokeWidth="4"
               />
             ))}
@@ -296,7 +335,7 @@ const BiometricsDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress }
                   {
                     left: point.x - 20,
                     top: point.y - 20,
-                  }
+                  },
                 ]}
                 onPress={() => handleDataPointClick(point.entry, index)}
                 activeOpacity={0.3}
@@ -309,41 +348,69 @@ const BiometricsDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress }
         {/* Chart legend */}
         <View style={styles.legend}>
           <View style={styles.legendDot} />
-          <Text style={[textStyles.bodySmall, styles.legendText]}>Weight progression over time (tap dots for details)</Text>
+          <Text style={[textStyles.bodySmall, styles.legendText]}>
+            Weight progression over time (tap dots for details)
+          </Text>
         </View>
 
         {/* Statistical summary */}
         <View style={styles.statsContainer}>
           <View style={styles.statItem}>
-            <Text style={[textStyles.captionSmall, styles.statLabel]}>Entries</Text>
-            <Text style={[textStyles.bodySmall, styles.statValue]}>{chartData.length}</Text>
+            <Text style={[textStyles.captionSmall, styles.statLabel]}>
+              Entries
+            </Text>
+            <Text style={[textStyles.bodySmall, styles.statValue]}>
+              {chartData.length}
+            </Text>
           </View>
           <View style={styles.statItem}>
-            <Text style={[textStyles.captionSmall, styles.statLabel]}>Min Weight</Text>
-            <Text style={[textStyles.bodySmall, styles.statValue]}>{minWeight} kg</Text>
+            <Text style={[textStyles.captionSmall, styles.statLabel]}>
+              Min Weight
+            </Text>
+            <Text style={[textStyles.bodySmall, styles.statValue]}>
+              {minWeight} kg
+            </Text>
           </View>
           <View style={styles.statItem}>
-            <Text style={[textStyles.captionSmall, styles.statLabel]}>Max Weight</Text>
-            <Text style={[textStyles.bodySmall, styles.statValue]}>{maxWeight} kg</Text>
+            <Text style={[textStyles.captionSmall, styles.statLabel]}>
+              Max Weight
+            </Text>
+            <Text style={[textStyles.bodySmall, styles.statValue]}>
+              {maxWeight} kg
+            </Text>
           </View>
           <View style={styles.statItem}>
-            <Text style={[textStyles.captionSmall, styles.statLabel]}>Trend</Text>
-            <Text style={[textStyles.bodySmall, styles.statValue, { 
-              color: weights[weights.length - 1] > weights[0] ? '#EF5350' : '#66BB6A' 
-            }]}>
-              {weights[weights.length - 1] > weights[0] ? '↗' : '↘'}
+            <Text style={[textStyles.captionSmall, styles.statLabel]}>
+              Trend
+            </Text>
+            <Text
+              style={[
+                textStyles.bodySmall,
+                styles.statValue,
+                {
+                  color:
+                    weights[weights.length - 1] > weights[0]
+                      ? "#EF5350"
+                      : "#66BB6A",
+                },
+              ]}
+            >
+              {weights[weights.length - 1] > weights[0] ? "↗" : "↘"}
             </Text>
           </View>
         </View>
 
         {/* Latest entry summary */}
         <View style={styles.latestEntryInfo}>
-          <Text style={[textStyles.bodyMedium, styles.latestEntryTitle]}>Latest Entry</Text>
+          <Text style={[textStyles.bodyMedium, styles.latestEntryTitle]}>
+            Latest Entry
+          </Text>
           <Text style={[textStyles.bodySmall, styles.latestEntryText]}>
             Weight: {latestEntry.weight} kg | Height: {latestEntry.height} cm
           </Text>
           <Text style={[textStyles.bodySmall, styles.latestEntryText]}>
-            BMI: {currentBMI} | Date: {new Date(latestEntry.timestamp).toLocaleDateString()}
+            BMI: {currentBMI} | Date:{" "}
+            {new Date(latestEntry.timestamp).toLocaleDateString()}
           </Text>
         </View>
       </View>
@@ -354,18 +421,20 @@ const BiometricsDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress }
    * Renders chart view or empty state message
    */
   const renderChart = () => {
-    const screenWidth = Dimensions.get('window').width;
+    const screenWidth = Dimensions.get("window").width;
     const chartWidth = screenWidth - 40;
     const chartHeight = 300;
-    
+
     if (entries.length < 2) {
       return (
         <View style={styles.perfectChartContainer}>
-          <Text style={[textStyles.heading2, styles.chartTitle]}>Weight Progression</Text>
+          <Text style={[textStyles.heading2, styles.chartTitle]}>
+            Weight Progression
+          </Text>
           <View style={styles.noDataContainer}>
             <Text style={[textStyles.bodyMedium, styles.noDataText]}>
-              {entries.length === 0 
-                ? "No data available for chart" 
+              {entries.length === 0
+                ? "No data available for chart"
                 : "Add more entries to see chart progression"}
             </Text>
           </View>
@@ -379,29 +448,44 @@ const BiometricsDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress }
       return {
         weight: entry.weight,
         label: `${date.getDate()}/${date.getMonth() + 1}`,
-        entry: entry
+        entry: entry,
       };
     });
 
-    return <PerfectChart chartData={chartData} chartWidth={chartWidth} chartHeight={chartHeight} />;
+    return (
+      <PerfectChart
+        chartData={chartData}
+        chartWidth={chartWidth}
+        chartHeight={chartHeight}
+      />
+    );
   };
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={Colors.dark.background} />
-      
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor={Colors.dark.background}
+      />
+
       {/* Header navigation with title */}
       <View style={styles.header}>
         <View style={styles.backButtonContainer}>
           <CustomButtonThree onPress={onBackPress} />
         </View>
-        <Text style={[textStyles.welcomeText, styles.title, { color: Colors.dark.textPrimary }]}>
+        <Text
+          style={[
+            textStyles.welcomeText,
+            styles.title,
+            { color: Colors.dark.textPrimary },
+          ]}
+        >
           Biometrics Log
         </Text>
       </View>
 
-      <ScrollView 
-        style={styles.scrollContainer} 
+      <ScrollView
+        style={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
@@ -416,32 +500,48 @@ const BiometricsDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress }
         {/* Current vs previous measurements comparison */}
         <View style={styles.comparisonContainer}>
           <View style={styles.comparisonCard}>
-            <Text style={[textStyles.bodyMedium, styles.cardTitle]}>Weight (kg)</Text>
+            <Text style={[textStyles.bodyMedium, styles.cardTitle]}>
+              Weight (kg)
+            </Text>
             <View style={styles.comparisonRow}>
               <View style={styles.comparisonCol}>
-                <Text style={[textStyles.bodySmall, styles.comparisonLabel]}>Current</Text>
-                <Text style={[textStyles.heading2, styles.comparisonValue]}>{latestEntry.weight}</Text>
+                <Text style={[textStyles.bodySmall, styles.comparisonLabel]}>
+                  Current
+                </Text>
+                <Text style={[textStyles.heading2, styles.comparisonValue]}>
+                  {latestEntry.weight}
+                </Text>
               </View>
               <View style={styles.comparisonCol}>
-                <Text style={[textStyles.bodySmall, styles.comparisonLabel]}>Previous</Text>
+                <Text style={[textStyles.bodySmall, styles.comparisonLabel]}>
+                  Previous
+                </Text>
                 <Text style={[textStyles.heading2, styles.comparisonValue]}>
-                  {previousEntry ? previousEntry.weight : '--'}
+                  {previousEntry ? previousEntry.weight : "--"}
                 </Text>
               </View>
             </View>
           </View>
 
           <View style={styles.comparisonCard}>
-            <Text style={[textStyles.bodyMedium, styles.cardTitle]}>Height (cm)</Text>
+            <Text style={[textStyles.bodyMedium, styles.cardTitle]}>
+              Height (cm)
+            </Text>
             <View style={styles.comparisonRow}>
               <View style={styles.comparisonCol}>
-                <Text style={[textStyles.bodySmall, styles.comparisonLabel]}>Current</Text>
-                <Text style={[textStyles.heading2, styles.comparisonValue]}>{latestEntry.height}</Text>
+                <Text style={[textStyles.bodySmall, styles.comparisonLabel]}>
+                  Current
+                </Text>
+                <Text style={[textStyles.heading2, styles.comparisonValue]}>
+                  {latestEntry.height}
+                </Text>
               </View>
               <View style={styles.comparisonCol}>
-                <Text style={[textStyles.bodySmall, styles.comparisonLabel]}>Previous</Text>
+                <Text style={[textStyles.bodySmall, styles.comparisonLabel]}>
+                  Previous
+                </Text>
                 <Text style={[textStyles.heading2, styles.comparisonValue]}>
-                  {previousEntry ? previousEntry.height : '--'}
+                  {previousEntry ? previousEntry.height : "--"}
                 </Text>
               </View>
             </View>
@@ -454,15 +554,17 @@ const BiometricsDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress }
             style={[
               styles.toggleButton,
               styles.toggleButtonLeft,
-              activeView === 'chart' && styles.toggleButtonActive
+              activeView === "chart" && styles.toggleButtonActive,
             ]}
-            onPress={() => setActiveView('chart')}
+            onPress={() => setActiveView("chart")}
           >
-            <Text style={[
-              textStyles.bodyMedium,
-              styles.toggleButtonText,
-              activeView === 'chart' && styles.toggleButtonTextActive
-            ]}>
+            <Text
+              style={[
+                textStyles.bodyMedium,
+                styles.toggleButtonText,
+                activeView === "chart" && styles.toggleButtonTextActive,
+              ]}
+            >
               Chart
             </Text>
           </TouchableOpacity>
@@ -471,15 +573,17 @@ const BiometricsDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress }
             style={[
               styles.toggleButton,
               styles.toggleButtonRight,
-              activeView === 'entries' && styles.toggleButtonActive
+              activeView === "entries" && styles.toggleButtonActive,
             ]}
-            onPress={() => setActiveView('entries')}
+            onPress={() => setActiveView("entries")}
           >
-            <Text style={[
-              textStyles.bodyMedium,
-              styles.toggleButtonText,
-              activeView === 'entries' && styles.toggleButtonTextActive
-            ]}>
+            <Text
+              style={[
+                textStyles.bodyMedium,
+                styles.toggleButtonText,
+                activeView === "entries" && styles.toggleButtonTextActive,
+              ]}
+            >
               Previous Entries
             </Text>
           </TouchableOpacity>
@@ -487,11 +591,11 @@ const BiometricsDashboard = ({ entries, onDeleteEntry, onAddEntry, onBackPress }
 
         {/* Dynamic content area showing either entries or chart */}
         <View style={styles.contentArea}>
-          {activeView === 'entries' ? (
+          {activeView === "entries" ? (
             <View style={styles.entriesContainer}>
               {entries.map((entry) => (
                 <BiometricDataCard
-                  key={entry.id}
+                  key={entry._id} // _id for mongo
                   entry={entry}
                   age={25}
                   onDelete={onDeleteEntry}
@@ -537,70 +641,70 @@ const styles = StyleSheet.create({
     paddingBottom: 140,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     paddingTop: 50,
     paddingBottom: 20,
     paddingHorizontal: 20,
-    position: 'relative',
+    position: "relative",
     backgroundColor: Colors.dark.background,
   },
   backButtonContainer: {
-    position: 'absolute',
+    position: "absolute",
     left: 20,
     top: 50,
   },
   title: {
-    textAlign: 'center',
+    textAlign: "center",
   },
   bmiCard: {
-    backgroundColor: '#4F9AFF',
+    backgroundColor: "#4F9AFF",
     borderRadius: 16,
     padding: 24,
     marginBottom: 20,
-    alignItems: 'flex-start',
+    alignItems: "flex-start",
   },
   bmiLabel: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     marginBottom: 8,
   },
   bmiValue: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
   },
   comparisonContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 12,
     marginBottom: 20,
   },
   comparisonCard: {
     flex: 1,
-    backgroundColor: '#4F9AFF',
+    backgroundColor: "#4F9AFF",
     borderRadius: 16,
     padding: 20,
   },
   cardTitle: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     marginBottom: 16,
   },
   comparisonRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
   comparisonCol: {
     flex: 1,
   },
   comparisonLabel: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     opacity: 0.8,
     marginBottom: 4,
   },
   comparisonValue: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
   },
   toggleContainer: {
-    flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
+    flexDirection: "row",
+    backgroundColor: "#FFFFFF",
     borderRadius: 25,
     padding: 4,
     marginBottom: 20,
@@ -610,8 +714,8 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 21,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   toggleButtonLeft: {
     marginRight: 2,
@@ -623,10 +727,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#4F9AFF",
   },
   toggleButtonText: {
-    color: '#666',
+    color: "#666",
   },
   toggleButtonTextActive: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
   },
   contentArea: {
     flex: 1,
@@ -639,11 +743,11 @@ const styles = StyleSheet.create({
     marginHorizontal: 0,
   },
   perfectChartContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 20,
     padding: 20,
     marginBottom: 20,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 4,
@@ -653,33 +757,33 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   chartTitle: {
-    color: '#333',
+    color: "#333",
     marginBottom: 20,
-    textAlign: 'center',
+    textAlign: "center",
   },
   centeredChartArea: {
-    position: 'relative',
+    position: "relative",
     marginBottom: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   touchOverlay: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
   },
   touchArea: {
-    position: 'absolute',
+    position: "absolute",
     width: 40,
     height: 40,
     borderRadius: 20,
   },
   legend: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 20,
     paddingHorizontal: 10,
   },
@@ -691,64 +795,64 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   legendText: {
-    color: '#666',
+    color: "#666",
   },
   statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
+    flexDirection: "row",
+    justifyContent: "space-around",
     marginBottom: 20,
     paddingVertical: 15,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: "#f8f9fa",
     borderRadius: 12,
   },
   statItem: {
-    alignItems: 'center',
+    alignItems: "center",
   },
   statLabel: {
-    color: '#666',
+    color: "#666",
     marginBottom: 4,
   },
   statValue: {
-    color: '#333',
+    color: "#333",
   },
   latestEntryInfo: {
-    backgroundColor: '#f0f9ff',
+    backgroundColor: "#f0f9ff",
     borderRadius: 12,
     padding: 15,
     borderLeftWidth: 4,
-    borderLeftColor: '#4F9AFF',
+    borderLeftColor: "#4F9AFF",
   },
   latestEntryTitle: {
-    color: '#333',
+    color: "#333",
     marginBottom: 6,
   },
   latestEntryText: {
-    color: '#666',
+    color: "#666",
     marginBottom: 2,
   },
   noDataContainer: {
     height: 200,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f8f9fa',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#f8f9fa",
     borderRadius: 12,
   },
   noDataText: {
-    color: '#999',
-    textAlign: 'center',
+    color: "#999",
+    textAlign: "center",
     paddingHorizontal: 20,
   },
   floatingButtonContainer: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 115,
     left: 20,
     right: 20,
     zIndex: 1000,
   },
   floatingButton: {
-    width: '100%',
+    width: "100%",
     borderRadius: 25,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 8,
@@ -759,17 +863,17 @@ const styles = StyleSheet.create({
   },
   popupOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   popupContainer: {
-    backgroundColor: '#4F9AFF',
+    backgroundColor: "#4F9AFF",
     borderRadius: 20,
     padding: 24,
     width: 300,
-    alignItems: 'center',
-    shadowColor: '#000',
+    alignItems: "center",
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 10,
@@ -779,19 +883,19 @@ const styles = StyleSheet.create({
     elevation: 20,
   },
   popupTitle: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     marginBottom: 16,
-    textAlign: 'center',
+    textAlign: "center",
   },
   popupDate: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     marginBottom: 24,
-    textAlign: 'center',
+    textAlign: "center",
   },
   popupData: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     marginBottom: 8,
-    textAlign: 'center',
+    textAlign: "center",
   },
 });
 
