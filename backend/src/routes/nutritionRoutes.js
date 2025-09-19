@@ -10,19 +10,23 @@ const router = express.Router();
  */
 router.post('/', auth, async (req, res, next) => {
     try {
-        const { name, type, calories, protine, fats, carbs } = req.body;
+        const { name, type, calories, protein, fat, carbs } = req.body;
 
-        //check calories, protine, fats, carb is a number
+        if (!name || !type) {
+            return res.status(400).json({ error: 'name and type are required' });
+        }
+
+        //check calories, protein, fat, carb is a number
         if (calories === undefined || Number.isNaN(Number(calories))){
             return res.status(400).json({ error: 'calories is required and must be a number' });
         }
 
-        if (protine === undefined || Number.isNaN(Number(protine))){
-            return res.status(400).json({ error: 'protine is required and must be a number' });
+        if (protein === undefined || Number.isNaN(Number(protein))){
+            return res.status(400).json({ error: 'protein is required and must be a number' });
         }
 
-        if (fats === undefined || Number.isNaN(Number(fats))){
-            return res.status(400).json({ error: 'fatssss is required and must be a number' });
+        if (fat === undefined || Number.isNaN(Number(fat))){
+            return res.status(400).json({ error: 'fat is required and must be a number' });
         }
 
         if (carbs === undefined || Number.isNaN(Number(carbs))){
@@ -35,8 +39,8 @@ router.post('/', auth, async (req, res, next) => {
             name: name,
             type: type,
             calories: calories,
-            protine: protine,
-            fats: fats,
+            protein: protein,
+            fat: fat,
             carbs: carbs,
         });
 
@@ -100,6 +104,8 @@ router.get('/', auth, async (req, res, next) => {
                 $lte: endOfToday
             }
         })
+
+        return res.json(nutrition);
     } catch (err) {
         //error to global error handler 
         return next(err);
