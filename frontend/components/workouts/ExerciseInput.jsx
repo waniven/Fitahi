@@ -110,13 +110,7 @@ function ExerciseInput(props) {
 
   // removeExerciseCard removes a selected exercise card
   function removeExerciseCard(id) {
-    setExercises((curr) => {
-      if (curr.length <= 1) {
-        alert("You must have at least one exercise in a workout.");
-        return curr; // don’t delete anything
-      }
-      return curr.filter((ex) => ex.id !== id);
-    });
+    setExercises((curr) => curr.filter((ex) => ex.id !== id));
   }
 
   // onCancel allows to click X to go back to Workout Input
@@ -392,10 +386,12 @@ function ExerciseInput(props) {
                         {
                           borderColor: theme.error,
                           backgroundColor: theme.error,
+                          opacity: exercises.length === 1 ? 0.4 : 1, // fade out if only one
                         },
                       ]}
                       accessibilityRole="button"
                       accessibilityLabel={`Delete exercise ${idx + 1}`}
+                      disabled={exercises.length === 1} // disable press if only one
                     >
                       <Text
                         style={{
