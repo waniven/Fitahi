@@ -35,7 +35,7 @@ const NutritionDataCard = ({
 
   // Handles delete with toast notification
   const handleDelete = () => {
-    CustomToast.nutritionDeleted(foodName);
+    //CustomToast.nutritionDeleted(foodName);
     onDelete && onDelete(entry.id);
   };
 

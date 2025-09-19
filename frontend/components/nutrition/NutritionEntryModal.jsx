@@ -249,7 +249,7 @@ export default function NutritionEntryModal({
         timestamp: new Date().toISOString(),
       };
       
-      CustomToast.nutritionSaved(foodName.trim(), selectedMealType);
+      //CustomToast.nutritionSaved(foodName.trim(), selectedMealType);
       
       if (onSave) {
         onSave(newNutritionEntry);
