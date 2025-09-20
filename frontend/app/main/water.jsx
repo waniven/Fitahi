@@ -64,13 +64,7 @@ const Water = () => {
   const dailyGoal = 2000; //should be read from api 
 
   //back button logic
-  const handleBackPress = () => {
-    if (showDashboard) {
-      setShowDashboard(false);
-    } else {
-      router.back();
-    }
-  };
+  const handleBackPress = () => router.back();
 
 
   const handleAddWater = () => {
