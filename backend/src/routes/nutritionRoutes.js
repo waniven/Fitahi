@@ -17,19 +17,19 @@ router.post('/', auth, async (req, res, next) => {
         }
 
         //check calories, protein, fat, carb is a number
-        if (calories === undefined || Number.isNaN(Number(calories))){
+        if (calories === undefined || Number.isNaN(Number(calories))) {
             return res.status(400).json({ error: 'calories is required and must be a number' });
         }
 
-        if (protein === undefined || Number.isNaN(Number(protein))){
+        if (protein === undefined || Number.isNaN(Number(protein))) {
             return res.status(400).json({ error: 'protein is required and must be a number' });
         }
 
-        if (fat === undefined || Number.isNaN(Number(fat))){
+        if (fat === undefined || Number.isNaN(Number(fat))) {
             return res.status(400).json({ error: 'fat is required and must be a number' });
         }
 
-        if (carbs === undefined || Number.isNaN(Number(carbs))){
+        if (carbs === undefined || Number.isNaN(Number(carbs))) {
             return res.status(400).json({ error: 'carbs is required and must be a number' });
         }
 
@@ -108,6 +108,22 @@ router.get('/', auth, async (req, res, next) => {
         return res.json(nutrition);
     } catch (err) {
         //error to global error handler 
+        return next(err);
+    }
+});
+
+/**
+ * GET /api/nutrition
+ * get all nutrition logs for a user (not just today)
+ */
+router.get('/all', auth, async (req, res, next) => {
+    try {
+        const nutrition = await Nutrition.find({
+            userId: req.user.id
+        }).sort({ createdAt: -1 });
+
+        return res.json(nutrition);
+    } catch (err) {
         return next(err);
     }
 });
