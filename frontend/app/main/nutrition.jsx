@@ -24,13 +24,7 @@ const Nutrition = () => {
   const [error, setError] = useState(null);
 
   //back button logic
-  const handleBackPress = () => {
-    if (showDashboard) {
-      setShowDashboard(false);
-    } else {
-      router.back();
-    }
-  };
+  const handleBackPress = () => router.back();
 
   const handleAddFood = () => {
     setModalVisible(true);
