@@ -65,8 +65,6 @@ export default function AccountSettings() {
         const me = await getMe();
         if (!alive) return;
 
-        console.log(me);
-
         const dobStr = toYmd(me.dateofbirth);
 
         setForm((prev) => ({

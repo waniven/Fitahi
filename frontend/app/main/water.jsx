@@ -6,6 +6,7 @@ import WaterEntryModal from '../../components/water/WaterEntryModal';
 import WaterDashboard from '../../components/water/WaterDashboard';
 import CustomToast from '../../components/common/CustomToast';
 import { sampleEntries } from '../../components/common/SampleData';
+import { getMe } from '@/services/userService';
 import { getWater, postWater, deleteWater } from '@/services/waterServices';
 
 
@@ -61,11 +62,10 @@ const Water = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const dailyGoal = 2000; //should be read from api 
-
   //back button logic
   const handleBackPress = () => router.back();
 
+  const [dailyGoal, setDailyGoal] = useState(2000);
 
   const handleAddWater = () => {
     setModalVisible(true);
@@ -82,7 +82,17 @@ const Water = () => {
     const loadWater = async () => {
       setLoading(true);
       setError(null);
+      
+      //load water goal from api
+      try {
+        const me = await getMe();
+        setDailyGoal(me.intakeGoals?.dailyWater);
+      } catch (err) {
+        CustomToast.error('Error loading daily water goal');
+        console.warn('GET /me failed', err);
+      }
 
+      //load water logs from api 
       try {
         const res = await getWater();
         const rows = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
@@ -167,7 +177,7 @@ const Water = () => {
           onDeleteEntry={handleDeleteEntry}
           onAddEntry={handleAddWater}
           onBackPress={handleBackPress}
-          dailyGoal={2000}
+          dailyGoal={dailyGoal}
         />
         
         <WaterEntryModal
