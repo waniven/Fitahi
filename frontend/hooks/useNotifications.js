@@ -1,32 +1,28 @@
-import * as Notifications from 'expo-notifications';
-import Constants from 'expo-constants';
+import * as Notifications from "expo-notifications";
+import * as Device from "expo-device";
 
-/**
- * Request permissions and get Expo push token
- */
 export async function registerForPushNotificationsAsync() {
-    let token;
-
-    // Only get a push token on a real device
-    if (!Constants.isDevice) {
-        console.log('Must use a physical device for Push Notifications');
-        return;
+    if (!Device.isDevice) {
+        console.log("Must use physical device for Push Notifications");
+        return null;
     }
 
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
-    let finalStatus = existingStatus;
+    console.log("Existing status:", existingStatus);
 
-    if (existingStatus !== 'granted') {
+    let finalStatus = existingStatus;
+    if (existingStatus !== "granted") {
         const { status } = await Notifications.requestPermissionsAsync();
+        console.log("Request status:", status);
         finalStatus = status;
     }
 
-    if (finalStatus !== 'granted') {
-        console.log('Failed to get push token for push notification!');
-        return;
+    if (finalStatus !== "granted") {
+        console.log("Permission not granted");
+        return null;
     }
 
-    token = (await Notifications.getExpoPushTokenAsync()).data;
-    console.log('Expo Push Token:', token);
+    const token = (await Notifications.getExpoPushTokenAsync()).data;
+    console.log("Expo Push Token:", token);
     return token;
 }

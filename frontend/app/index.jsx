@@ -14,6 +14,7 @@ import FitahiLogo from "../constants/FitahiLogo";
 import CustomButton from "../components/common/CustomButton";
 import globalStyles from "../styles/globalStyles";
 import { registerForPushNotificationsAsync } from "@/hooks/useNotifications";
+import * as Notifications from "expo-notifications";
 import api from "../services/api";
 
 export default function Index() {
@@ -68,9 +69,19 @@ export default function Index() {
     ]).start();
 
     // push notifications setup
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: false,
+        shouldSetBadge: false,
+      }),
+    });
+
+    // push notifications setup
     async function setupPushNotifications() {
       try {
         const token = await registerForPushNotificationsAsync();
+        console.log("Token returned:", token);
         if (token) {
           // Send token to backend (make sure api includes auth header)
           await api.post("/users/savePushToken", { token });
