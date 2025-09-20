@@ -6,6 +6,7 @@ import NutritionEntryModal from '../../components/nutrition/NutritionEntryModal'
 import NutritionDashboard from '../../components/nutrition/NutritionDashboard';
 import { sampleEntries } from '../../components/common/SampleData';
 import CustomToast from '../../components/common/CustomToast';
+import { getMe } from '@/services/userService';
 import { postNutrition, getNutrition, deleteNutrition } from '../../services/nutritionService';
 
 /**
@@ -23,6 +24,13 @@ const Nutrition = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  //fall back values calories: 2300, protein: 30% / 4, carbs: 50% / 4, fat: 20% / 9 
+  const [calorieGoal, setCalorieGoal] = useState(2300);
+  const [carbGoal, setCarbGoal] = useState(287.5);
+  const [proteinGoal, setProteinGoal] = useState(172.5);
+  const [fatGoal, setFatGoal] = useState(51.1111111111);
+
+
   //back button logic
   const handleBackPress = () => router.back();
 
@@ -34,18 +42,31 @@ const Nutrition = () => {
     setModalVisible(false);
   };
 
-const toUI = (row) => ({
-  id: row.id ?? row._id ?? row.uuid,
-  name: row.name,
-  type: row.type, 
-  mealType: row.type,
-  calories: Number(row.calories) || 0,
-  protein: Number(row.protein ?? row.protine) || 0,
-  fat: Number(row.fat ?? row.fats) || 0,
-  carbs: Number(row.carbs) || 0,
-  // 👇 THIS is the key bit for the dashboard's date filtering
-  timestamp: row.timestamp ?? row.createdAt ?? new Date().toISOString(),
-});
+  //calories: from API, protein: 30% / 4, carbs: 50% / 4, fat: 20% / 9 
+  const macroBreakdown = (calories) => {
+    const cals = Number(calories) || 2300;
+    const carbGoal = (cals * 0.5 / 4);
+    const proteinGoal = (cals * 0.3 / 4);
+    const fatGoal = (cals * 0.2 / 9);
+
+    //rounded to 1 dp
+    setCalorieGoal(cals);
+    setCarbGoal(parseFloat(carbGoal.toFixed(1)));
+    setProteinGoal(parseFloat(proteinGoal.toFixed(1)));
+    setFatGoal(parseFloat(fatGoal.toFixed(1)));
+  };
+
+  const toUI = (row) => ({
+    id: row.id ?? row._id ?? row.uuid,
+    name: row.name,
+    type: row.type, 
+    mealType: row.type,
+    calories: Number(row.calories) || 0,
+    protein: Number(row.protein ?? row.protine) || 0,
+    fat: Number(row.fat ?? row.fats) || 0,
+    carbs: Number(row.carbs) || 0,
+    timestamp: row.timestamp ?? row.createdAt ?? new Date().toISOString(),
+  });
 
   //load from api
   useEffect (() => {
@@ -54,6 +75,15 @@ const toUI = (row) => ({
     const loadNutrition = async () => {
       setLoading(true);
       setError(null);
+
+      //load daily calorie info from getMe api route
+      try {
+        const me = await getMe();
+        macroBreakdown(me.intakeGoals?.dailyCalories);
+      } catch (err) {
+        CustomToast.error('Error loading intake goal');
+        console.warn('GET /me failed', err);
+      }
 
       try {
         const res = await getNutrition();
@@ -148,7 +178,7 @@ const toUI = (row) => ({
           onDeleteEntry={handleDeleteEntry}
           onAddEntry={handleAddFood}
           onBackPress={handleBackPress}
-          dailyGoals={{ calories: 3000, protein: 200, carbs: 200, fat: 200 }}
+          dailyGoals={{ calories: calorieGoal, protein: proteinGoal, carbs: carbGoal, fat: fatGoal }}
         />
         
         <NutritionEntryModal
