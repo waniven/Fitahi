@@ -187,29 +187,29 @@ const AnalyticsDashboard = () => {
     const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
     const dailyMacros = [];
 
-    const { startOfWeek, endOfWeek } = getWeekBounds();
-
     days.forEach((day, dayIndex) => {
-      let proteinCals = 0,
-        carbsCals = 0,
-        fatCals = 0;
+      let proteinGrams = 0,
+        carbsGrams = 0,
+        fatGrams = 0;
 
       nutritionEntries.forEach((entry) => {
         const date = new Date(entry.timestamp || entry.createdAt);
-        if (date >= startOfWeek && date < endOfWeek) {
-          const entryDayIndex = (date.getDay() + 6) % 7;
-          if (entryDayIndex === dayIndex) {
-            proteinCals += (entry.protein || 0) * 4;
-            carbsCals += (entry.carbs || 0) * 4;
-            fatCals += (entry.fat || 0) * 9;
-          }
+        const entryDayIndex = (date.getDay() + 6) % 7;
+        if (
+          entryDayIndex === dayIndex &&
+          date >= startOfWeek &&
+          date < endOfWeek
+        ) {
+          proteinGrams += entry.protein || 0;
+          carbsGrams += entry.carbs || 0;
+          fatGrams += entry.fat || 0;
         }
       });
 
       dailyMacros.push([
-        Math.round(proteinCals),
-        Math.round(carbsCals),
-        Math.round(fatCals),
+        Math.round(proteinGrams),
+        Math.round(carbsGrams),
+        Math.round(fatGrams),
       ]);
     });
 
@@ -292,7 +292,7 @@ const AnalyticsDashboard = () => {
                     WATER INTAKE
                   </Text>
                   <Text style={[styles.chartSubtitle, { color: "#CCCCCC" }]}>
-                    Daily consumption (mL)
+                    Daily consumption (millilitres)
                   </Text>
                 </View>
                 <View style={styles.chartContainer}>
@@ -367,10 +367,10 @@ const AnalyticsDashboard = () => {
               <View style={styles.chartSection}>
                 <View style={styles.chartTitleContainer}>
                   <Text style={[styles.chartTitle, { color: "#FFFFFF" }]}>
-                    TOTAL PER DAY (KCAL)
+                    TOTAL PER DAY
                   </Text>
                   <Text style={[styles.chartSubtitle, { color: "#CCCCCC" }]}>
-                    Calories by macronutrient breakdown
+                    Calories by macronutrient breakdown (grams)
                   </Text>
                 </View>
                 <View style={styles.nutritionChartContainer}>
@@ -388,8 +388,12 @@ const AnalyticsDashboard = () => {
                         `rgba(51, 51, 51, ${opacity})`,
                     }}
                     style={styles.nutritionChart}
+                    fromZero={true}
                     segments={5}
+                    yAxisLabel=""
+                    formatYLabel={(y) => `${Math.round(Number(y) / 50) * 50}`}
                   />
+
                   <View style={styles.nutritionLegend}>
                     <View style={styles.legendRow}>
                       <View style={styles.legendItem}>
@@ -441,7 +445,7 @@ const AnalyticsDashboard = () => {
                     WEIGHT PROGRESS
                   </Text>
                   <Text style={[styles.chartSubtitle, { color: "#CCCCCC" }]}>
-                    Daily weight tracking (kg)
+                    Daily weight tracking (kilograms)
                   </Text>
                 </View>
                 <View style={styles.chartContainer}>
