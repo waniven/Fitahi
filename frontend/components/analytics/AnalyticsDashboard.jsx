@@ -1,206 +1,244 @@
-// components/analytics/AnalyticsDashboard.jsx
-import React from 'react';
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  SafeAreaView,
   StatusBar,
   Dimensions,
-  TouchableOpacity
-} from 'react-native';
-import { useRouter } from 'expo-router';
-import { LineChart, BarChart, StackedBarChart } from 'react-native-chart-kit';
-import { Colors } from '../../constants/Colors';
-import { Font, Type, TextVariants } from '../../constants/Font';
-import { sampleEntries } from '../../components/common/SampleData';
-import CustomButtonThree from '../common/CustomButtonThree';
-import FloatingAIButton from '../../app/ai/FloatingAIButton';
-import BottomNav from '../navbar/BottomNav';
+  TouchableOpacity,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
+import { LineChart, BarChart, StackedBarChart } from "react-native-chart-kit";
+import { Colors } from "../../constants/Colors";
+import { Type, TextVariants } from "../../constants/Font";
+import CustomButtonThree from "../common/CustomButtonThree";
+import FloatingAIButton from "../../app/ai/FloatingAIButton";
+import BottomNav from "../navbar/BottomNav";
+import LoadingProgress from "../LoadingProgress";
 
-const screenWidth = Dimensions.get('window').width;
-const chartWidth = screenWidth - 60; // Reduced padding for better fit
-const chartContainerWidth = screenWidth - 40; // Container width
+import { getAllWater } from "../../services/waterServices";
+import { getWorkoutResults } from "../../services/workoutResultService";
+import { getAllNutrition } from "../../services/nutritionService";
+import { getBiometrics } from "../../services/biometricService";
+import Toast from "react-native-toast-message";
 
-/**
- * AnalyticsDashboard - Enhanced dashboard with workout analytics and navigation
- */
-const AnalyticsDashboard = ({ onBackPress, onRefresh }) => {
-  const router = useRouter(); // Use Expo Router instead of navigation prop
+const screenWidth = Dimensions.get("window").width;
+const chartWidth = screenWidth - 60;
+const chartContainerWidth = screenWidth - 40;
+
+const AnalyticsDashboard = () => {
+  const router = useRouter();
   const theme = Colors["dark"];
 
-  // Use sample data - you can replace this with props later if needed
-  const data = sampleEntries;
+  // state for logs
+  const [waterEntries, setWaterEntries] = useState([]);
+  const [workoutEntries, setWorkoutEntries] = useState([]);
+  const [nutritionEntries, setNutritionEntries] = useState([]);
+  const [biometricEntries, setBiometricEntries] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [progress, setProgress] = useState(0);
 
-  // Navigation handlers for each chart using Expo Router
-  const navigateToWaterLogs = () => {
-    router.push('/analytics/WaterAnalyticsScreen');
+  // fetch logs on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        setProgress(0);
+
+        let water = [],
+          workouts = [],
+          nutrition = [],
+          biometrics = [];
+
+        try {
+          water = await getAllWater();
+          setProgress(0.25);
+        } catch (err) {
+          CustomToast.error(
+            "Could not load Water Intake logs",
+            "Please try again."
+          );
+        }
+
+        try {
+          workouts = await getWorkoutResults();
+          setProgress(0.5);
+        } catch (err) {
+          CustomToast.error("Could not load Workout logs", "Please try again.");
+        }
+
+        try {
+          nutrition = await getAllNutrition();
+          setProgress(0.75);
+        } catch (err) {
+          CustomToast.error(
+            "Could not load Nutrition logs",
+            "Please try again."
+          );
+        }
+
+        try {
+          biometrics = await getBiometrics();
+          setProgress(1);
+        } catch (err) {
+          CustomToast.error(
+            "Could not load Biometric logs",
+            "Please try again."
+          );
+        }
+
+        setWaterEntries(water);
+        setWorkoutEntries(workouts);
+        setNutritionEntries(nutrition);
+        setBiometricEntries(biometrics);
+      } catch (err) {
+        CustomToast.error(
+          "Error fetching your Analytics",
+          "Please try again soon."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  // helpers
+  const secondsToMinutes = (seconds) => seconds / 60;
+
+  const getWeekBounds = () => {
+    const now = new Date();
+    const day = now.getDay(); // 0=Sun … 6=Sat
+    const diffToMonday = (day + 6) % 7; // shift so Monday=0
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - diffToMonday);
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 7);
+    endOfWeek.setHours(0, 0, 0, 0);
+
+    return { startOfWeek, endOfWeek };
   };
 
-  const navigateToWorkoutLogs = () => {
-    router.push('/analytics/WorkoutAnalyticsScreen');
-  };
+  const { startOfWeek, endOfWeek } = getWeekBounds();
 
-  const navigateToNutritionLogs = () => {
-    router.push('/analytics/NutritionAnalyticsScreen');
-  };
+  const hasWaterLogs = waterEntries.some((entry) => {
+    const date = new Date(entry.timestamp || entry.createdAt);
+    return date >= startOfWeek && date < endOfWeek;
+  });
 
-  const navigateToBiometricLogs = () => {
-    router.push('/analytics/BiometricsAnalyticsScreen');
-  };
+  const hasWorkoutLogs = workoutEntries.some((entry) => {
+    const date = new Date(entry.dateCompleted || entry.timestamp);
+    return date >= startOfWeek && date < endOfWeek;
+  });
 
-  // Enhanced chart configuration with better padding and margins
-  const whiteChartConfig = {
-    backgroundColor: '#ffffff',
-    backgroundGradientFrom: '#ffffff',
-    backgroundGradientTo: '#ffffff',
-    decimalPlaces: 0,
-    color: (opacity = 1) => `rgba(74, 144, 226, ${opacity})`,
-    labelColor: (opacity = 1) => `rgba(51, 51, 51, ${opacity})`,
-    style: {
-      borderRadius: 16,
-    },
-    propsForDots: {
-      r: '5',
-      strokeWidth: '2',
-      stroke: '#ffffff'
-    },
-    propsForBackgroundLines: {
-      strokeDasharray: '3,3',
-      stroke: 'rgba(0, 0, 0, 0.1)',
-      strokeWidth: 1
-    },
-    propsForLabels: {
-      fontSize: 11,
-      fontFamily: Font.regular
-    },
-    paddingRight: 30, // Add right padding to prevent label cutoff
-    paddingLeft: 10,   // Add left padding for better spacing
-  };
+  const hasNutritionLogs = nutritionEntries.some((entry) => {
+    const date = new Date(entry.timestamp || entry.createdAt);
+    return date >= startOfWeek && date < endOfWeek;
+  });
 
-  // Helper function to convert seconds to minutes
-  const secondsToMinutes = (seconds) => Math.round(seconds / 60);
+  const hasBiometricLogs = biometricEntries.some((entry) => {
+    const date = new Date(entry.timestamp);
+    return date >= startOfWeek && date < endOfWeek;
+  });
 
-  // Water data - Bar Chart
+  // water data
   const prepareWaterData = () => {
-    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
     const waterByDay = Array(7).fill(0);
 
-    data.waterEntries.forEach(entry => {
-      const date = new Date(entry.timestamp);
-      const dayIndex = (date.getDay() + 6) % 7; // Convert Sunday=0 to Monday=0
-      waterByDay[dayIndex] += entry.amount;
+    waterEntries.forEach((entry) => {
+      const date = new Date(entry.timestamp || entry.createdAt);
+      if (date >= startOfWeek && date < endOfWeek) {
+        const dayIndex = (date.getDay() + 6) % 7; // shift Mon=0
+        waterByDay[dayIndex] += entry.amount || 0;
+      }
     });
 
-    return {
-      labels: days,
-      datasets: [{
-        data: waterByDay.map(amount => amount || 0) // Show 0 if no water logged
-      }]
-    };
+    return { labels: days, datasets: [{ data: waterByDay }] };
   };
 
-  // Workout data - Bar Chart showing total time spent per day
+  // workout data
   const prepareWorkoutData = () => {
-    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
     const workoutByDay = Array(7).fill(0);
 
-    data.workoutEntries.forEach(entry => {
-      const date = new Date(entry.timestamp);
-      const dayIndex = (date.getDay() + 6) % 7; // Convert Sunday=0 to Monday=0
-      workoutByDay[dayIndex] += entry.totalTimeSpent || 0;
+    workoutEntries.forEach((entry) => {
+      if (!entry.totalTimeSpent) return; // skip invalid
+      const date = new Date(entry.dateCompleted || entry.timestamp);
+      if (date >= startOfWeek && date < endOfWeek) {
+        const dayIndex = (date.getDay() + 6) % 7;
+        workoutByDay[dayIndex] += secondsToMinutes(entry.totalTimeSpent);
+      }
     });
 
     return {
       labels: days,
-      datasets: [{
-        data: workoutByDay.map(seconds => secondsToMinutes(seconds)) // Convert to minutes
-      }]
+      datasets: [{ data: workoutByDay }],
     };
   };
 
-  // Nutrition Chart with StackedBarChart using real sample data
+  // nutrition data
   const prepareNutritionStackedData = () => {
-    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
     const dailyMacros = [];
 
-    // Process each day
     days.forEach((day, dayIndex) => {
-      let proteinCals = 0;
-      let carbsCals = 0;
-      let fatCals = 0;
+      let proteinGrams = 0,
+        carbsGrams = 0,
+        fatGrams = 0;
 
-      data.nutritionEntries.forEach(entry => {
-        const date = new Date(entry.timestamp);
-        const entryDayIndex = (date.getDay() + 6) % 7; // Convert Sunday=0 to Monday=0
-
-        if (entryDayIndex === dayIndex) {
-          proteinCals += (entry.protein || 0) * 4;
-          carbsCals += (entry.carbs || 0) * 4;
-          fatCals += (entry.fat || 0) * 9;
+      nutritionEntries.forEach((entry) => {
+        const date = new Date(entry.timestamp || entry.createdAt);
+        const entryDayIndex = (date.getDay() + 6) % 7;
+        if (
+          entryDayIndex === dayIndex &&
+          date >= startOfWeek &&
+          date < endOfWeek
+        ) {
+          proteinGrams += entry.protein || 0;
+          carbsGrams += entry.carbs || 0;
+          fatGrams += entry.fat || 0;
         }
       });
 
-      // Only add default values if absolutely no data exists
-      if (proteinCals === 0 && carbsCals === 0 && fatCals === 0) {
-        dailyMacros.push([0, 0, 0]); // Show empty bars for days with no data
-      } else {
-        dailyMacros.push([
-          Math.round(proteinCals),
-          Math.round(carbsCals),
-          Math.round(fatCals)
-        ]);
-      }
+      dailyMacros.push([
+        Math.round(proteinGrams),
+        Math.round(carbsGrams),
+        Math.round(fatGrams),
+      ]);
     });
 
     return {
       labels: days,
       data: dailyMacros,
-      barColors: ["#4ECDC4", "#FFB74D", "#5DADE2"] // Protein, Carbs, Fat
+      barColors: ["#4ECDC4", "#FFB74D", "#5DADE2"],
     };
   };
 
-  // Biometrics - Line Chart with current week format
+  // biometrics data
   const prepareBiometricsData = () => {
-    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    
-    // If we have biometric entries, map them to the current week
-    const sortedEntries = [...data.biometricEntries].sort((a, b) =>
-      new Date(a.timestamp) - new Date(b.timestamp)
-    );
+    const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+    const weights = Array(7).fill(null);
 
-    if (sortedEntries.length === 0) {
-      return {
-        labels: days,
-        datasets: [{ data: [70, 70, 70, 70, 70, 70, 70] }] // Flat line if no data
-      };
-    }
+    const filtered = biometricEntries
+      .filter((entry) => {
+        const date = new Date(entry.timestamp);
+        return date >= startOfWeek && date < endOfWeek;
+      })
+      .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
-    // Create weight data for each day of the week
-    const weeklyWeights = Array(7).fill(null);
-    
-    // Map existing entries to days (simplified - you might want more sophisticated logic)
-    sortedEntries.forEach((entry, index) => {
-      if (index < 7) {
-        weeklyWeights[index] = entry.weight;
-      }
+    filtered.forEach((entry) => {
+      const date = new Date(entry.timestamp);
+      const dayIndex = (date.getDay() + 6) % 7;
+      weights[dayIndex] = entry.weight;
     });
 
-    // Fill missing days with the last known weight
-    let lastKnownWeight = sortedEntries[sortedEntries.length - 1].weight;
-    for (let i = 0; i < weeklyWeights.length; i++) {
-      if (weeklyWeights[i] === null) {
-        weeklyWeights[i] = lastKnownWeight;
-      } else {
-        lastKnownWeight = weeklyWeights[i];
-      }
-    }
-
-    return {
-      labels: days,
-      datasets: [{ data: weeklyWeights }]
-    };
+    return { labels: days, datasets: [{ data: weights }] };
   };
 
   const waterData = prepareWaterData();
@@ -208,21 +246,31 @@ const AnalyticsDashboard = ({ onBackPress, onRefresh }) => {
   const nutritionStackedData = prepareNutritionStackedData();
   const biometricsData = prepareBiometricsData();
 
-  return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
-      <StatusBar barStyle="light-content" backgroundColor={theme.background} />
+  if (loading) {
+    return (
+      <SafeAreaView
+        style={[styles.safeArea, { backgroundColor: theme.background }]}
+      >
+        <LoadingProgress progress={progress} message="Fetching analytics..." />
+      </SafeAreaView>
+    );
+  }
 
+  return (
+    <SafeAreaView
+      style={[styles.safeArea, { backgroundColor: theme.background }]}
+    >
+      <StatusBar barStyle="light-content" backgroundColor={theme.background} />
       <View style={[styles.container, { backgroundColor: theme.background }]}>
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.backButtonContainer}>
-            <CustomButtonThree onPress={onBackPress} />
+            <CustomButtonThree onPress={() => router.back()} />
           </View>
           <Text style={[styles.title, { color: theme.textPrimary }]}>
             Your Analytics
           </Text>
         </View>
-
         <Text style={[styles.subtitle, { color: "#CCCCCC" }]}>
           Take a visual look at your progress.
         </Text>
@@ -232,176 +280,201 @@ const AnalyticsDashboard = ({ onBackPress, onRefresh }) => {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
         >
-          {/* Water Chart - Clickable */}
-          <TouchableOpacity onPress={navigateToWaterLogs} activeOpacity={0.8}>
-            <View style={styles.chartSection}>
-              <View style={styles.chartTitleContainer}>
-                <Text style={[styles.chartTitle, { color: "#FFFFFF" }]}>
-                  WATER INTAKE
-                </Text>
-                <Text style={[styles.chartSubtitle, { color: "#CCCCCC" }]}>
-                  Daily consumption (mL)
-                </Text>
+          {/* Water Chart */}
+          {hasWaterLogs && (
+            <TouchableOpacity
+              onPress={() => router.push("/analytics/WaterAnalyticsScreen")}
+              activeOpacity={0.8}
+            >
+              <View style={styles.chartSection}>
+                <View style={styles.chartTitleContainer}>
+                  <Text style={[styles.chartTitle, { color: "#FFFFFF" }]}>
+                    WATER INTAKE
+                  </Text>
+                  <Text style={[styles.chartSubtitle, { color: "#CCCCCC" }]}>
+                    Daily consumption (millilitres)
+                  </Text>
+                </View>
+                <View style={styles.chartContainer}>
+                  <BarChart
+                    data={waterData}
+                    width={chartWidth}
+                    height={200}
+                    chartConfig={{
+                      backgroundColor: "#fff",
+                      backgroundGradientFrom: "#fff",
+                      backgroundGradientTo: "#fff",
+                      decimalPlaces: 0,
+                      color: (opacity = 1) => `rgba(74, 144, 226, ${opacity})`,
+                      labelColor: (opacity = 1) =>
+                        `rgba(51, 51, 51, ${opacity})`,
+                    }}
+                    style={styles.chart}
+                    fromZero
+                    segments={4}
+                  />
+                  <Text style={styles.chartPeriod}>Current Week</Text>
+                </View>
               </View>
+            </TouchableOpacity>
+          )}
 
-              <View style={styles.chartContainer}>
-                <BarChart
-                  data={waterData}
-                  width={chartWidth}
-                  height={200}
-                  chartConfig={{
-                    ...whiteChartConfig,
-                    color: (opacity = 1) => `rgba(74, 144, 226, ${opacity})`,
-                    barPercentage: 0.6,
-                  }}
-                  style={styles.chart}
-                  showValuesOnTopOfBars={false}
-                  fromZero={true}
-                  segments={4}
-                />
-                <Text style={styles.chartPeriod}>Current Week</Text>
+          {/* Workout Chart */}
+          {hasWorkoutLogs && (
+            <TouchableOpacity
+              onPress={() => router.push("/analytics/WorkoutAnalyticsScreen")}
+              activeOpacity={0.8}
+            >
+              <View style={styles.chartSection}>
+                <View style={styles.chartTitleContainer}>
+                  <Text style={[styles.chartTitle, { color: "#FFFFFF" }]}>
+                    WORKOUT TIME
+                  </Text>
+                  <Text style={[styles.chartSubtitle, { color: "#CCCCCC" }]}>
+                    Daily workout duration (minutes)
+                  </Text>
+                </View>
+                <View style={styles.chartContainer}>
+                  <BarChart
+                    data={workoutData}
+                    width={chartWidth}
+                    height={200}
+                    chartConfig={{
+                      backgroundColor: "#fff",
+                      backgroundGradientFrom: "#fff",
+                      backgroundGradientTo: "#fff",
+                      decimalPlaces: 1, // allow fractional minutes
+                      color: (opacity = 1) => `rgba(255, 99, 132, ${opacity})`,
+                      labelColor: (opacity = 1) =>
+                        `rgba(51, 51, 51, ${opacity})`,
+                    }}
+                    style={styles.chart}
+                    fromZero
+                    segments={4}
+                  />
+                  <Text style={styles.chartPeriod}>Current Week</Text>
+                </View>
               </View>
-            </View>
-          </TouchableOpacity>
+            </TouchableOpacity>
+          )}
 
-          {/* Workout Chart - Clickable */}
-          <TouchableOpacity onPress={navigateToWorkoutLogs} activeOpacity={0.8}>
-            <View style={styles.chartSection}>
-              <View style={styles.chartTitleContainer}>
-                <Text style={[styles.chartTitle, { color: "#FFFFFF" }]}>
-                  WORKOUT TIME
-                </Text>
-                <Text style={[styles.chartSubtitle, { color: "#CCCCCC" }]}>
-                  Daily workout duration (minutes)
-                </Text>
-              </View>
+          {/* Nutrition Chart */}
+          {hasNutritionLogs && (
+            <TouchableOpacity
+              onPress={() => router.push("/analytics/NutritionAnalyticsScreen")}
+              activeOpacity={0.8}
+            >
+              <View style={styles.chartSection}>
+                <View style={styles.chartTitleContainer}>
+                  <Text style={[styles.chartTitle, { color: "#FFFFFF" }]}>
+                    TOTAL PER DAY
+                  </Text>
+                  <Text style={[styles.chartSubtitle, { color: "#CCCCCC" }]}>
+                    Calories by macronutrient breakdown (grams)
+                  </Text>
+                </View>
+                <View style={styles.nutritionChartContainer}>
+                  <StackedBarChart
+                    data={nutritionStackedData}
+                    width={chartWidth}
+                    height={300}
+                    chartConfig={{
+                      backgroundColor: "#fff",
+                      backgroundGradientFrom: "#fff",
+                      backgroundGradientTo: "#fff",
+                      decimalPlaces: 0,
+                      color: (opacity = 1) => `rgba(51, 51, 51, ${opacity})`,
+                      labelColor: (opacity = 1) =>
+                        `rgba(51, 51, 51, ${opacity})`,
+                    }}
+                    style={styles.nutritionChart}
+                    fromZero={true}
+                    segments={5}
+                    yAxisLabel=""
+                    formatYLabel={(y) => `${Math.round(Number(y) / 50) * 50}`}
+                  />
 
-              <View style={styles.chartContainer}>
-                <BarChart
-                  data={workoutData}
-                  width={chartWidth}
-                  height={200}
-                  chartConfig={{
-                    ...whiteChartConfig,
-                    color: (opacity = 1) => `rgba(255, 99, 132, ${opacity})`, // Pink/Red color for workouts
-                    barPercentage: 0.6,
-                  }}
-                  style={styles.chart}
-                  showValuesOnTopOfBars={false}
-                  fromZero={true}
-                  segments={4}
-                />
-                <Text style={styles.chartPeriod}>Current Week</Text>
-              </View>
-            </View>
-          </TouchableOpacity>
-
-          {/* Nutrition Chart - Clickable */}
-          <TouchableOpacity onPress={navigateToNutritionLogs} activeOpacity={0.8}>
-            <View style={styles.chartSection}>
-              <View style={styles.chartTitleContainer}>
-                <Text style={[styles.chartTitle, { color: "#FFFFFF" }]}>
-                  TOTAL PER DAY (KCAL)
-                </Text>
-                <Text style={[styles.chartSubtitle, { color: "#CCCCCC" }]}>
-                  Calories by macronutrient breakdown
-                </Text>
-              </View>
-
-              <View style={styles.nutritionChartContainer}>
-                <StackedBarChart
-                  data={nutritionStackedData}
-                  width={chartWidth}
-                  height={300}
-                  chartConfig={{
-                    backgroundColor: '#ffffff',
-                    backgroundGradientFrom: '#ffffff',
-                    backgroundGradientTo: '#ffffff',
-                    decimalPlaces: 0,
-                    color: (opacity = 1) => `rgba(51, 51, 51, ${opacity})`,
-                    labelColor: (opacity = 1) => `rgba(51, 51, 51, ${opacity})`,
-                    fillShadowGradient: '#ffffff',
-                    fillShadowGradientOpacity: 0.1,
-                    barPercentage: 0.5,
-                    style: {
-                      borderRadius: 16,
-                    },
-                    propsForBackgroundLines: {
-                      strokeDasharray: '3,3',
-                      stroke: 'rgba(0, 0, 0, 0.1)',
-                      strokeWidth: 1
-                    },
-                    propsForLabels: {
-                      fontSize: 10,
-                      fontFamily: Font.regular
-                    },
-                    formatYLabel: (value) => Math.floor(value).toString(),
-                    yAxisInterval: 100,
-                    paddingRight: 40, // Increased right padding
-                    paddingLeft: 15,   // Increased left padding
-                  }}
-                  style={styles.nutritionChart}
-                  segments={5}
-                  withHorizontalLabels={true}
-                  withVerticalLabels={true}
-                  showBarTops={false}
-                />
-
-                {/* Clean Legend */}
-                <View style={styles.nutritionLegend}>
-                  <View style={styles.legendRow}>
-                    <View style={styles.legendItem}>
-                      <View style={[styles.legendDot, { backgroundColor: '#4ECDC4' }]} />
-                      <Text style={styles.legendText}>Protein</Text>
-                    </View>
-                    <View style={styles.legendItem}>
-                      <View style={[styles.legendDot, { backgroundColor: '#FFB74D' }]} />
-                      <Text style={styles.legendText}>Carbs</Text>
-                    </View>
-                    <View style={styles.legendItem}>
-                      <View style={[styles.legendDot, { backgroundColor: '#5DADE2' }]} />
-                      <Text style={styles.legendText}>Fat</Text>
+                  <View style={styles.nutritionLegend}>
+                    <View style={styles.legendRow}>
+                      <View style={styles.legendItem}>
+                        <View
+                          style={[
+                            styles.legendDot,
+                            { backgroundColor: "#4ECDC4" },
+                          ]}
+                        />
+                        <Text style={styles.legendText}>Protein</Text>
+                      </View>
+                      <View style={styles.legendItem}>
+                        <View
+                          style={[
+                            styles.legendDot,
+                            { backgroundColor: "#FFB74D" },
+                          ]}
+                        />
+                        <Text style={styles.legendText}>Carbs</Text>
+                      </View>
+                      <View style={styles.legendItem}>
+                        <View
+                          style={[
+                            styles.legendDot,
+                            { backgroundColor: "#5DADE2" },
+                          ]}
+                        />
+                        <Text style={styles.legendText}>Fat</Text>
+                      </View>
                     </View>
                   </View>
+                  <Text style={styles.chartPeriod}>Current Week</Text>
                 </View>
-
-                <Text style={styles.chartPeriod}>Current Week</Text>
               </View>
-            </View>
-          </TouchableOpacity>
+            </TouchableOpacity>
+          )}
 
-          {/* Biometrics Chart - Clickable */}
-          <TouchableOpacity onPress={navigateToBiometricLogs} activeOpacity={0.8}>
-            <View style={styles.chartSection}>
-              <View style={styles.chartTitleContainer}>
-                <Text style={[styles.chartTitle, { color: "#FFFFFF" }]}>
-                  WEIGHT PROGRESS
-                </Text>
-                <Text style={[styles.chartSubtitle, { color: "#CCCCCC" }]}>
-                  Daily weight tracking (kg)
-                </Text>
+          {/* Biometrics Chart */}
+          {hasBiometricLogs && (
+            <TouchableOpacity
+              onPress={() =>
+                router.push("/analytics/BiometricsAnalyticsScreen")
+              }
+              activeOpacity={0.8}
+            >
+              <View style={styles.chartSection}>
+                <View style={styles.chartTitleContainer}>
+                  <Text style={[styles.chartTitle, { color: "#FFFFFF" }]}>
+                    WEIGHT PROGRESS
+                  </Text>
+                  <Text style={[styles.chartSubtitle, { color: "#CCCCCC" }]}>
+                    Daily weight tracking (kilograms)
+                  </Text>
+                </View>
+                <View style={styles.chartContainer}>
+                  <LineChart
+                    data={biometricsData}
+                    width={chartWidth}
+                    height={200}
+                    chartConfig={{
+                      backgroundColor: "#fff",
+                      backgroundGradientFrom: "#fff",
+                      backgroundGradientTo: "#fff",
+                      decimalPlaces: 0,
+                      color: (opacity = 1) => `rgba(54, 162, 235, ${opacity})`,
+                      labelColor: (opacity = 1) =>
+                        `rgba(51, 51, 51, ${opacity})`,
+                    }}
+                    style={styles.chart}
+                    bezier
+                    withDots
+                    withInnerLines={false}
+                    withOuterLines={false}
+                    segments={4}
+                  />
+                  <Text style={styles.chartPeriod}>Current Week</Text>
+                </View>
               </View>
-
-              <View style={styles.chartContainer}>
-                <LineChart
-                  data={biometricsData}
-                  width={chartWidth}
-                  height={200}
-                  chartConfig={{
-                    ...whiteChartConfig,
-                    color: (opacity = 1) => `rgba(54, 162, 235, ${opacity})`,
-                  }}
-                  style={styles.chart}
-                  bezier
-                  withDots={true}
-                  withInnerLines={false}
-                  withOuterLines={false}
-                  segments={4}
-                />
-                <Text style={styles.chartPeriod}>Current Week</Text>
-              </View>
-            </View>
-          </TouchableOpacity>
+              <Toast />
+            </TouchableOpacity>
+          )}
 
           <View style={styles.bottomSpacing} />
         </ScrollView>
@@ -414,86 +487,53 @@ const AnalyticsDashboard = ({ onBackPress, onRefresh }) => {
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-  },
-  container: {
-    flex: 1,
-  },
+  safeArea: { flex: 1 },
+  container: { flex: 1 },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     paddingTop: 45,
     paddingBottom: 10,
-    position: 'relative',
+    position: "relative",
     paddingHorizontal: 20,
   },
-  backButtonContainer: {
-    position: 'absolute',
-    left: 20,
-    top: 45,
-  },
-  title: {
-    ...TextVariants.h1,
-    textAlign: 'center',
-  },
+  backButtonContainer: { position: "absolute", left: 20, top: 45 },
+  title: { ...TextVariants.h1, textAlign: "center" },
   subtitle: {
     ...TextVariants.body,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 30,
     paddingHorizontal: 20,
   },
-  scrollContainer: {
-    flex: 1,
-  },
+  scrollContainer: { flex: 1 },
   scrollContent: {
     paddingBottom: 140,
-    alignItems: 'center',
-    paddingHorizontal: 10, // Add horizontal padding to scroll content
+    alignItems: "center",
+    paddingHorizontal: 10,
   },
-  chartSection: {
-    marginBottom: 40,
-    width: '100%',
-    alignItems: 'center',
-  },
-  chartTitleContainer: {
-    marginBottom: 20,
-    alignItems: 'center',
-  },
+  chartSection: { marginBottom: 40, width: "100%", alignItems: "center" },
+  chartTitleContainer: { marginBottom: 20, alignItems: "center" },
   chartTitle: {
     ...Type.semibold,
     fontSize: 18,
     letterSpacing: 0.5,
-    textAlign: 'center',
+    textAlign: "center",
   },
   chartSubtitle: {
     ...Type.regular,
     fontSize: 14,
     marginTop: 5,
-    textAlign: 'center',
+    textAlign: "center",
   },
   chartContainer: {
-    alignItems: 'center',
-    backgroundColor: '#ffffff',
+    alignItems: "center",
+    backgroundColor: "#fff",
     borderRadius: 16,
-    padding: 20, // Increased padding for better spacing
-    marginHorizontal: 20, // Reduced margin for bigger containers
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    elevation: 5,
-    width: chartContainerWidth, // Use container width
-    minWidth: chartContainerWidth, // Ensure minimum width
-  },
-  nutritionChartContainer: {
-    alignItems: 'center',
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 25, // Increased padding for nutrition chart
+    paddingVertical: 20,
+    paddingHorizontal: 10, // reduced padding to center bars
     marginHorizontal: 20,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.12,
     shadowRadius: 8,
@@ -501,55 +541,50 @@ const styles = StyleSheet.create({
     width: chartContainerWidth,
     minWidth: chartContainerWidth,
   },
-  chart: {
-    borderRadius: 12,
-    marginLeft: 0, // Remove left margin
-    marginRight: 0, // Remove right margin
+  nutritionChartContainer: {
+    alignItems: "center",
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 25,
+    marginHorizontal: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 5,
+    width: chartContainerWidth,
+    minWidth: chartContainerWidth,
   },
-  nutritionChart: {
-    borderRadius: 12,
-    marginLeft: -10, // Negative margin to center better
-    marginRight: 0,
-  },
+  chart: { borderRadius: 12 },
+  nutritionChart: { borderRadius: 12 },
   chartPeriod: {
     ...TextVariants.caption,
-    color: '#666',
+    color: "#666",
     marginTop: 10,
-    fontStyle: 'italic',
-    textAlign: 'center',
+    fontStyle: "italic",
+    textAlign: "center",
   },
   nutritionLegend: {
     marginTop: 15,
     marginBottom: 5,
     paddingHorizontal: 10,
-    width: '100%',
+    width: "100%",
   },
   legendRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    width: '100%',
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
+    width: "100%",
   },
   legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
-  legendDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    marginRight: 8,
-  },
-  legendText: {
-    ...Type.regular,
-    fontSize: 12,
-    color: '#333',
-  },
-  bottomSpacing: {
-    height: 20,
-  },
+  legendDot: { width: 12, height: 12, borderRadius: 6, marginRight: 8 },
+  legendText: { ...Type.regular, fontSize: 12, color: "#333" },
+  bottomSpacing: { height: 20 },
 });
 
 export default AnalyticsDashboard;

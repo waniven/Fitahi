@@ -9,11 +9,11 @@ import api from "./api";
 //create nutrition log (POST)
 export async function postNutrition({ name, type, calories, protein, fat, carbs }) {
     const res = await api.post('nutrition', {
-        name, 
-        type, 
-        calories, 
-        protein, 
-        fat, 
+        name,
+        type,
+        calories,
+        protein,
+        fat,
         carbs
     });
     return res.data;
@@ -25,7 +25,13 @@ export async function getNutrition() {
     return res.data;
 }
 
+// get all nutrition logs
+export async function getAllNutrition() {
+    const res = await api.get("nutrition/all");
+    return res.data;
+}
+
 //delete nutrition log 
-export async function deleteNutrition(id){
+export async function deleteNutrition(id) {
     await api.delete(`nutrition/${id}`);
 }

@@ -1,68 +1,68 @@
-// app/main/analytics.jsx
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'expo-router';
-import { getAnalyticsData } from '../../components/common/SampleData';
-import LogScreen from '../../components/common/LogScreen';
-import AnalyticsDashboard from '../../components/analytics/AnalyticsDashboard';
+import React, { useEffect, useState } from "react";
+import { useRouter } from "expo-router";
+import CustomToast from "@/components/common/CustomToast";
+import AnalyticsDashboard from "../../components/analytics/AnalyticsDashboard";
+import AnalyticsLogScreen from "../../components/analytics/AnalyticsLogScreen";
 
-/**
- * Analytics - Data visualization and progress tracking screen
- * Uses the reusable LogScreen component with analytics-specific configuration
- * Shows dashboard when entries exist from other features, otherwise shows initial log screen
- */
-const Analytics = ({ navigation }) => { // Add navigation prop here
+// import backend services
+import { getBiometrics } from "../../services/biometricService";
+import { getAllNutrition } from "../../services/nutritionService";
+import { getWorkoutResults } from "../../services/workoutResultService";
+import { getAllWater } from "../../services/waterServices";
+
+export default function AnalyticsScreen() {
   const router = useRouter();
-  const [showDashboard, setShowDashboard] = useState(true);
-  const [analyticsData, setAnalyticsData] = useState(getAnalyticsData());
+  const [analyticsData, setAnalyticsData] = useState(null);
+  const [showDashboard, setShowDashboard] = useState(false);
 
-  // Check for data on component mount
   useEffect(() => {
-    const data = getAnalyticsData();
-    setAnalyticsData(data);
-    setShowDashboard(data.totalEntries >= 2);
+    async function fetchAnalytics() {
+      try {
+        const [workouts, biometrics, nutrition, water] = await Promise.all([
+          getWorkoutResults(),
+          getBiometrics(),
+          getAllNutrition(),
+          getAllWater(),
+        ]);
+
+        const totalEntries =
+          workouts.length + biometrics.length + nutrition.length + water.length;
+
+        setAnalyticsData({
+          workoutEntries: workouts,
+          biometricEntries: biometrics,
+          nutritionEntries: nutrition,
+          waterEntries: water,
+          totalEntries,
+        });
+
+        setShowDashboard(totalEntries >= 2);
+      } catch (err) {
+        CustomToast.error(
+          "Error fetching your Analytics",
+          "Please try again soon."
+        );
+      }
+    }
+
+    fetchAnalytics();
   }, []);
 
-  const handleBackPress = () => {
-    if (showDashboard) {
-      setShowDashboard(false);
-    } else {
-      router.back();
-    }
+  const handleBack = () => {
+    router.back();
   };
 
-  const handleRefreshAnalytics = () => {
-    // Refresh data from sample data
-    const refreshedData = getAnalyticsData();
-    setAnalyticsData(refreshedData);
-    if (refreshedData.totalEntries >= 2) {
-      setShowDashboard(true);
-    }
-  };
-
-  // Show dashboard if we have 2+ entries and showDashboard is true
-  if (showDashboard && analyticsData.totalEntries >= 2) {
-    return (
-      <AnalyticsDashboard
-        navigation={navigation} // Pass navigation prop
-        data={analyticsData}
-        onBackPress={handleBackPress}
-        onRefresh={handleRefreshAnalytics}
-      />
-    );
-  }
-
-  // Show initial log screen with message to make logs
-  return (
-    <LogScreen
-      title="Your Analytics"
-      subtitle="Make some logs and come back to get overviews!"
-      showBackButton={true}
-      showAddButton={false}
-      onBackPress={handleBackPress}
-      titleColor="#FFFFFF"
-      subtitleColor="#CCCCCC"
+  return showDashboard && analyticsData ? (
+    <AnalyticsDashboard data={analyticsData} />
+  ) : (
+    <AnalyticsLogScreen
+      title="Analytics"
+      subtitle={
+        analyticsData
+          ? "Make some logs and come back to get overviews!"
+          : "No analytics data available."
+      }
+      onBackPress={handleBack}
     />
   );
-};
-
-export default Analytics;
+}

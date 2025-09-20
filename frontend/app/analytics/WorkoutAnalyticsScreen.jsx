@@ -1,52 +1,79 @@
-// app/analytics/WorkoutAnalyticsScreen.jsx
-import React from 'react';
-import { ScrollView } from 'react-native';
-import { useRouter } from 'expo-router';
-import AnalyticsLogScreen from '../../components/analytics/AnalyticsLogScreen';
-import AnalyticsUniversalCard from '../../components/analytics/AnalyticsUniversalCard';
-import { sampleEntries } from '../../components/common/SampleData';
+import React, { useEffect, useState } from "react";
+import { ScrollView } from "react-native";
+import { useRouter } from "expo-router";
+import AnalyticsLogScreen from "../../components/analytics/AnalyticsLogScreen";
+import AnalyticsUniversalCard from "../../components/analytics/AnalyticsUniversalCard";
+import { getWorkoutResults } from "../../services/workoutResultService";
+import CustomToast from "@/components/common/CustomToast";
 
 export default function WorkoutAnalyticsScreen() {
   const router = useRouter();
+  const [workoutEntries, setWorkoutEntries] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleBack = () => {
-    router.back();
-  };
+  useEffect(() => {
+    async function fetchWorkouts() {
+      try {
+        const data = await getWorkoutResults();
+        setWorkoutEntries(data);
+      } catch (err) {
+        CustomToast.error("Could not load Workout logs", "Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    }
 
-  const handleDelete = (id) => {
-    console.log('Delete workout entry:', id);
-  };
+    fetchWorkouts();
+  }, []);
 
+  const handleBack = () => router.back();
   const handleWorkoutPress = (workoutEntry) => {
-    // Navigate to workout result screen with the workout data
     router.push({
-      pathname: '/analytics/WorkoutResult',
+      pathname: "/analytics/WorkoutResult",
       params: {
         workoutData: JSON.stringify(workoutEntry),
-        returnTo: 'analytics'
-      }
+        returnTo: "analytics",
+      },
     });
   };
+
+  if (loading) {
+    return (
+      <AnalyticsLogScreen
+        title="Workout Logs"
+        subtitle="Loading..."
+        onBackPress={handleBack}
+      />
+    );
+  }
+
+  if (workoutEntries.length === 0) {
+    return (
+      <AnalyticsLogScreen
+        title="Workout Logs"
+        subtitle="No workout logs found."
+        onBackPress={handleBack}
+      />
+    );
+  }
 
   return (
     <AnalyticsLogScreen
       title="Workout Logs"
-      subtitle="Your previous logs."
+      subtitle="Your previous logs:"
       onBackPress={handleBack}
     >
-      <ScrollView 
-        style={{ flex: 1 }} 
+      <ScrollView
+        style={{ flex: 1 }}
         contentContainerStyle={{ paddingBottom: 20 }}
         showsVerticalScrollIndicator={false}
       >
-        {sampleEntries.workoutEntries.map((entry, index) => (
+        {workoutEntries.map((entry, index) => (
           <AnalyticsUniversalCard
-            key={entry.id || index}
+            key={entry._id || index}
             entry={entry}
             type="workout"
-            onDelete={handleDelete}
-            onPress={handleWorkoutPress} // Add click handler
-            showDeleteButton={false}
+            onPress={handleWorkoutPress}
           />
         ))}
       </ScrollView>
