@@ -39,6 +39,7 @@ export async function updateMe({
     password,
     pfp,
     quiz,
+    intakeGoals,
 }) {
     const res = await api.patch('users/me', {
         firstname,
@@ -48,6 +49,7 @@ export async function updateMe({
         ...(password ? { password } : {}),
         ...(pfp ? { pfp } : {}),
         ...(quiz ? { quiz } : {}),
+        ...(intakeGoals ? { intakeGoals } : {}),
     });
     return res.data;
 }

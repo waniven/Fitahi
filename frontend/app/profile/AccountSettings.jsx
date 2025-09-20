@@ -65,6 +65,8 @@ export default function AccountSettings() {
         const me = await getMe();
         if (!alive) return;
 
+        console.log(me);
+
         const dobStr = toYmd(me.dateofbirth);
 
         setForm((prev) => ({
@@ -78,6 +80,8 @@ export default function AccountSettings() {
           trainingDays: me.quiz?.TrainingDays ?? "",
           trainingTime: me.quiz?.TrainingTime ?? "",
           diet: me.quiz?.Diet ?? "",
+          waterGoal: me.intakeGoals?.dailyWater.toString() ?? "",
+          caloriesGoal: me.intakeGoals?.dailyCalories.toString() ?? "",
         }));
         setSelectedDob(fromYmd(dobStr));
         if (me.pfp) setProfileImage({ uri: me.pfp });
@@ -126,8 +130,11 @@ export default function AccountSettings() {
     if (form.password.length > 0 && form.password.length < 8) {
       newErrors.password = "Password must be at least 8 characters."; //password to be at least 8 characters
     }
-    if (form.waterGoal && !/^\d+(\.\d+)?L$/i.test(form.waterGoal.trim())) {
-      newErrors.waterGoal = "Water goal must be like '2L' or '2.5L'."; //water in L
+    if (form.waterGoal && !/^(?:[1-5]\d{3}(?:\.\d+)?|6000(?:\.0+)?)\s*(?:l)?$/i.test(String(form.waterGoal).trim())) {
+      newErrors.waterGoal = "Water goal must be 1000ml to 6000ml.";
+    }
+    if (form.caloriesGoal && !/^(?:[1-5]\d{3}(?:\.\d+)?|6000(?:\.0+)?)\s*(?:l)?$/i.test(String(form.waterGoal).trim())) {
+      newErrors.caloriesGoal = "Calorie goal must be 1000kcal to 4000kcal.";
     }
 
     console.log(newErrors);
@@ -197,6 +204,11 @@ export default function AccountSettings() {
         Diet: form.diet || null,
       };
 
+      const intakeGoals = {
+        dailyCalories: form.caloriesGoal,
+        dailyWater: form.waterGoal
+      }
+
       // send to backend
       await updateMe({
         firstname,
@@ -206,6 +218,7 @@ export default function AccountSettings() {
         ...(form.password ? { password: form.password } : {}),
         ...(pfp ? { pfp } : {}),
         quiz,
+        intakeGoals,
       });
 
       // Show success toast when info saved
@@ -378,8 +391,9 @@ export default function AccountSettings() {
 
             <CustomInput
               label="Water Intake Goal (millilitres)"
-              placeholder="e.g. 2L per day"
+              placeholder="e.g. 2500ml per day"
               value={form.waterGoal}
+              errorMessage={errors.waterGoal}
               onChangeText={(text) => handleChange("waterGoal", text)}
             />
 
@@ -387,6 +401,7 @@ export default function AccountSettings() {
               label="Calories Intake Goal (kcal)"
               placeholder="e.g. 2000 kcal"
               value={form.caloriesGoal}
+              errorMessage={errors.caloriesGoal}
               onChangeText={(text) => handleChange("caloriesGoal", text)}
             />
           </View>

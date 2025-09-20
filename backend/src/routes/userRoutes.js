@@ -65,6 +65,10 @@ router.patch('/me', auth, async (req, res, next) => {
         if (typeof req.body.password === 'string') updates.password = req.body.password;
         if (typeof req.body.pfp === 'string') updates.pfp = req.body.pfp;
         if (typeof req.body.quiz === 'object') updates.quiz = req.body.quiz;
+        if (req.body.intakeGoals && typeof req.body.intakeGoals === 'object') {
+            if ('dailyCalories' in req.body.intakeGoals) updates['intakeGoals.dailyCalories'] = req.body.intakeGoals.dailyCalories;
+            if ('dailyWater' in req.body.intakeGoals) updates['intakeGoals.dailyWater'] = req.body.intakeGoals.dailyWater; 
+        }
 
         //check if whitelist object is empty, if so dont update anything
         if (Object.keys(updates).length === 0) {
