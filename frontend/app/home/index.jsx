@@ -21,11 +21,15 @@ import ReminderModal from "@/components/reminders/ReminderModal";
 import LogCards from "@/components/logcards/LogCards";
 import { useCalendarLogic } from "@/hooks/useCalendarLogic";
 
+/**
+ * Main dashboard screen displaying calendar, reminders, and quick navigation cards
+ * Serves as the central hub for fitness tracking and planning features
+ */
 export default function Home() {
   const theme = Colors["dark"];
   const router = useRouter();
 
-  // Disable Android back button on Home
+  // Prevent users from navigating back from the home screen on Android
   useEffect(() => {
     const backAction = () => true;
     const subscription = BackHandler.addEventListener(
@@ -35,12 +39,10 @@ export default function Home() {
     return () => subscription.remove();
   }, []);
 
-  // Premium banner for premium button (unused for now)
-  // const [showPremium, setShowPremium] = useState(true);
-  // Modal control
+  // Modal visibility control for reminder creation/editing
   const [modalVisible, setModalVisible] = useState(false);
 
-  // Use the custom calendar & reminder hook
+  // Calendar and reminder functionality from custom hook
   const {
     reminders,
     viewingDate,
@@ -55,7 +57,7 @@ export default function Home() {
     handleDeleteReminder,
   } = useCalendarLogic();
 
-  // Quick log cards data
+  // Navigation cards for quick access to main app features
   const quickLogCards = [
     {
       title: "Your Analytics",
@@ -106,12 +108,12 @@ export default function Home() {
       style={[styles.container, { backgroundColor: theme.background }]}
     >
       <ScrollView contentContainerStyle={{ flexGrow: 1, paddingBottom: 140 }}>
-        {/* Logo */}
+        {/* App branding section */}
         <View style={styles.logoContainer}>
           <FitahiLogo width={320} height={140} fill="#FFFFFF" />
         </View>
 
-        {/* Calendar + Reminders */}
+        {/* Calendar widget with reminder functionality */}
         <View style={[styles.widgetCard, { backgroundColor: "#fff" }]}>
           <Calendar
             style={{ borderRadius: 16, backgroundColor: "#fff" }}
@@ -131,16 +133,16 @@ export default function Home() {
               selectedDayBackgroundColor: theme.tint,
               selectedDayTextColor: "#fff",
             }}
-            current={viewingDate} // Dynamic current month
+            current={viewingDate}
             hideExtraDays
             firstDay={1}
-            enableSwipeMonths={true} // Scrollable months
+            enableSwipeMonths={true}
             markedDates={getMarkedDates(theme)}
-            minDate={formattedToday} // Prevent selecting past dates
+            minDate={formattedToday}
             onDayPress={handleDayPress}
           />
 
-          {/* Date Info Header */}
+          {/* Selected date display and reminder creation button */}
           <View style={styles.dateHeader}>
             <Text
               style={[
@@ -167,7 +169,7 @@ export default function Home() {
             </TouchableOpacity>
           </View>
 
-          {/* Reminders Display */}
+          {/* Reminders list for selected date */}
           <View style={styles.remindersContainer}>
             {(() => {
               const dayReminders = getRemindersForDate(viewingDate);
@@ -187,6 +189,7 @@ export default function Home() {
                   </View>
                 );
               }
+              // Display up to 3 reminders with edit functionality
               return dayReminders.slice(0, 3).map((reminder) => (
                 <TouchableOpacity
                   key={reminder._id}
@@ -227,28 +230,15 @@ export default function Home() {
           </View>
         </View>
 
-        {/*Commented out for the purposes of showcasing only finished features in Sprint 1*/}
-        {/* Premium card
-        {showPremium && (
-          <View style={[styles.premiumCard, { backgroundColor: "#fff" }]}>
-            <Ionicons name="diamond-outline" size={20} color={theme.tint} />
-            <Text style={[globalStyles.premiumText, { color: theme.tint }]}>Premium Membership</Text>
-            <TouchableOpacity style={styles.closeButton} onPress={() => setShowPremium(false)}>
-              <Text style={{ color: theme.tint, fontWeight: "700" }}>✕</Text>
-            </TouchableOpacity>
-          </View>
-        )} */}
-
-        {/* Quick log cards */}
+        {/* Quick access navigation cards for main app features */}
         <LogCards cards={quickLogCards} />
       </ScrollView>
 
-      {/* Reminder Modal */}
+      {/* Modal for creating and editing reminders */}
       <ReminderModal
         visible={modalVisible}
         onClose={() => {
           setModalVisible(false);
-          // reset editing state when closing
           handleEditReminder(null);
         }}
         onSave={handleSaveReminder}
@@ -257,17 +247,16 @@ export default function Home() {
         selectedDate={viewingDate}
       />
 
-      {/* Bottom navigation + AI button */}
+      {/* Fixed navigation and assistance components */}
       <BottomNav />
       <FloatingAIButton />
 
-      {/* Global toast notifications */}
+      {/* Global toast notification system */}
       <Toast />
     </SafeAreaView>
   );
 }
 
-// Styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
