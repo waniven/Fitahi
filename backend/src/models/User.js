@@ -18,6 +18,10 @@ const userSchema = new Schema(
             Diet: { type: String, default: null },
             Height: { type: Number, default: null },
             Weight: { type: Number, default: null },
+        },
+        intakeGoals: { //daily intake goals 
+            dailyCalories: { type: Number, default: null },
+            dailyWater: { type: Number, default: null },
         }
     },
     { timestamps: true } //will automatically add a timestamp

@@ -37,7 +37,7 @@ const Nutrition = () => {
 const toUI = (row) => ({
   id: row.id ?? row._id ?? row.uuid,
   name: row.name,
-  type: row.type,                  // keep both for safety
+  type: row.type, 
   mealType: row.type,
   calories: Number(row.calories) || 0,
   protein: Number(row.protein ?? row.protine) || 0,
