@@ -3,7 +3,6 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
-      "ignore": ["backend", ".git", "node_modules", ".env"],
       "env": {
         "EXPO_PUBLIC_BASE_URL": "@EXPO_PUBLIC_BASE_URL",
         "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY": "@EXPO_PUBLIC_GOOGLE_MAPS_API_KEY"
