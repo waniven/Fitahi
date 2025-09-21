@@ -404,7 +404,7 @@ export default function AccountSettings() {
             />
 
             <CustomInput
-              label="Water Intake Goal (millilitres)"
+              label="Daily Water Intake Goal (millilitres)"
               placeholder="e.g. 2500ml per day"
               value={form.waterGoal}
               errorMessage={errors.waterGoal}
@@ -412,7 +412,7 @@ export default function AccountSettings() {
             />
 
             <CustomInput
-              label="Calories Intake Goal (kcal)"
+              label="Daily Calories Intake Goal (kcal)"
               placeholder="e.g. 2000 kcal"
               value={form.caloriesGoal}
               errorMessage={errors.caloriesGoal}

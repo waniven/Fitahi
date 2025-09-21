@@ -1,6 +1,7 @@
 // components/nutrition/NutritionDashboard.jsx
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, StatusBar } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle, Path } from 'react-native-svg';
 import { Colors } from '../../constants/Colors';
 import { Font, Type, TextVariants } from '../../constants/Font';
