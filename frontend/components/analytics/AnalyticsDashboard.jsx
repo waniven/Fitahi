@@ -245,6 +245,7 @@ const AnalyticsDashboard = () => {
   const workoutData = prepareWorkoutData();
   const nutritionStackedData = prepareNutritionStackedData();
   const biometricsData = prepareBiometricsData();
+  const maxY = Math.max(...nutritionStackedData.data.flat());
 
   if (loading) {
     return (
@@ -388,10 +389,8 @@ const AnalyticsDashboard = () => {
                         `rgba(51, 51, 51, ${opacity})`,
                     }}
                     style={styles.nutritionChart}
-                    fromZero={true}
+                    fromZero
                     segments={5}
-                    yAxisLabel=""
-                    formatYLabel={(y) => `${Math.round(Number(y) / 50) * 50}`}
                   />
 
                   <View style={styles.nutritionLegend}>

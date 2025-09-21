@@ -30,21 +30,61 @@ export function useCalendarLogic() {
 
   // Marked dates for the calendar
   const getMarkedDates = (theme) => {
-    return reminders.reduce(
-      (acc, r) => {
-        acc[r.date] = { marked: true, dotColor: theme.tint };
-        return acc;
-      },
-      {
-        [formattedToday]: { selected: true, selectedColor: theme.tint + "40" },
+    const marked = {
+      [formattedToday]: { selected: true, selectedColor: theme.tint + "40" },
+    };
+
+    reminders.forEach((r) => {
+      const startDate = new Date(r.date);
+      const today = new Date();
+
+      // Mark dates in the next 90 days
+      for (let i = 0; i < 90; i++) {
+        const checkDate = new Date();
+        checkDate.setDate(today.getDate() + i);
+        const dateStr = checkDate.toISOString().split("T")[0];
+
+        if (
+          r.repeat === 'Daily' && checkDate >= startDate ||
+          r.repeat === 'Weekly' && checkDate >= startDate && checkDate.getDay() === startDate.getDay() ||
+          r.repeat === 'Monthly' && checkDate >= startDate && checkDate.getDate() === startDate.getDate() ||
+          r.repeat === 'None' && r.date === dateStr
+        ) {
+          marked[dateStr] = { marked: true, dotColor: theme.tint };
+        }
       }
-    );
+    });
+
+    return marked;
   };
+
 
   // Filter reminders for a specific date
   const getRemindersForDate = (date) => {
-    return reminders.filter((r) => r.date === date);
+    const day = new Date(date);
+    return reminders.filter((r) => {
+      const reminderDate = new Date(r.date);
+
+      if (r.repeat === 'None') {
+        return r.date === date;
+      }
+
+      if (r.repeat === 'Daily') {
+        return day >= reminderDate;
+      }
+
+      if (r.repeat === 'Weekly') {
+        return day >= reminderDate && day.getDay() === reminderDate.getDay();
+      }
+
+      if (r.repeat === 'Monthly') {
+        return day >= reminderDate && day.getDate() === reminderDate.getDate();
+      }
+
+      return false;
+    });
   };
+
 
   // Handle selecting a day
   const handleDayPress = (day) => {

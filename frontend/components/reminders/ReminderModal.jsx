@@ -390,7 +390,7 @@ export default function ReminderModal({
                   {/* Time picker */}
                   <View style={styles.dateTimeColumn}>
                     <Text style={[textStyles.caption, styles.dateTimeLabel]}>
-                      TIME
+                      TIME *
                     </Text>
 
                     <TouchableOpacity
