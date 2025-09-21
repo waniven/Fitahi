@@ -41,6 +41,7 @@ yarn-error.*
 
 # firebase config
 google-services.json
+fcm_service_account.json
 
 # other
 .vscode/
