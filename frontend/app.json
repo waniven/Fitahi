@@ -25,7 +25,7 @@
     },
     "android": {
       "package": "com.anonymous.frontend",
-      "googleServicesFile": "${GOOGLE_SERVICES_JSON}",
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
