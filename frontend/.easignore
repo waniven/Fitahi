@@ -2,3 +2,4 @@ backend
 .git
 node_modules
 .env
+google-services.json
