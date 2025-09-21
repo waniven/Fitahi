@@ -1,6 +1,7 @@
 // components/water/WaterDashboard.jsx
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, StatusBar } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '../../constants/Colors';
 import { Font, Type, TextVariants } from '../../constants/Font';
 import CustomButton from '../common/CustomButton';

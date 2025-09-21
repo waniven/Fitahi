@@ -52,17 +52,26 @@ router.delete('/:id', auth, async (req, res, next) => {
             userId: req.user.id,
         });
 
-        // biometric entry not found
         if (!deletedBiometric) {
             return res.status(404).json({ error: 'Biometric entry not found' });
         }
 
-        // no content on success
+        // check if there are any remaining biometric logs
+        const remainingLogs = await Biometric.find({ userId: req.user.id });
+
+        // clear quiz Height and Weight if no logs remain
+        if (remainingLogs.length === 0) {
+            await User.findByIdAndUpdate(req.user.id, {
+                $unset: { "quiz.Height": "", "quiz.Weight": "" },
+            });
+        }
+
         return res.status(204).send();
     } catch (err) {
         return next(err);
     }
 });
+
 
 /**
  * GET /api/biometrics/:id

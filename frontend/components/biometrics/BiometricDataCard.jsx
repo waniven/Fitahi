@@ -31,7 +31,6 @@ const textStyles = {
 // Reusable component for displaying biometric data with BMI calculation and weight display
 const BiometricDataCard = ({
   entry,
-  age = 25,
   onDelete,
   showDeleteButton = true,
   style,
@@ -138,7 +137,7 @@ const BiometricDataCard = ({
 
         <View style={styles.detailsRow}>
           <Text style={[textStyles.bodySmall, styles.detailText]}>
-            Height: {entry.height?.toFixed(1) || "--"} cm | Age: {age}
+            Height: {entry.height?.toFixed(1) || "--"} cm
           </Text>
         </View>
       </View>

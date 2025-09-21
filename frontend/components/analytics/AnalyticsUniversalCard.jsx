@@ -40,6 +40,25 @@ const AnalyticsUniversalCard = ({
   ...props
 }) => {
   const [age, setAge] = useState(null);
+  const [userIntakeGoal, setUserIntakeGoal] = useState(null);
+
+  // fetch current water goal from db
+  useEffect(() => {
+    async function fetchUserInfo() {
+      try {
+        const me = await userService.getMe();
+        if (me?.dateofbirth) setAge(calculateAge(me.dateofbirth));
+        if (me?.intakeGoals?.dailyWater)
+          setUserIntakeGoal(me.intakeGoals.dailyWater);
+      } catch (err) {
+        CustomToast.error(
+          "Failed to fetch user info",
+          "Please try again later."
+        );
+      }
+    }
+    fetchUserInfo();
+  }, []);
 
   // fetch DOB from userService once and calculate age
   useEffect(() => {
@@ -61,7 +80,7 @@ const AnalyticsUniversalCard = ({
 
   // bmi logic
   const parseBmiValue = () => {
-    const raw = entry?.bmi ?? null; // prefer virtual field in db schema
+    const raw = entry?.bmi ?? null;
     if (raw != null) {
       const n = typeof raw === "string" ? Number(raw) : raw;
       return Number.isFinite(n) ? Math.round(n * 10) / 10 : null;
@@ -85,7 +104,6 @@ const AnalyticsUniversalCard = ({
     return { text: "Obese", color: "#EF5350" };
   };
 
-  // timestamp formatting
   const getTimestamp = () => {
     if (type === "water")
       return entry?.time ?? entry?.createdAt ?? entry?.timestamp;
@@ -121,13 +139,15 @@ const AnalyticsUniversalCard = ({
   };
 
   const handlePress = () => onPress && onPress(entry);
+  const waterGoal = entry?.goal ?? userIntakeGoal ?? "-";
 
   const getMainDisplay = () => {
     if (type === "water") {
       return {
         value: entry?.amount != null ? entry.amount.toFixed(0) : "0",
         unit: "mL",
-        subtitle: "water goal",
+
+        subtitle: `Current water goal: ${waterGoal} mL`,
         color: Colors.light.primary,
       };
     } else if (type === "workout") {
@@ -157,7 +177,7 @@ const AnalyticsUniversalCard = ({
 
   const getDetails = () => {
     if (type === "water") {
-      return `Goal met at this point? • No`;
+      return `💧💧💧`;
     } else if (type === "workout") {
       const workoutName =
         entry?.workout_id?.name || entry?.workoutName || "Deleted Workout";
@@ -253,9 +273,7 @@ const AnalyticsUniversalCard = ({
   }
 
   return (
-    <View style={[dynamicStyles.cardContainer, style]} {...props}>
-      {CardContent}
-    </View>
+    <View style={[dynamicStyles.cardContainer, style]}>{CardContent}</View>
   );
 };
 

@@ -16,6 +16,7 @@ import { Colors } from "../../constants/Colors";
 import { questions } from "../../constants/quizData";
 import { Font } from "@/constants/Font";
 import { saveQuiz, saveIntakeGoals, getAge } from "../../services/userService";
+import { createBiometric } from "../../services/biometricService";
 import CustomToast from "@/components/common/CustomToast";
 
 const { width } = Dimensions.get("window");
@@ -32,38 +33,42 @@ export default function Quiz() {
   const isPicker = currentQuestion.type === "picker";
   const isLastQuestion = currentIndex === questions.length - 1;
 
-const calculateCalories = async ({ weight, height, trainingDays, fitnessGoal }) => {
-  const age = await getAge();
+  const calculateCalories = async ({
+    weight,
+    height,
+    trainingDays,
+    fitnessGoal,
+  }) => {
+    const age = await getAge();
 
-  const w = Number(weight);
-  const h = Number(height);
-  const a = Number(age);
+    const w = Number(weight);
+    const h = Number(height);
+    const a = Number(age);
 
-  //return a default values missing
-  if (!w || !h || !a || !trainingDays ){
-    return 2300;
-  }
+    //return a default values missing
+    if (!w || !h || !a || !trainingDays) {
+      return 2300;
+    }
 
-  //factor based on how many days the user trains a week
-  const numOfTrainingDays = String(trainingDays).replace(/\s+/g, ' ').trim();
-  let factor = 0;
+    //factor based on how many days the user trains a week
+    const numOfTrainingDays = String(trainingDays).replace(/\s+/g, " ").trim();
+    let factor = 0;
 
-  if (numOfTrainingDays === '1 - 2') factor = 1.4;
-  if (numOfTrainingDays === '3 - 4') factor = 1.55;
-  if (numOfTrainingDays === '5 - 6') factor = 1.725;
-  if (numOfTrainingDays === '7')  factor = 1.9;
+    if (numOfTrainingDays === "1 - 2") factor = 1.4;
+    if (numOfTrainingDays === "3 - 4") factor = 1.55;
+    if (numOfTrainingDays === "5 - 6") factor = 1.725;
+    if (numOfTrainingDays === "7") factor = 1.9;
 
-  //modifyer based on fitness goal
-  const goal = String(fitnessGoal || '').trim();
-  let modifier = 0;
+    //modifyer based on fitness goal
+    const goal = String(fitnessGoal || "").trim();
+    let modifier = 0;
 
-  if (goal === 'Lose weight') modifier = -250;
-  if (goal === 'Improve endurance')  modifier = 0;
-  if (goal === 'Build muscle') modifier = 250;
+    if (goal === "Lose weight") modifier = -250;
+    if (goal === "Improve endurance") modifier = 0;
+    if (goal === "Build muscle") modifier = 250;
 
-  return ((10 * w + 6.25 * h - 5 * a + 5) * factor) + modifier;
-};
-
+    return (10 * w + 6.25 * h - 5 * a + 5) * factor + modifier;
+  };
 
   // Go to next question
   const goNext = () => {
@@ -95,10 +100,11 @@ const calculateCalories = async ({ weight, height, trainingDays, fitnessGoal }) 
 
   // Send quiz answers to backend when done
   const handleFinish = async () => {
-    //calculate intake goals and save them
-    try{
-      //calculate daily water based on weight, fall back avg recomended ammount
-      const dailyWater = Number(answers.Weight) ? Number(answers.Weight) * 35 : 2500;
+    try {
+      //calculate daily water based on weight, fall back avg recommended amount
+      const dailyWater = Number(answers.Weight)
+        ? Number(answers.Weight) * 35
+        : 2500;
 
       //calculate intakeGoals
       const dailyCalories = await calculateCalories({
@@ -110,10 +116,25 @@ const calculateCalories = async ({ weight, height, trainingDays, fitnessGoal }) 
 
       //save intake goals
       await saveIntakeGoals({ dailyCalories, dailyWater });
+
+      // create first biometric log if both weight and height exist
+      if (answers.Weight && answers.Height) {
+        try {
+          await createBiometric({
+            weight: Number(answers.Weight),
+            height: Number(answers.Height),
+            timestamp: new Date(),
+          });
+        } catch (err) {
+          CustomToast.error(
+            "Biometric log failed",
+            "We couldn't save your first biometric log."
+          );
+        }
+      }
     } catch (error) {
-      console.error("Failed to save intakeGoals:", error);
-        CustomToast.error(
-        "Intake goal saving Failed",
+      CustomToast.error(
+        "Failed to save Intake Goal",
         "See account settings to update."
       );
     }
@@ -124,7 +145,6 @@ const calculateCalories = async ({ weight, height, trainingDays, fitnessGoal }) 
       CustomToast.success("Quiz Completed!", "Your answers have been saved.");
       router.replace("/profile/thankyou");
     } catch (error) {
-      console.error("Failed to update quiz:", error);
       CustomToast.error(
         "Quiz Submission Failed",
         "See account settings to update."

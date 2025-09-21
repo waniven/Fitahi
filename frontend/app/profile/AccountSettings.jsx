@@ -86,13 +86,19 @@ export default function AccountSettings() {
 
         // fetch latest biometric log
         const biometrics = await getBiometrics();
-        if (!alive) return;
         if (biometrics.length > 0) {
           const latest = biometrics[0];
           setForm((prev) => ({
             ...prev,
             height: latest.height?.toString() ?? prev.height,
             weight: latest.weight?.toString() ?? prev.weight,
+          }));
+        } else {
+          // fallback to quiz data
+          setForm((prev) => ({
+            ...prev,
+            height: me.quiz?.Height?.toString() ?? prev.height,
+            weight: me.quiz?.Weight?.toString() ?? prev.weight,
           }));
         }
       } catch (err) {
@@ -128,10 +134,20 @@ export default function AccountSettings() {
     if (form.password.length > 0 && form.password.length < 8) {
       newErrors.password = "Password must be at least 8 characters."; //password to be at least 8 characters
     }
-    if (form.waterGoal && !/^(?:[1-5]\d{3}(?:\.\d+)?|6000(?:\.0+)?)\s*(?:l)?$/i.test(String(form.waterGoal).trim())) {
+    if (
+      form.waterGoal &&
+      !/^(?:[1-5]\d{3}(?:\.\d+)?|6000(?:\.0+)?)\s*(?:l)?$/i.test(
+        String(form.waterGoal).trim()
+      )
+    ) {
       newErrors.waterGoal = "Water goal must be 1000ml to 6000ml.";
     }
-    if (form.caloriesGoal && !/^(?:[1-5]\d{3}(?:\.\d+)?|6000(?:\.0+)?)\s*(?:l)?$/i.test(String(form.waterGoal).trim())) {
+    if (
+      form.caloriesGoal &&
+      !/^(?:[1-5]\d{3}(?:\.\d+)?|6000(?:\.0+)?)\s*(?:l)?$/i.test(
+        String(form.waterGoal).trim()
+      )
+    ) {
       newErrors.caloriesGoal = "Calorie goal must be 1000kcal to 4000kcal.";
     }
 
@@ -204,8 +220,8 @@ export default function AccountSettings() {
 
       const intakeGoals = {
         dailyCalories: form.caloriesGoal,
-        dailyWater: form.waterGoal
-      }
+        dailyWater: form.waterGoal,
+      };
 
       // send to backend
       await updateMe({
