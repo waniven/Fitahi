@@ -15,7 +15,8 @@ import WheelPickerExpo from "react-native-wheel-picker-expo";
 import { Colors } from "../../constants/Colors";
 import { questions } from "../../constants/quizData";
 import { Font } from "@/constants/Font";
-import { saveQuiz } from "../../services/userService";
+import { saveQuiz, saveIntakeGoals, getAge } from "../../services/userService";
+import { createBiometric } from "../../services/biometricService";
 import CustomToast from "@/components/common/CustomToast";
 
 const { width } = Dimensions.get("window");
@@ -31,6 +32,43 @@ export default function Quiz() {
   const currentQuestion = questions[currentIndex];
   const isPicker = currentQuestion.type === "picker";
   const isLastQuestion = currentIndex === questions.length - 1;
+
+  const calculateCalories = async ({
+    weight,
+    height,
+    trainingDays,
+    fitnessGoal,
+  }) => {
+    const age = await getAge();
+
+    const w = Number(weight);
+    const h = Number(height);
+    const a = Number(age);
+
+    //return a default values missing
+    if (!w || !h || !a || !trainingDays) {
+      return 2300;
+    }
+
+    //factor based on how many days the user trains a week
+    const numOfTrainingDays = String(trainingDays).replace(/\s+/g, " ").trim();
+    let factor = 0;
+
+    if (numOfTrainingDays === "1 - 2") factor = 1.4;
+    if (numOfTrainingDays === "3 - 4") factor = 1.55;
+    if (numOfTrainingDays === "5 - 6") factor = 1.725;
+    if (numOfTrainingDays === "7") factor = 1.9;
+
+    //modifyer based on fitness goal
+    const goal = String(fitnessGoal || "").trim();
+    let modifier = 0;
+
+    if (goal === "Lose weight") modifier = -250;
+    if (goal === "Improve endurance") modifier = 0;
+    if (goal === "Build muscle") modifier = 250;
+
+    return (10 * w + 6.25 * h - 5 * a + 5) * factor + modifier;
+  };
 
   // Go to next question
   const goNext = () => {
@@ -63,11 +101,50 @@ export default function Quiz() {
   // Send quiz answers to backend when done
   const handleFinish = async () => {
     try {
+      //calculate daily water based on weight, fall back avg recommended amount
+      const dailyWater = Number(answers.Weight)
+        ? Number(answers.Weight) * 35
+        : 2500;
+
+      //calculate intakeGoals
+      const dailyCalories = await calculateCalories({
+        weight: answers.Weight,
+        height: answers.Height,
+        trainingDays: answers.TrainingDays,
+        fitnessGoal: answers.FitnessGoal,
+      });
+
+      //save intake goals
+      await saveIntakeGoals({ dailyCalories, dailyWater });
+
+      // create first biometric log if both weight and height exist
+      if (answers.Weight && answers.Height) {
+        try {
+          await createBiometric({
+            weight: Number(answers.Weight),
+            height: Number(answers.Height),
+            timestamp: new Date(),
+          });
+        } catch (err) {
+          CustomToast.error(
+            "Biometric log failed",
+            "We couldn't save your first biometric log."
+          );
+        }
+      }
+    } catch (error) {
+      CustomToast.error(
+        "Failed to save Intake Goal",
+        "See account settings to update."
+      );
+    }
+
+    //save quiz and exit quiz screen
+    try {
       await saveQuiz(answers);
       CustomToast.success("Quiz Completed!", "Your answers have been saved.");
       router.replace("/profile/thankyou");
     } catch (error) {
-      console.error("Failed to update quiz:", error);
       CustomToast.error(
         "Quiz Submission Failed",
         "See account settings to update."

@@ -13,7 +13,7 @@ router.post('/', auth, async (req, res, next) => {
         const { time, amount } = req.body;
 
         //check if amount is a number
-        if (amount === undefined || Number.isNaN(Number(amount))){
+        if (amount === undefined || Number.isNaN(Number(amount))) {
             return res.status(400).json({ error: 'amount is required and must be a number' });
         }
 
@@ -83,6 +83,22 @@ router.get('/', auth, async (req, res, next) => {
                 $lte: endOfToday
             }
         }).sort({ createdAt: 1 });
+
+        return res.json(water);
+    } catch (err) {
+        return next(err);
+    }
+});
+
+/**
+ * GET /api/water/all
+ * get all water logs for a user (not just today)
+ */
+router.get('/all', auth, async (req, res, next) => {
+    try {
+        const water = await Water.find({
+            userId: req.user.id
+        }).sort({ createdAt: -1 });
 
         return res.json(water);
     } catch (err) {

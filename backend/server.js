@@ -11,6 +11,7 @@ const workoutResultRoutes = require('./src/routes/workoutResultRoutes');
 const messageRoutes = require("./src/routes/messageRoutes");
 const conversationRoutes = require("./src/routes/conversationRoutes");
 const waterRoutes = require("./src/routes/waterRoutes");
+const nutritionRoutes = require("./src/routes/nutritionRoutes");
 const biometricRoutes = require("./src/routes/biometricRoutes")
 const reminderRoutes = require("./src/routes/reminderRoutes");
 
@@ -27,6 +28,7 @@ app.use('/api/workout-results', workoutResultRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/conversations", conversationRoutes);
 app.use("/api/water", waterRoutes);
+app.use("/api/nutrition", nutritionRoutes);
 app.use("/api/biometrics", biometricRoutes);
 app.use("/api/reminders", reminderRoutes);
 

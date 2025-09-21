@@ -1,39 +1,66 @@
-import React from 'react';
-import { ScrollView } from 'react-native';
-import { useRouter } from 'expo-router';
-import AnalyticsLogScreen from '../../components/analytics/AnalyticsLogScreen';
-import AnalyticsNutritionCard from '../../components/analytics/AnalyticsNutritionCard';
-import { sampleEntries } from '../../components/common/SampleData';
+import React, { useEffect, useState } from "react";
+import { ScrollView } from "react-native";
+import { useRouter } from "expo-router";
+import AnalyticsLogScreen from "../../components/analytics/AnalyticsLogScreen";
+import AnalyticsNutritionCard from "../../components/analytics/AnalyticsNutritionCard";
+import { getAllNutrition } from "../../services/nutritionService";
+import CustomToast from "@/components/common/CustomToast";
 
 export default function NutritionAnalyticsScreen() {
   const router = useRouter();
+  const [nutritionEntries, setNutritionEntries] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleBack = () => {
-    router.back();
-  };
+  useEffect(() => {
+    async function fetchNutrition() {
+      try {
+        const data = await getAllNutrition();
+        setNutritionEntries(data);
+      } catch (err) {
+        CustomToast.error("Could not load Nutrition logs", "Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    }
 
-  const handleDelete = (id) => {
-    console.log('Delete nutrition entry:', id);
-  };
+    fetchNutrition();
+  }, []);
+
+  const handleBack = () => router.back();
+
+  if (loading) {
+    return (
+      <AnalyticsLogScreen
+        title="Nutrition Logs"
+        subtitle="Loading..."
+        onBackPress={handleBack}
+      />
+    );
+  }
+
+  if (nutritionEntries.length === 0) {
+    return (
+      <AnalyticsLogScreen
+        title="Nutrition Logs"
+        subtitle="No nutrition logs found."
+        onBackPress={handleBack}
+      />
+    );
+  }
 
   return (
     <AnalyticsLogScreen
       title="Nutrition Logs"
-      subtitle="Your previous logs."
+      subtitle="Your previous logs:"
       onBackPress={handleBack}
     >
-      <ScrollView 
-        style={{ flex: 1, paddingHorizontal: 20 }} 
+      <ScrollView
+        style={{ flex: 1, paddingHorizontal: 20 }}
         contentContainerStyle={{ paddingBottom: 20 }}
         showsVerticalScrollIndicator={false}
       >
-        {sampleEntries.nutritionEntries.map((entry, index) => (
-          <AnalyticsNutritionCard
-            key={entry.id || index}
-            entry={entry}
-            onDelete={handleDelete}
-            showDeleteButton={false}
-          />
+        {nutritionEntries.map((entry, index) => (
+          <AnalyticsNutritionCard key={entry._id || index} entry={entry} />
         ))}
       </ScrollView>
     </AnalyticsLogScreen>

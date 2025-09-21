@@ -24,6 +24,12 @@ export async function getMe() {
     return res.data;
 }
 
+//get users age
+export async function getAge() {
+    const res = await api.get('users/me/age');
+    return res.data;
+}
+
 //update user profile 
 export async function updateMe({
     firstname,
@@ -33,6 +39,7 @@ export async function updateMe({
     password,
     pfp,
     quiz,
+    intakeGoals,
 }) {
     const res = await api.patch('users/me', {
         firstname,
@@ -42,6 +49,7 @@ export async function updateMe({
         ...(password ? { password } : {}),
         ...(pfp ? { pfp } : {}),
         ...(quiz ? { quiz } : {}),
+        ...(intakeGoals ? { intakeGoals } : {}),
     });
     return res.data;
 }
@@ -55,5 +63,11 @@ export async function deleteMe() {
 export async function saveQuiz(quiz) {
     console.log(quiz)
     const res = await api.patch("users/me/quiz", { quiz });
+    return res.data;
+}
+
+//intakeGoal from quiz after signup
+export async function saveIntakeGoals({ dailyCalories, dailyWater }) {
+    const res = await api.patch('users/me/intakeGoals', {intakeGoals: { dailyCalories, dailyWater }});
     return res.data;
 }

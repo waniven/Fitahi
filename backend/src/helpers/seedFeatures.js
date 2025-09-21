@@ -79,17 +79,17 @@ const features = [
   // nutrition
   {
     name: "Create/Log/Make Nutrition Entry/Log",
-    description: "Log/Make your nutrition/meals including breakfast, lunch, dinner, or snacks. Tracks calories, protein, carbs, and fats. Does not delete previous entries automatically.",
+    description: "Log/Make your nutrition/meals/food including breakfast, lunch, dinner, or snacks. Tracks calories, protein, carbs, and fats. Does not delete previous entries automatically.",
     steps: [
       "From the Home Screen, go to the \"Nutrition Log\" tab",
       "Tap + to create a new nutrition log (if you haven't created any logs yet), or \"Log New Food Entry\" (if you have already logged food before)",
-      "Enter food name, meal type (breakfast, lunch, dinner, or snack), and how much of the following was in your food (in kcal): calories, protein, carbs, fats",
+      "Enter food name, meal type (breakfast, lunch, dinner, or snack), and how much of the following was in your food: calories (kcal), protein, carbs, fats (last three must be given in grams)",
       "Click \"Log Food\"",
     ],
   },
   {
     name: "Delete/Remove Nutrition Entry/Log",
-    description: "Delete/Remove a log/logged food entry from your nutrition log. Does not create new entries automatically.",
+    description: "Delete/Remove a log/logged food entry from your nutrition log. Does not modify entry, but user can delete and add entries back in. This feature only deletes/removes entries.",
     steps: [
       "From the Home Screen, go to the \"Nutrition Log\" tab",
       "If you have already logged food, you should see a list of \"Today's Entries\", otherwise you may want to create a new log first",
@@ -100,7 +100,7 @@ const features = [
   // water
   {
     name: "Create/Log/Make Water Entry/Log",
-    description: "Create/Log/Make your water intake. Records the amount and time you drank water. Does not delete previous entries automatically.",
+    description: "Create/Log/Make your water intake. Records the amount and time you drank water. Does not delete previous entries automatically. ",
     steps: [
       "From the Home Screen, go to the \"Water Log\" tab",
       "Tap + to create a new water log (if you haven't created any logs yet), or \"Log New Water Entry\" (if you have already logged water before)",
@@ -110,7 +110,7 @@ const features = [
   },
   {
     name: "Delete/Remove Water Entry/Log",
-    description: "Delete a previously logged water entry. Does not create new entries automatically.",
+    description: "Delete a previously logged water entry. Does not modify entry, but user can delete and add entries back in. This feature only deletes/removes entries.",
     steps: [
       "From the Home Screen, go to the \"Water Log\" tab",
       "If you have already logged water, you should see a list of \"Today's Entries\", otherwise you may want to create a new log first",
@@ -141,16 +141,17 @@ const features = [
 
   // account settings and quiz questions
   {
-    name: "Edit/Modify Account/Personal/Quiz Information",
-    description: "The user CAN ONLY EDIT THE FOLLOWING: Profile Picture, First Name, Last Name, Date of Birth, Email, Password, Fitness Goal, Fitness Level, Training Days, Training Time, Diet, Height, Weight, Water Intake Goal, and Calories Intake Goal. No other fields exist.",
+    name: "View/Edit/Modify Account/Personal/Quiz Information",
+    description: "The user CAN ONLY EDIT AND VIEW THE FOLLOWING: Profile Picture, First Name, Last Name, Date of Birth, Email, Password, Fitness Goal, Fitness Level, Training Days, Training Time, Dietary Preference, Daily Water Intake Goal (mL), and Daily Calories Intake Goal (kcal). Height and Weight are read-only in Settings and can ONLY be updated by making Biometric logs (Biometrics Log tab). No other fields exist.",
     steps: [
       "From the bottom Navigation Bar, click on the \"Settings\" icon",
-      "Tap on any field you want to modify, fields you can modify include: Profile Picture, First Name, Last Name, Date of Birth, Email, Password, Fitness Goal, Fitness Level, Training Days, Training Time, Diet, Height, Weight, Water Intake Goal, and Calories Intake Goal.",
+      "Tap on any field you want to modify, fields you can modify include: Profile Picture, First Name, Last Name, Date of Birth, Email, Password, Fitness Goal, Fitness Level, Training Days, Training Time, Dietary Preference, Daily Water Intake Goal, and Daily Calories Intake Goal.",
+      "Height and Weight are read-only from the Settings page and can ONLY be edited by making Biometric Logs (the user would have gotten the chance to enter them in through the Sign-Up Quiz as well). No other way of editting those fields.",
       "Once you're done editing, click \"Save Information\"",
     ],
   },
   {
-    name: "Edit/Modify Profile Picture",
+    name: "View/Edit/Modify Profile Picture",
     description: "Lets the user edit their profile photo/picture in the settings page.",
     steps: [
       "From the bottom Navigation Bar, click on the \"Settings\" icon",
@@ -158,6 +159,42 @@ const features = [
       "Choose a picture from your device and crop it",
       "Once you're happy with your chosen photo, click \"Save Information\"",
     ],
+  },
+
+  // gym finder
+  {
+    name: "Nearby Gym Finder/Gym finder/Maps/Map",
+    description: "View interactive map, find nearest gyms in your area (given location permissions are allowed), and search up gyms through a search bar. See quick overall star review and open/close status of the gym. Google Maps/native Maps can be opened through this feature.",
+    steps: [
+      "From the Home Screen, go to the \"Gym Finder\" tab",
+      "If asked, accept location permission request, otherwise feature will not work properly",
+      "Afterwards, you can do the following:",
+      "Search up gyms in the search bar via address or name (any irrelevant searches will default to showing you nearby gyms)",
+      "Interact with a global map that shows you Gym markers and your current location",
+      "View a list of gyms being presented in the map, showing their overall star rating and open/closed status, as well as \"Map\" buttons next to each of them if you want to open the gym in your native Maps app",
+    ],
+  },
+
+  // analytics (viewing logs)
+  {
+    name: "See Analytics/View All Logs/View Graphs",
+    description: "Lets the user view weekly graphs for their workout durations, nutrition breakdown (calories, carbs, fat, protein), water intake, and biometrics weight tracking. Clicking on the graphs allows them to see all logs/entries made for that graph's category. Details on respective logs include things like age, meal names, exercises finished in a workout log, etc...",
+    steps: [
+      "From the Home Screen, navigate to the \"Your Analytics\" tab.",
+      "If you have logged entries for workouts, water, nutrition, or biometrics, the corresponding graphs will be visible.",
+      "Each graph displays this week's data:",
+      "- Workouts: total minutes spent per day",
+      "- Nutrition: daily calorie and macronutrient breakdown",
+      "- Water: daily water intake compared to goal",
+      "- Biometrics: weight tracked per day",
+      "Tap any graph to view all past, detailed logs for that category (only these four categories support graphs and log views).",
+      "Those detailed logs (per graph) include:",
+      "- Water: all intake entries and the daily goal",
+      "- Biometrics: height, weight and BMI at that point in time, as well as your age",
+      "- Nutrition: meal name, meal type (breakfast, lunch, dinner, snack), and nutrient breakdown (calories, protein, carbs, fat) per entry",
+      "- Workouts: workout name, total minutes spent, and total exercises completed",
+      "For workouts, tapping a single log entry will show precise details, including exact duration and exercises performed."
+    ]
   },
 ];
 
