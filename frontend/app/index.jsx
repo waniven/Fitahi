@@ -13,21 +13,24 @@ import { Colors } from "../constants/Colors";
 import FitahiLogo from "../constants/FitahiLogo";
 import CustomButton from "../components/common/CustomButton";
 import globalStyles from "../styles/globalStyles";
+import { registerForPushNotificationsAsync } from "@/hooks/useNotifications";
+import * as Notifications from "expo-notifications";
+import api from "../services/api";
 
 export default function Index() {
   const scheme = useColorScheme();
   const theme = Colors[scheme ?? "light"];
   const router = useRouter();
 
-  // Animated values for splash page
+  // animated values
   const svgFade = useRef(new Animated.Value(0)).current;
-  const svgTranslateY = useRef(new Animated.Value(-20)).current; // start slightly up
+  const svgTranslateY = useRef(new Animated.Value(-20)).current;
   const subtitleFade = useRef(new Animated.Value(0)).current;
-  const subtitleTranslateY = useRef(new Animated.Value(20)).current; // start slightly down
+  const subtitleTranslateY = useRef(new Animated.Value(20)).current;
   const buttonFade = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // animations: logo subtitle buttons
+    // splash animations
     Animated.sequence([
       Animated.parallel([
         Animated.timing(svgFade, {
@@ -65,12 +68,34 @@ export default function Index() {
       }),
     ]).start();
 
-    // prevent going back from splash
+    // push notifications setup
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: false,
+        shouldSetBadge: false,
+      }),
+    });
+
+    // push notifications setup
+    async function setupPushNotifications() {
+      try {
+        const token = await registerForPushNotificationsAsync();
+        console.log("Token returned:", token);
+        if (token) {
+          // Send token to backend (make sure api includes auth header)
+          await api.post("/users/savePushToken", { token });
+        }
+      } catch (err) {
+        console.warn("Failed to register push notifications:", err);
+      }
+    }
+    setupPushNotifications();
+
+    // block back button on splash
     const backHandler = BackHandler.addEventListener(
       "hardwareBackPress",
-      () => {
-        return true; // block back button
-      }
+      () => true // block
     );
 
     return () => backHandler.remove();
@@ -78,7 +103,7 @@ export default function Index() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      {/*  Logo with fade + slide down*/}
+      {/* Logo */}
       <Animated.View
         style={{
           opacity: svgFade,
@@ -89,7 +114,7 @@ export default function Index() {
         <FitahiLogo width={320} height={140} fill="#FFFFFF" />
       </Animated.View>
 
-      {/* Subtitle with fade + slide up */}
+      {/* Subtitle */}
       <Animated.View
         style={{
           opacity: subtitleFade,
@@ -102,7 +127,7 @@ export default function Index() {
         </Text>
       </Animated.View>
 
-      {/* Buttons with fade in */}
+      {/* Buttons */}
       <Animated.View
         style={{ opacity: buttonFade, width: "100%", alignItems: "center" }}
       >
@@ -113,7 +138,6 @@ export default function Index() {
           size="large"
           style={styles.button}
         />
-
         <CustomButton
           title="Log In"
           onPress={() => router.push("/auth/login")}

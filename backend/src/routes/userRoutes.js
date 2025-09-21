@@ -237,4 +237,28 @@ router.patch('/me/intakeGoals', auth, async (req, res, next) => {
     }
 });
 
+/**
+ * POST /api/users/savePushToken
+ * save expo push token for current user
+ */
+router.post('/savePushToken', auth, async (req, res, next) => {
+    try {
+        const { token } = req.body;
+        if (!token) return res.status(400).json({ error: 'No token provided' });
+
+        const userId = req.user.id;
+        const updated = await User.findByIdAndUpdate(
+            userId,
+            { pushToken: token },
+            { new: true }
+        );
+
+        if (!updated) return res.status(404).json({ error: 'User not found' });
+
+        return res.json({ success: true });
+    } catch (err) {
+        return next(err);
+    }
+});
+
 module.exports = router;

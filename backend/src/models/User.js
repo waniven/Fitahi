@@ -22,7 +22,8 @@ const userSchema = new Schema(
         intakeGoals: { //daily intake goals 
             dailyCalories: { type: Number, default: null },
             dailyWater: { type: Number, default: null },
-        }
+        },
+        pushToken: { type: String, default: '' } // store Expo push token
     },
     { timestamps: true } //will automatically add a timestamp
 )
