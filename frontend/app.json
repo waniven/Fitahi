@@ -1,31 +1,31 @@
 {
   "expo": {
-    "jsEngine": "hermes",
     "name": "frontend",
     "slug": "frontend",
     "version": "1.0.0",
+    "jsEngine": "hermes",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "dark",
-    "newArchEnabled": true,
     "scheme": "fitahi",
+    "icon": "./assets/images/icon.png",
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
     "ios": {
+      "bundleIdentifier": "com.anonymous.frontend",
       "supportsTablet": true,
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "We use your location to find nearby gyms."
       },
       "config": {
         "googleMapsApiKey": "${EXPO_PUBLIC_GOOGLE_MAPS_API_KEY}"
-      },
-      "bundleIdentifier": "com.anonymous.frontend"
+      }
     },
     "android": {
-      "googleServicesFile": "./google-services.json",
+      "package": "com.anonymous.frontend",
+      "googleServicesFile": "${GOOGLE_SERVICES_JSON}",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -41,7 +41,13 @@
           "apiKey": "${EXPO_PUBLIC_GOOGLE_MAPS_API_KEY}"
         }
       },
-      "package": "com.anonymous.frontend"
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "data": [{ "scheme": "fitahi" }],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
     },
     "web": {
       "favicon": "./assets/images/favicon.png"
@@ -50,7 +56,14 @@
       "expo-router",
       "expo-font",
       "expo-web-browser",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/icon.png",
+          "color": "#ffffff"
+        }
+      ]
     ],
     "extra": {
       "router": {},
