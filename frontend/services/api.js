@@ -1,8 +1,7 @@
-import { BASE_URL } from "@env";
 import axios from "axios";
 
 const api = axios.create({
-    baseURL: `${BASE_URL}/api`,
+    baseURL: `${process.env.EXPO_PUBLIC_BASE_URL}/api`,
     headers: { "Content-Type": "application/json" },
 });
 
@@ -10,7 +9,7 @@ let accessToken = null;
 
 export function setAuthToken(token) {
     accessToken = token || null;
-    
+
     if (accessToken) {
         api.defaults.headers.Authorization = `Bearer ${token}`;
     } else {
