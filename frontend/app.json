@@ -25,7 +25,7 @@
       "bundleIdentifier": "com.anonymous.frontend"
     },
     "android": {
-      "googleServicesFile": "./google-services.json",
+      "googleServicesFile": "${GOOGLE_SERVICES_JSON}",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
