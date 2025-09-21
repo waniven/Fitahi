@@ -7,6 +7,8 @@ const router = express.Router();
 
 //helper to validate MongoDB objectId
 const isValidId = (id) => mongoose.Types.ObjectId.isValid(id);
+//helper to turn dob to age
+const dobToAge = require('../helpers/dobToAge');
 
 /*
  * POST /api/users/
@@ -63,6 +65,10 @@ router.patch('/me', auth, async (req, res, next) => {
         if (typeof req.body.password === 'string') updates.password = req.body.password;
         if (typeof req.body.pfp === 'string') updates.pfp = req.body.pfp;
         if (typeof req.body.quiz === 'object') updates.quiz = req.body.quiz;
+        if (req.body.intakeGoals && typeof req.body.intakeGoals === 'object') {
+            if ('dailyCalories' in req.body.intakeGoals) updates['intakeGoals.dailyCalories'] = req.body.intakeGoals.dailyCalories;
+            if ('dailyWater' in req.body.intakeGoals) updates['intakeGoals.dailyWater'] = req.body.intakeGoals.dailyWater; 
+        }
 
         //check if whitelist object is empty, if so dont update anything
         if (Object.keys(updates).length === 0) {
@@ -145,6 +151,31 @@ router.get('/me', auth, async (req, res, next) => {
 });
 
 /**
+ * GET /api/me/age
+ * users own profile
+ * need to auth their token
+**/
+router.get('/me/age', auth, async (req, res, next) => {
+    try {
+        //get users own profile
+        const me = await User.findById(req.user.id).select('dateofbirth');
+
+        //return error if user profile not found
+        if (!me) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        //use helper to change date to age
+        const ageYears = dobToAge(me.dateofbirth);
+
+        //return users age
+        return res.json(ageYears);
+    } catch (err) {
+        return next(err);
+    }
+});
+
+/**
  * PATCH /api/users/me/quiz
  * save user's sign-up quiz answers
 **/
@@ -162,6 +193,37 @@ router.patch('/me/quiz', auth, async (req, res, next) => {
         const updated = await User.findByIdAndUpdate(
             id,
             { $set: { quiz } },
+            { new: true, runValidators: true }
+        );
+
+        if (!updated) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        return res.json(updated);
+    } catch (err) {
+        return next(err);
+    }
+});
+
+/**
+ * PATCH /api/users/me/intakeGoals
+ * save user's intakeGoals
+**/
+router.patch('/me/intakeGoals', auth, async (req, res, next) => {
+    try {
+        const id = req.user.id;
+
+        //values from frontend (can be partial due to skippable fields)
+        const { intakeGoals } = req.body;
+
+        if (!intakeGoals || typeof intakeGoals !== 'object') {
+            return res.status(400).json({ error: 'Invalid intake goals object data' });
+        }
+
+        const updated = await User.findByIdAndUpdate(
+            id,
+            { $set: { intakeGoals } },
             { new: true, runValidators: true }
         );
 
@@ -198,36 +260,5 @@ router.post('/savePushToken', auth, async (req, res, next) => {
         return next(err);
     }
 });
-
-/**
- * GET /api/users/:id
- * Get a single user
- * For testing only
-router.get('/:id', async (req, res, next) => {
-    try{
-        //id obj 
-        const { id } = req.params;
-
-        //check if id is valid
-        if(!isValidId(id)) {
-            return res.status(400).json({ error: 'Invalid user id' });
-        }
-
-        //find user document
-        const user = await User.findById(id);
-
-        //return error if user not found
-        if (!user) {
-            return res.status(404).json({ error: 'User not found'})
-        }
-
-        //return user document
-        return res.json(user);
-
-    } catch (err) {
-        return next(err);
-    }
-});
-*/
 
 module.exports = router;

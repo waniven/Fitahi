@@ -3,6 +3,7 @@ const router = express.Router();
 const Message = require("../models/Message");
 const Conversation = require("../models/Conversation");
 const Feature = require("../models/Feature");
+const User = require("../models/User");
 const auth = require("../middleware/auth");
 require("dotenv").config();
 
@@ -36,6 +37,27 @@ router.post("/", auth, async (req, res) => {
             conversationId: convoId,
         });
         await userMessage.save();
+
+        // fetch user profile with quiz + goals
+        const me = await User.findById(userId).lean();
+
+        let userContext = "";
+        if (me) {
+            userContext = `
+User profile context:
+- Fitness Goal: ${me.quiz?.FitnessGoal || "Not set"}
+- Fitness Level: ${me.quiz?.FitnessLevel || "Not set"}
+- Training Days (per week): ${me.quiz?.TrainingDays || "Not set"}
+- Training Time (per session): ${me.quiz?.TrainingTime || "Not set"}
+- Dietary preference: ${me.quiz?.Diet || "Not set"}
+- Height (cm): ${me.quiz?.Height || "Not set"}
+- Weight (kg): ${me.quiz?.Weight || "Not set"}
+- Daily Water Goal (mL): ${me.intakeGoals?.dailyWater || "Not set"}
+- Daily Calories Goal (kcal): ${me.intakeGoals?.dailyCalories || "Not set"}
+
+ALWAYS keep this context in mind when chatting or giving suggestions, do not make up things about the user that aren't true.
+`;
+        }
 
         // fetch last 4 messages for context
         const pastMessages = await Message.find({ conversationId: convoId })
@@ -90,7 +112,7 @@ User: "${text}"
 You are Darwin, Fitahi's friendly AI assistant.
 Fitahi is a fitness app with features to log workouts, diet, supplements, water intake, and biometrics, plus account settings.
 Always respond like a casual text message. Emojis are always welcome. Be supportive, motivational and friendly.
-${isFirstUserMessage ? "Introduce yourself briefly with who you are." : "Continue the conversation naturally, considering conversation history."}
+${isFirstUserMessage ? "Introduce yourself briefly with who you are." : "No need to say hello, continue the conversation naturally, considering conversation history."}
 
 Conversation history:
 ${chatHistory}
@@ -114,13 +136,17 @@ Plain text only.
 You are Darwin, Fitahi's friendly AI assistant.
 Fitahi is a fitness app with features to log workouts, diet, supplements, water intake, and biometrics, plus account settings.
 Always respond like a casual text message. Emojis are always welcome. Be supportive, motivational and friendly.
-${isFirstUserMessage ? "Introduce yourself briefly with who you are." : "Continue the conversation naturally, considering conversation history."}
+${isFirstUserMessage ? "Introduce yourself briefly with who you are." : "No need to say hello, continue the conversation naturally, considering conversation history."}
+
+${userContext}
+Always briefly let the user know what you've considered from their profile while you're suggesting and/or chatting to them, still keeping things conversational and text-message styled.
 
 The user said: "${text}"
 Conversation history:
 ${chatHistory}
 
 ONLY IF the user was asking about a feature: tell them Fitahi doesn't have that feature yet AND DON'T MAKE UP OR LIE ABOUT ALTERNATIVES. Suggest exploring ONE OF existing features instead: logging/creating workouts, water, nutrition, or supplements. DON'T ELBORATE.
+If the user was asking about being able to update their height and/or weight in settings, tell them they are read-only in settings (viewable in settings) and suggest that they make a biometric log to update those fields.
 
 Otherwise follow these instructions:
 - This is casual conversation.

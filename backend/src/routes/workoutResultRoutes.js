@@ -49,25 +49,40 @@ router.post('/', auth, async (req, res, next) => {
 */
 router.get('/', auth, async (req, res, next) => {
     try {
-        // fetch results sorted by newest first, optionally populate workout info
+        // fetch results sorted by newest first, populate workout info
         const results = await WorkoutResult.find({ userId: req.user.id })
             .sort({ dateCompleted: -1 })
             .populate('workout_id', 'workoutName workoutType');
 
         // transform each result
-        const transformed = results.map(r => ({
-            id: r._id.toString(),
-            totalTimeSpent: r.totalTimeSpent,
-            completedExercises: r.completedExercises,
-            dateCompleted: r.dateCompleted.toISOString(),
-            workout_id: {
-                id: r.workout_id._id.toString(),
-                name: r.workout_id.workoutName, // renamed for frontend
-                type: r.workout_id.workoutType,
-            }
-        }));
+        const transformed = results.map(r => {
+            let workoutInfo;
 
-        // return transformed
+            if (r.workout_id) {
+                // workout still exists
+                workoutInfo = {
+                    id: r.workout_id._id.toString(),
+                    name: r.workout_id.workoutName,
+                    type: r.workout_id.workoutType,
+                };
+            } else {
+                // workout was deleted
+                workoutInfo = {
+                    id: null,
+                    name: "Deleted Workout",
+                    type: "?",
+                };
+            }
+
+            return {
+                id: r._id.toString(),
+                totalTimeSpent: r.totalTimeSpent,
+                completedExercises: r.completedExercises,
+                dateCompleted: r.dateCompleted.toISOString(),
+                workout_id: workoutInfo,
+            };
+        });
+
         return res.json(transformed);
     } catch (err) {
         next(err);

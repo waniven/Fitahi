@@ -21,7 +21,13 @@ export async function getWater() {
     return res.data;
 }
 
+// get all water logs for user
+export async function getAllWater() {
+    const res = await api.get("water/all");
+    return res.data;
+}
+
 //delete water log 
-export async function deleteWater(id){
+export async function deleteWater(id) {
     await api.delete(`water/${id}`);
 }
