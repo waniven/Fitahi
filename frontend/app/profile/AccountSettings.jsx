@@ -144,7 +144,7 @@ export default function AccountSettings() {
     }
     if (
       form.caloriesGoal &&
-      !/^(?:[1-5]\d{3}(?:\.\d+)?|6000(?:\.0+)?)\s*(?:l)?$/i.test(
+      !/^(?:[1-5]\d{3}(?:\.\d+)?|4000(?:\.0+)?)\s*(?:l)?$/i.test(
         String(form.waterGoal).trim()
       )
     ) {
