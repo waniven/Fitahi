@@ -1,5 +1,5 @@
 const express = require('express');
-const supplement = require('../models/supplement');
+const supplement = require('../models/Supplement');
 const validateId = require('../helpers/validateId');
 const auth = require('../middleware/auth');
 const router = express.Router();

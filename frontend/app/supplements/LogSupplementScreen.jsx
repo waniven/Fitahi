@@ -1,4 +1,4 @@
-import { useState, useContext, useLayoutEffect, useMemo } from "react";
+import { useState, useContext, useLayoutEffect, useMemo, useEffect, useCallback } from "react";
 import {
   Text,
   FlatList,
@@ -19,6 +19,10 @@ import { useRouter } from "expo-router";
 import ListCardItemGeneral from "@/components/ListCardItemGeneral";
 import SupplementsLog from "@/components/supplements/models/SupplementsLog";
 import BottomNav from "@/components/navbar/BottomNav";
+import CustomToast from "@/components/common/CustomToast";
+
+//import api service
+import { getSupplements, createSupplement, updateSupplement, deleteSupplement } from "../../services/supplementService";
 
 // LogSupplements allows user create supplement plans and log them
 function LogSupplements({ navigation }) {
@@ -87,23 +91,78 @@ function LogSupplements({ navigation }) {
     setShowInput(false);
   }
 
-  // saveSupplement is used to save supplement plan
-  function saveSupplement(plan) {
-    setPlans((curr) => {
-      const idx = curr.findIndex((p) => String(p.id) === String(plan.id));
-      if (idx >= 0) {
-        const copy = [...curr];
-        copy[idx] = plan;
-        return copy;
+  //load data from api
+  const loadSupplements = useCallback(async () => {
+    try{
+      const data = await getSupplements();
+      setPlans(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.warn("Failed to load supplements:", err);
+      CustomToast.error("Failed to load supplements");
+    }
+  }, []);
+
+  useEffect(() => {
+    loadSupplements();
+  }, [loadSupplements]);
+
+  //saveSupplement is used to save supplement to plan and api
+  async function saveSupplement(plan) {
+    //if has id then treat as update, else create
+    const isUpdate = ! !plan?.id;
+
+    //update entry
+    if (isUpdate) {
+      const prev = plans;
+
+      //replace entry with new 
+      setPlans((curr) => curr.map((p) => (String(p.id) === String(plan.id) ? { ...p, ...plan } : p)));
+      closeInput();
+
+      try {
+        //api request
+        const updated = await updateSupplement(plan.id, plan);
+
+        // sync with server response
+        setPlans((curr) =>
+          curr.map((p) => (String(p.id) === String(plan.id) ? { ...p, ...updated } : p))
+        );
+
+        CustomToast.success("Update successful");
+      } catch (err) {
+        console.warn("Update failed:", err?.message || err);
+        CustomToast.error("Update Failed");
+        setPlans(prev); //rollback to old list
       }
-      return [...curr, plan];
-    });
-    closeInput();
+      
+    } else {
+      //create new supplement
+      try {
+        const created = await createSupplement(plan);
+        setPlans((curr) => curr.map((p) => (p.id === tempId ? created : p)));
+      }  catch (err) {
+        console.warn("Create failed:", err?.message || err);
+        CustomToast.error("Create Failed");
+        setPlans(prev); //rollback to old list
+      }
+    }
   }
 
   // deletePlan is used to delete supplement plan
-  function deletePlan(id) {
-    setPlans((curr) => curr.filter((p) => p.id !== id));
+  async function deletePlan(id) {
+    const prev = plans;
+
+    //remove from array
+    setPlans((curr) => curr.filter((p) => String(p.id) !== String(id)));
+
+    try {
+      await deleteSupplement(id);
+      CustomToast.success("Supplement deleted");
+    } catch (err) {
+      console.warn("Delete failed:", err);
+      CustomToast.error("Delete Failed");
+      setPlans(prev); //rollback to old list
+    }
   }
 
   // startEditPlan is used to edit plan

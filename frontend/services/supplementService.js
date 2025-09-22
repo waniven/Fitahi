@@ -14,11 +14,11 @@ export async function createSupplement(supplement) {
 
 //PATCH an exsisting supplement
 export async function updateSupplement(id, supplement) {
-    const res = await api.post(`/supplements/${id}`, supplement);
+    const res = await api.patch(`/supplements/${id}`, supplement);
     return res.data;
 };
 
 //DELETE an exsisting suppliment
-export async function deletedSupplement(id) {
-    const res = await api.post(`/supplements/${id}`);
+export async function deleteSupplement(id) {
+    const res = await api.delete(`/supplements/${id}`);
 }
