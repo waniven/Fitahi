@@ -21,11 +21,13 @@ import ReminderModal from "@/components/reminders/ReminderModal";
 import LogCards from "@/components/logcards/LogCards";
 import { useCalendarLogic } from "@/hooks/useCalendarLogic";
 import * as Notifications from "@/services/notificationService";
+import { useWaterNotifications } from "@/services/waterNotifications";
 import { Font } from "@/constants/Font";
 
 export default function Home() {
   const theme = Colors["dark"];
   const router = useRouter();
+  useWaterNotifications();
 
   // notification permissions
   useEffect(() => {
@@ -55,7 +57,7 @@ export default function Home() {
   // Modal control
   const [modalVisible, setModalVisible] = useState(false);
 
-  // Use the custom calendar & reminder hook
+  // use the custom calendar & reminder hook
   const {
     reminders,
     viewingDate,
@@ -68,7 +70,13 @@ export default function Home() {
     handleEditReminder,
     handleSaveReminder,
     handleDeleteReminder,
+    setViewingDate,
   } = useCalendarLogic();
+
+  // always sync to today when Home mounts
+  useEffect(() => {
+    setViewingDate(formattedToday);
+  }, [formattedToday]);
 
   // Quick log cards data
   const quickLogCards = [

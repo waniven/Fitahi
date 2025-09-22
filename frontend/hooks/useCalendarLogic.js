@@ -7,12 +7,13 @@ import * as notificationService from "../services/notificationService";
 export function useCalendarLogic() {
   const [reminders, setReminders] = useState([]);
   const [viewingDate, setViewingDate] = useState(
-    new Date().toISOString().split("T")[0]
+    new Date().toLocaleDateString("en-CA") // YYYY-MM-DD format
   );
+
   const [editingReminder, setEditingReminder] = useState(null);
 
   const today = new Date();
-  const formattedToday = today.toISOString().split("T")[0];
+  const formattedToday = today.toLocaleDateString("en-CA");
 
   // Load reminders
   useEffect(() => {
