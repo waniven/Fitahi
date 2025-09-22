@@ -62,7 +62,7 @@ export async function cancelAllNotifications() {
     for (const n of scheduled) {
         await Notifications.cancelScheduledNotificationAsync(n.identifier);
     }
-    console.log('All scheduled notifications canceled');
+    console.log('All scheduled notifications cancelled');
 }
 
 // schedule upcoming notifications for the next `daysAhead` days
@@ -73,6 +73,27 @@ export async function scheduleReminderNotification(reminder, daysAhead = 7) {
     const notifications = [];
     const startDate = new Date(reminder.date || new Date());
 
+    if (reminder.repeat === 'None') {
+        // only schedule once if in the future
+        const notificationDate = new Date(startDate);
+        notificationDate.setHours(hour, minute, 0, 0);
+
+        if (notificationDate > new Date()) {
+            const id = await Notifications.scheduleNotificationAsync({
+                content: {
+                    title: reminder.title,
+                    body: reminder.notes || '',
+                    sound: 'default',
+                },
+                trigger: { type: 'date', date: notificationDate },
+            });
+            notifications.push(id);
+        }
+
+        return notifications;
+    }
+
+    // repeat logic for Daily, Weekly, Monthly
     for (let i = 0; i < daysAhead; i++) {
         const current = new Date(startDate);
 
@@ -90,13 +111,10 @@ export async function scheduleReminderNotification(reminder, daysAhead = 7) {
                 new Date(year, month + 1, 0).getDate()
             );
             current.setFullYear(year, month, day);
-        } else {
-            current.setDate(startDate.getDate());
         }
 
         current.setHours(hour, minute, 0, 0);
 
-        // skip past notifications
         if (current <= new Date()) continue;
 
         const id = await Notifications.scheduleNotificationAsync({

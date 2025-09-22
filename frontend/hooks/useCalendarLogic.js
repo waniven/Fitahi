@@ -21,10 +21,7 @@ export function useCalendarLogic() {
         const data = await reminderService.getReminders();
         setReminders(data);
       } catch (error) {
-        CustomToast.error(
-          "Failed to load reminders",
-          error?.message || "Please try again later"
-        );
+        CustomToast.error("Failed to load reminders", "Please try again later");
       }
     };
     fetchReminders();
@@ -91,7 +88,10 @@ export function useCalendarLogic() {
   // SELECT DAY
   const handleDayPress = (day) => {
     const selected = new Date(day.dateString);
-    if (selected < today) return; // disable past selection
+    const selectedStr = toLocalDateString(selected);
+    const todayStr = toLocalDateString(today);
+
+    if (selectedStr < todayStr) return; // only block true past days
     setViewingDate(day.dateString);
   };
 
@@ -135,10 +135,7 @@ export function useCalendarLogic() {
         prev.map((r) => (r._id === savedReminder._id ? savedReminder : r))
       );
     } catch (error) {
-      CustomToast.error(
-        "Failed to save reminder",
-        error?.message || "Please try again"
-      );
+      CustomToast.error("Failed to save reminder", "Please try again");
       console.log(error);
     }
   };
@@ -154,10 +151,7 @@ export function useCalendarLogic() {
       setReminders((prev) => prev.filter((r) => r._id !== id));
       CustomToast.reminderDeleted(deleted?.title || "");
     } catch (error) {
-      CustomToast.error(
-        "Failed to delete reminder",
-        error?.message || "Please try again"
-      );
+      CustomToast.error("Failed to delete reminder", "Please try again");
     }
   };
 
