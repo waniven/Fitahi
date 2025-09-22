@@ -6,6 +6,10 @@ import AnalyticsNutritionCard from "../../components/analytics/AnalyticsNutritio
 import { getAllNutrition } from "../../services/nutritionService";
 import CustomToast from "@/components/common/CustomToast";
 
+/**
+ * Screen that displays a scrollable list of nutrition log entries
+ * Shows historical nutrition data with specialized nutrition card formatting
+ */
 export default function NutritionAnalyticsScreen() {
   const router = useRouter();
   const [nutritionEntries, setNutritionEntries] = useState([]);

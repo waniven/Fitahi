@@ -14,20 +14,24 @@ import FitahiLogo from "../constants/FitahiLogo";
 import CustomButton from "../components/common/CustomButton";
 import globalStyles from "../styles/globalStyles";
 
+/**
+ * Main landing screen with animated logo and navigation to authentication flows
+ * Features sequential animations and prevents back navigation on splash screen
+ */
 export default function Index() {
   const scheme = useColorScheme();
   const theme = Colors[scheme ?? "light"];
   const router = useRouter();
 
-  // Animated values for splash page
+  // Animated values for coordinated entrance animations
   const svgFade = useRef(new Animated.Value(0)).current;
-  const svgTranslateY = useRef(new Animated.Value(-20)).current; // start slightly up
+  const svgTranslateY = useRef(new Animated.Value(-20)).current;
   const subtitleFade = useRef(new Animated.Value(0)).current;
-  const subtitleTranslateY = useRef(new Animated.Value(20)).current; // start slightly down
+  const subtitleTranslateY = useRef(new Animated.Value(20)).current;
   const buttonFade = useRef(new Animated.Value(0)).current;
 
+  // Orchestrates sequential entrance animations and disables back button
   useEffect(() => {
-    // animations: logo subtitle buttons
     Animated.sequence([
       Animated.parallel([
         Animated.timing(svgFade, {
@@ -65,11 +69,11 @@ export default function Index() {
       }),
     ]).start();
 
-    // prevent going back from splash
+    // Prevents hardware back button from exiting the splash screen
     const backHandler = BackHandler.addEventListener(
       "hardwareBackPress",
       () => {
-        return true; // block back button
+        return true;
       }
     );
 
@@ -78,7 +82,7 @@ export default function Index() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      {/*  Logo with fade + slide down*/}
+      {/* Animated logo with fade-in and slide-down effect */}
       <Animated.View
         style={{
           opacity: svgFade,
@@ -89,7 +93,7 @@ export default function Index() {
         <FitahiLogo width={320} height={140} fill="#FFFFFF" />
       </Animated.View>
 
-      {/* Subtitle with fade + slide up */}
+      {/* Animated tagline with fade-in and slide-up effect */}
       <Animated.View
         style={{
           opacity: subtitleFade,
@@ -102,7 +106,7 @@ export default function Index() {
         </Text>
       </Animated.View>
 
-      {/* Buttons with fade in */}
+      {/* Animated authentication buttons with fade-in effect */}
       <Animated.View
         style={{ opacity: buttonFade, width: "100%", alignItems: "center" }}
       >

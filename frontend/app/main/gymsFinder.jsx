@@ -7,13 +7,18 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import ShowGymsFinder from "../maps/ShowGymsFinder";
 
-
 const Stack = createNativeStackNavigator();
 
-
+/**
+ * Main navigation container for the gym finder feature
+ * Provides themed stack navigation with safe area handling
+ */
 export default function GymsFinderMainScreen() {
+  // Gets safe area insets and theme for consistent UI across devices
   const insets = useSafeAreaInsets();
   const theme = Colors[useColorScheme() ?? "light"];
+  
+  // Ensures minimum top padding for header on devices without notch
   const topPad = Math.max(insets.top, 24);
 
   return (
@@ -38,6 +43,7 @@ export default function GymsFinderMainScreen() {
           contentStyle: { backgroundColor: theme.background },
         }}
       >
+        {/* Main gym finder screen with map and search functionality */}
         <Stack.Screen
           name="ShowGymsFinder"
           component={ShowGymsFinder}

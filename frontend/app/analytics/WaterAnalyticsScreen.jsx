@@ -6,6 +6,10 @@ import AnalyticsUniversalCard from "@/components/analytics/AnalyticsUniversalCar
 import { getAllWater } from "@/services/waterServices";
 import CustomToast from "@/components/common/CustomToast";
 
+/**
+ * Screen that displays a scrollable list of water intake log entries
+ * Shows historical water consumption data in a standardized analytics format
+ */
 export default function WaterAnalyticsPage() {
   const router = useRouter();
   const [waterEntries, setWaterEntries] = useState([]);

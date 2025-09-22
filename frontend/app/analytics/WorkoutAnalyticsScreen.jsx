@@ -6,6 +6,10 @@ import AnalyticsUniversalCard from "../../components/analytics/AnalyticsUniversa
 import { getWorkoutResults } from "../../services/workoutResultService";
 import CustomToast from "@/components/common/CustomToast";
 
+/**
+ * Screen that displays a scrollable list of workout log entries
+ * Shows historical workout data with navigation to detailed workout results
+ */
 export default function WorkoutAnalyticsScreen() {
   const router = useRouter();
   const [workoutEntries, setWorkoutEntries] = useState([]);

@@ -2,11 +2,13 @@
 import Toast from 'react-native-toast-message';
 import { Colors } from '../../constants/Colors';
 
-// Toast utility providing consistent styling across the app
-// Wraps react-native-toast-message with predefined styles and common use cases
+/**
+ * Toast utility class providing consistent notification styling across the app
+ * Wraps react-native-toast-message with predefined styles and domain-specific methods
+ */
 class CustomToast {
   
-  // Green toast for successful operations
+  // Displays success toast with green styling for positive confirmations
   static success(title, message, duration = 3000) {
     Toast.show({
       type: 'success',
@@ -29,7 +31,7 @@ class CustomToast {
     });
   }
 
-  // Red toast for errors and failures
+  // Displays error toast with red styling for failures and critical issues
   static error(title, message, duration = 4000) {
     Toast.show({
       type: 'error',
@@ -52,7 +54,7 @@ class CustomToast {
     });
   }
 
-  // Blue toast for information and neutral messages
+  // Displays informational toast with blue styling for neutral messages
   static info(title, message, duration = 3000) {
     Toast.show({
       type: 'info',
@@ -75,7 +77,7 @@ class CustomToast {
     });
   }
 
-  // Orange toast for warnings and cautions
+  // Displays warning toast with orange styling for cautions and alerts
   static warning(title, message, duration = 3500) {
     Toast.show({
       type: 'info',
@@ -98,7 +100,7 @@ class CustomToast {
     });
   }
 
-  // Food logging success message
+  // Shows confirmation when food item is successfully logged
   static nutritionSaved(foodName, mealType) {
     this.success(
       'Food Logged!',
@@ -106,7 +108,7 @@ class CustomToast {
     );
   }
 
-  // Food deletion confirmation message
+  // Shows confirmation when food entry is deleted from log
   static nutritionDeleted(foodName) {
     this.info(
       'Entry Removed',
@@ -114,7 +116,7 @@ class CustomToast {
     );
   }
 
-  // Form validation error message
+  // Shows validation error for form input issues
   static validationError(message = 'Please fill in all required fields') {
     this.error(
       'Validation Error',
@@ -122,7 +124,7 @@ class CustomToast {
     );
   }
 
-  // Water intake logging success
+  // Shows confirmation when water intake is successfully recorded
   static waterSaved(amount) {
     this.success(
       'Water Logged!',
@@ -130,7 +132,7 @@ class CustomToast {
     );
   }
 
-  // Water entry deletion confirmation
+  // Shows confirmation when water entry is removed from log
   static waterDeleted(amount) {
     this.info(
       'Entry Removed',
@@ -138,7 +140,7 @@ class CustomToast {
     );
   }
 
-  // Workout creation success
+  // Shows confirmation when new workout is created
   static workoutSaved(workoutName) {
     this.success(
       'Workout Created!',
@@ -146,7 +148,7 @@ class CustomToast {
     );
   }
 
-  // Workout completion celebration
+  // Shows celebration message when workout session is completed
   static workoutCompleted(workoutName) {
     this.success(
       'Great Job!',
@@ -154,7 +156,7 @@ class CustomToast {
     );
   }
 
-  // Reminder creation success
+  // Shows confirmation when reminder is successfully saved
   static reminderSaved(reminderTitle) {
     this.success(
       'Reminder Added!',
@@ -162,7 +164,7 @@ class CustomToast {
     );
   }
 
-  // Reminder update success
+  // Shows confirmation when existing reminder is modified
   static reminderUpdated(reminderTitle) {
     this.success(
       'Reminder Updated!',
@@ -170,7 +172,7 @@ class CustomToast {
     );
   }
 
-  // Reminder deletion confirmation
+  // Shows confirmation when reminder is deleted
   static reminderDeleted(reminderTitle) {
     this.info(
       'Reminder Deleted',
@@ -178,7 +180,7 @@ class CustomToast {
     );
   }
 
-  // Reminder notification (when reminder triggers)
+  // Shows alert when scheduled reminder triggers
   static reminderNotification(reminderTitle) {
     this.warning(
       'Reminder!',
@@ -186,7 +188,7 @@ class CustomToast {
     );
   }
 
-  // Flexible toast with custom styling options
+  // Shows fully customizable toast with flexible styling options
   static custom({
     type = 'info',
     title,
@@ -219,7 +221,7 @@ class CustomToast {
     });
   }
 
-  // Dismiss currently visible toast
+  // Immediately dismisses any currently visible toast
   static hide() {
     Toast.hide();
   }

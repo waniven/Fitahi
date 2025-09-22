@@ -20,14 +20,17 @@ import ListCardItemGeneral from "@/components/ListCardItemGeneral";
 import SupplementsLog from "@/components/supplements/models/SupplementsLog";
 import BottomNav from "@/components/navbar/BottomNav";
 
-// LogSupplements allows user create supplement plans and log them
+/**
+ * Supplement logging screen that manages supplement plans and daily tracking
+ * Allows users to create supplement schedules and mark daily intake status
+ */
 function LogSupplements({ navigation }) {
   const scheme = useColorScheme();
   const theme = Colors[scheme ?? "light"];
   const { toggleChat } = useContext(AIContext);
   const router = useRouter();
 
-  // useLayoutEffect sets go back Home button and set styles of AI button
+  // Sets up navigation header with back button and AI chat toggle
   useLayoutEffect(() => {
     const goBackOrHome = () => {
       if (navigation.canGoBack()) navigation.goBack();
@@ -65,29 +68,30 @@ function LogSupplements({ navigation }) {
     });
   }, [navigation, theme, toggleChat]);
 
-  // Default configuration for this screen
+  // Main state for supplement management
   const [showInput, setShowInput] = useState(false);
-  const [plans, setPlans] = useState([]); // SupplementsPlan[]
+  const [plans, setPlans] = useState([]);
   const [planToEdit, setPlanToEdit] = useState(null);
-  const [tab, setTab] = useState("today"); // <--- NEW: "today" | "all"
+  
+  // Tab state for switching between today's schedule and all plans
+  const [tab, setTab] = useState("today");
 
   const NAV_BAR_HEIGHT = 64;
   const BOX_MAX_HEIGHT = Math.round(Dimensions.get("window").height * 0.7);
   const isEmpty = plans.length === 0;
 
-  // openAdd to pop up the filling form
+  // Modal control functions
   function openAdd() {
     setPlanToEdit(null);
     setShowInput(true);
   }
 
-  // closeInput to close the filling form
   function closeInput() {
     setPlanToEdit(null);
     setShowInput(false);
   }
 
-  // saveSupplement is used to save supplement plan
+  // Saves new or edited supplement plan to the plans array
   function saveSupplement(plan) {
     setPlans((curr) => {
       const idx = curr.findIndex((p) => String(p.id) === String(plan.id));
@@ -101,21 +105,22 @@ function LogSupplements({ navigation }) {
     closeInput();
   }
 
-  // deletePlan is used to delete supplement plan
+  // Removes a supplement plan from the list
   function deletePlan(id) {
     setPlans((curr) => curr.filter((p) => p.id !== id));
   }
 
-  // startEditPlan is used to edit plan
+  // Opens edit modal for an existing supplement plan
   function startEditPlan(item) {
     setPlanToEdit(item);
     setShowInput(true);
   }
 
-  // Check today intake
+  // Gets today's date and day index for filtering scheduled supplements
   const todayStr = localISODate(new Date());
   const todayIdx = getMon0Sun6Index(new Date());
 
+  // Filters and sorts supplement plans scheduled for today
   const todaysItems = useMemo(() => {
     const list = [];
     for (const p of plans) {
@@ -142,7 +147,7 @@ function LogSupplements({ navigation }) {
   const hasPlans = plans?.length > 0;
   const hasToday = (todaysItems?.length ?? 0) > 0;
 
-  // markStatus checks the status of today's supplement intaken
+  // Updates the intake status for a specific supplement plan on today's date
   function markStatus(planId, status) {
     setPlans((prev) =>
       prev.map((plan) => {
@@ -165,7 +170,7 @@ function LogSupplements({ navigation }) {
     );
   }
 
-  // renderTodayCard: render to screen today card
+  // Renders individual supplement cards for today's view with intake tracking
   const renderTodayCard = ({ item }) => {
     const { plan, log } = item;
     const isTaken = log.status === "taken";
@@ -176,11 +181,11 @@ function LogSupplements({ navigation }) {
         style={[
           styles.todayCard,
           {
-            backgroundColor: theme.textPrimary /* ListCardItemGeneral */,
+            backgroundColor: theme.textPrimary,
           },
         ]}
       >
-        {/* Column 1 */}
+        {/* Supplement details column */}
         <View style={{ flex: 1 }}>
           <Text
             style={[
@@ -239,7 +244,7 @@ function LogSupplements({ navigation }) {
           </View>
         </View>
 
-        {/* Column 2 */}
+        {/* Status tracking column with taken/skipped toggles */}
         <View style={styles.col2}>
           <Text
             style={[
@@ -299,7 +304,7 @@ function LogSupplements({ navigation }) {
     );
   };
 
-  // renderPlanRow renders to screen plan in row
+  // Renders supplement plan items in the "All logs" view with edit/delete options
   const renderPlanRow = ({ item }) => {
     const dosageTime = [item.dosage || "", item.timeOfDay || ""]
       .filter(Boolean)
@@ -315,7 +320,7 @@ function LogSupplements({ navigation }) {
             name: item.name,
             type: `${dosageTime || "—"}`,
           }}
-          days={item.selectedDays} // <-- pass days here
+          days={item.selectedDays}
           onEdit={() => startEditPlan(item)}
           onDelete={() => deletePlan(item.id)}
           onStart={null}
@@ -331,7 +336,7 @@ function LogSupplements({ navigation }) {
   return (
     <View style={[styles.screen, { backgroundColor: theme.background }]}>
       <View style={styles.content}>
-        {/* Add/Edit Modal */}
+        {/* Modal for adding/editing supplement plans */}
         <SupplementsInput
           visible={showInput}
           onCancel={closeInput}
@@ -339,7 +344,7 @@ function LogSupplements({ navigation }) {
           entryToEdit={planToEdit}
         />
 
-        {/* Top toggle buttons — only show after we have at least one plan */}
+        {/* Tab selector between today's schedule and all plans */}
         {hasPlans && (
           <View
             style={[
@@ -391,7 +396,7 @@ function LogSupplements({ navigation }) {
           </View>
         )}
 
-        {/* Content area */}
+        {/* Main content area with conditional rendering based on state */}
         {hasPlans ? (
           tab === "today" ? (
             hasToday ? (
@@ -423,14 +428,14 @@ function LogSupplements({ navigation }) {
                 renderItem={renderPlanRow}
                 contentContainerStyle={[
                   styles.listContent,
-                  { paddingBottom: NAV_BAR_HEIGHT + 120 }, // Room for FAB + nav
+                  { paddingBottom: NAV_BAR_HEIGHT + 120 },
                 ]}
                 showsVerticalScrollIndicator
               />
             </View>
           )
         ) : (
-          // Empty state
+          // Empty state with centered add button and instructional text
           <View style={styles.fabContainerEmpty}>
             <Text
               style={[
@@ -450,10 +455,9 @@ function LogSupplements({ navigation }) {
           </View>
         )}
 
-        {/* Spacer so content doesn't collide with FAB/nav */}
         <View style={{ height: NAV_BAR_HEIGHT + 28 }} />
 
-        {/* FAB */}
+        {/* Floating action button for adding new supplement plans */}
         {hasPlans && (
           <Fab
             onPress={openAdd}
@@ -465,7 +469,6 @@ function LogSupplements({ navigation }) {
         )}
       </View>
 
-      {/* bottom navigation */}
       <BottomNav />
     </View>
   );
@@ -473,13 +476,12 @@ function LogSupplements({ navigation }) {
 
 export default LogSupplements;
 
-/* ---------- helpers ---------- */
-// getMon0Sun6Index returns day of the week in index
+// Converts day of week to Monday=0, Sunday=6 index
 function getMon0Sun6Index(d) {
   return (d.getDay() + 6) % 7;
 }
 
-// localISODate returns date format
+// Formats date as YYYY-MM-DD string
 function localISODate(d) {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
@@ -487,7 +489,7 @@ function localISODate(d) {
   return `${y}-${m}-${day}`;
 }
 
-// timeToMinutes return minutes total
+// Converts time string to minutes for sorting purposes
 function timeToMinutes(str) {
   if (!str) return 10 ** 6;
   const ampm = str.match(/^(\d{1,2}):(\d{2})\s?(AM|PM)$/i);
@@ -504,18 +506,11 @@ function timeToMinutes(str) {
   return 10 ** 6;
 }
 
-// Map 0..6 -> Mon..Sun labels
 const DAY_LABELS = ["M", "T", "W", "T", "F", "S", "S"];
 
-/**
- * Turn an array of weekday indices into a label string.
- * Examples:
- *   toDayLabels([0,2,4]) -> "M, W, F"
- *   toDayLabels([0,1,2,3,4,5,6]) -> "Every day"
- */
+// Converts array of day indices to readable day labels string
 function toDayLabels(indices = []) {
   if (!Array.isArray(indices)) return "";
-  // dedupe + keep only valid 0..6
   const uniq = [...new Set(indices)].filter((i) => i >= 0 && i <= 6);
   if (uniq.length === 7) return "Every day";
   return uniq
@@ -524,7 +519,6 @@ function toDayLabels(indices = []) {
     .join(", ");
 }
 
-/* ---------- styles ---------- */
 const styles = StyleSheet.create({
   screen: { flex: 1, paddingTop: 12 },
   content: { flex: 1, paddingHorizontal: 16 },

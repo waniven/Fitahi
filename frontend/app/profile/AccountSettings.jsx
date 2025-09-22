@@ -25,19 +25,32 @@ import { Font } from "@/constants/Font";
 import CustomButton from "../../components/common/CustomButton";
 import { getBiometrics } from "@/services/biometricService";
 
+/**
+ * Account settings screen for managing user profile and preferences
+ * Handles profile updates, image uploads, form validation, and user logout
+ */
 export default function AccountSettings() {
   const theme = Colors["dark"];
   const navigation = useNavigation();
+  
+  // Profile image state with URI and base64 data for upload
   const [profileImage, setProfileImage] = useState(null);
+  
+  // Date picker state for date of birth selection
   const [selectedDob, setSelectedDob] = useState(null);
+  
+  // Loading and error states for data fetching
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
+  
+  // Form validation error messages
   const [errors, setErrors] = useState({});
 
+  // Date conversion helpers for API compatibility
   const toYmd = (d) => (d ? new Date(d).toISOString().slice(0, 10) : "");
   const fromYmd = (s) => (s ? new Date(s) : null);
 
-  // Form state for all input fields
+  // Comprehensive form state containing all user profile fields
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
@@ -55,7 +68,7 @@ export default function AccountSettings() {
     caloriesGoal: "",
   });
 
-  //Fetch profile on mount and prefill form
+  // Fetches user profile and latest biometric data on component mount
   useEffect(() => {
     let alive = true;
 
@@ -84,7 +97,7 @@ export default function AccountSettings() {
         setSelectedDob(fromYmd(dobStr));
         if (me.pfp) setProfileImage({ uri: me.pfp });
 
-        // fetch latest biometric log
+        // Fetches most recent biometric entry to populate height/weight
         const biometrics = await getBiometrics();
         if (biometrics.length > 0) {
           const latest = biometrics[0];
@@ -118,21 +131,21 @@ export default function AccountSettings() {
     };
   }, []);
 
-  // Validate inputs
+  // Validates all form inputs with specific rules for each field
   const validateForm = () => {
     const newErrors = {};
 
     if (!/^[A-Za-z]+$/.test(form.firstName.trim())) {
-      newErrors.firstName = "First name must contain only letters."; //first name must only contain letter no numbers etc
+      newErrors.firstName = "First name must contain only letters.";
     }
     if (!/^[A-Za-z]+$/.test(form.lastName.trim())) {
-      newErrors.lastName = "Last name must contain only letters."; //last name only contains letters
+      newErrors.lastName = "Last name must contain only letters.";
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
-      newErrors.email = "Invalid email format."; //email must be valid
+      newErrors.email = "Invalid email format.";
     }
     if (form.password.length > 0 && form.password.length < 8) {
-      newErrors.password = "Password must be at least 8 characters."; //password to be at least 8 characters
+      newErrors.password = "Password must be at least 8 characters.";
     }
     if (
       form.waterGoal &&
@@ -156,7 +169,7 @@ export default function AccountSettings() {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Pick profile image from gallery
+  // Opens image picker and processes selected image for profile picture
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: "images",
@@ -186,17 +199,16 @@ export default function AccountSettings() {
     }
   };
 
-  // Handle input changes
+  // Updates form state when input values change
   const handleChange = (key, value) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
-  //Save chances to backend
+  // Validates form and saves all changes to the backend
   const handleSave = async () => {
     if (!validateForm()) {
-      // Show toast if validation fails
       CustomToast.validationError("Please fix the errors before saving.");
-      return; //if requirements not met return error
+      return;
     }
 
     try {
@@ -205,7 +217,7 @@ export default function AccountSettings() {
       const email = form.email.trim().toLowerCase();
       const dateofbirth = form.dob;
 
-      //Build data URL if we have base64
+      // Converts profile image to data URL format for API upload
       const pfp = profileImage?.base64
         ? `data:${profileImage.mime};base64,${profileImage.base64}`
         : undefined;
@@ -235,18 +247,19 @@ export default function AccountSettings() {
         intakeGoals,
       });
 
-      // Show success toast when info saved
       CustomToast.success("Saved!", "Your information has been updated.");
     } catch (e) {
       CustomToast.error("Save Failed", "Please try again later.");
     }
   };
 
+  // Updates both form state and date picker when date of birth changes
   const handleDobChange = (date) => {
     setSelectedDob(date);
     setForm((prev) => ({ ...prev, dob: toYmd(date) }));
   };
 
+  // Logs out user and redirects to login screen
   const handleLogout = () => {
     console.log("logout");
     logout();
@@ -262,7 +275,7 @@ export default function AccountSettings() {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         keyboardVerticalOffset={1}
       >
-        {/* Back button to go back to home page */}
+        {/* Back navigation button to return to home screen */}
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.navigate("home/index")}
@@ -270,18 +283,17 @@ export default function AccountSettings() {
           <Ionicons name="arrow-back" size={16} color="black" />
         </TouchableOpacity>
 
-        {/* Page header */}
         <Text style={[styles.title, { color: theme.textPrimary }]}>
           Your Account Settings
         </Text>
 
-        {/* Scrollable form */}
+        {/* Scrollable form container with all input fields */}
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Profile Picture */}
+          {/* Profile picture section with edit functionality */}
           <View style={styles.profilePicWrapper}>
             <View style={styles.profileCircle}>
               {profileImage ? (
@@ -293,13 +305,12 @@ export default function AccountSettings() {
                 <Ionicons name="person" size={60} color="white" />
               )}
             </View>
-            {/* Edit icon for profile image */}
             <TouchableOpacity style={styles.editIcon} onPress={pickImage}>
               <Ionicons name="pencil" size={18} color="white" />
             </TouchableOpacity>
           </View>
 
-          {/* Form Fields*/}
+          {/* Basic profile information inputs */}
           <View style={styles.formContainer}>
             <CustomInput
               label="First Name"
@@ -347,7 +358,7 @@ export default function AccountSettings() {
               secureTextEntry
             />
 
-            {/* Quiz Questions */}
+            {/* Fitness quiz preferences section */}
             <Text style={[styles.title, { color: "#fff" }]}>
               Quiz Questions
             </Text>
@@ -387,10 +398,11 @@ export default function AccountSettings() {
               onChangeText={(text) => handleChange("diet", text)}
             />
 
+            {/* Read-only biometric fields populated from latest biometric entry */}
             <CustomInput
               label="Height in cm (editable via biometrics log)"
               value={form.height}
-              editable={false} // read-only
+              editable={false}
               keyboardType="numeric"
               inputStyle={{ color: "white" }}
             />
@@ -398,7 +410,7 @@ export default function AccountSettings() {
             <CustomInput
               label="Weight in kg (editable via biometrics log)"
               value={form.weight}
-              editable={false} // read-only
+              editable={false}
               keyboardType="numeric"
               inputStyle={{ color: "white" }}
             />
@@ -420,7 +432,7 @@ export default function AccountSettings() {
             />
           </View>
 
-          {/* Logout button */}
+          {/* Fixed-position logout button */}
           <View style={styles.logoutButtonWrapper}>
             <CustomButton
               title="Logout"
@@ -432,11 +444,10 @@ export default function AccountSettings() {
             />
           </View>
 
-          {/* Extra spacing to avoid save button overlap */}
           <View style={{ height: 100 }} />
         </ScrollView>
 
-        {/* Sticky Save Button at the bottom */}
+        {/* Fixed-position save button at bottom of screen */}
         <View style={styles.saveButtonWrapper}>
           <CustomButton
             title="Save Information"
@@ -449,7 +460,6 @@ export default function AccountSettings() {
         </View>
       </KeyboardAvoidingView>
 
-      {/* Toast for notifications */}
       <Toast />
     </SafeAreaView>
   );
