@@ -344,7 +344,7 @@ const AnalyticsDashboard = () => {
                       backgroundColor: "#fff",
                       backgroundGradientFrom: "#fff",
                       backgroundGradientTo: "#fff",
-                      decimalPlaces: 1, // allow fractional minutes
+                      decimalPlaces: 2,
                       color: (opacity = 1) => `rgba(255, 99, 132, ${opacity})`,
                       labelColor: (opacity = 1) =>
                         `rgba(51, 51, 51, ${opacity})`,

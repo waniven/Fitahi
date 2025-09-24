@@ -37,8 +37,8 @@ export async function scheduleWorkoutReminders(workout) {
             ).padStart(2, "0")}`;
 
             const reminderData = {
-                title: `🏋️‍♂️ Time for your workout: ${workout.workoutName}`,
-                notes: `Workout type: ${workout.workoutType}`,
+                title: `👋 Hey - Don't forget about your workout: ${workout.workoutName}!`,
+                notes: `💪 You can do it!!`,
                 date: localDateStr, // store local string
                 repeat: "Weekly",
                 time: localTimeStr,
