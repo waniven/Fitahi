@@ -15,9 +15,9 @@ export async function scheduleWorkoutReminders(workout) {
             const jsDayIdx = (dayIdx + 1) % 7;
             let daysUntil = (jsDayIdx - now.getDay() + 7) % 7;
 
-            // If today is selected, keep it today if the time hasn't passed
-            const reminderHour = 15;
-            const reminderMinute = 40
+            // if today is selected, keep it today if the time hasn't passed
+            const reminderHour = 10; // send notifications at 10am on selected days
+            const reminderMinute = 0
             if (
                 daysUntil === 0 &&
                 (now.getHours() > reminderHour ||
