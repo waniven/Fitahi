@@ -3,7 +3,7 @@ import * as Notifications from "expo-notifications";
 import { getWater } from "@/services/waterServices";
 import { getMe } from "@/services/userService";
 
-export function useWaterNotifications() {
+export function scheduleWaterNotifications() {
     useEffect(() => {
         let notificationsActive = true; // stop service after final goal message
         let waterEntries = [];

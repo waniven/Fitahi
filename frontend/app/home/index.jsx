@@ -21,13 +21,12 @@ import ReminderModal from "@/components/reminders/ReminderModal";
 import LogCards from "@/components/logcards/LogCards";
 import { useCalendarLogic } from "@/hooks/useCalendarLogic";
 import * as Notifications from "@/services/notificationService";
-import { useWaterNotifications } from "@/services/waterNotifications";
+import { scheduleWaterNotifications } from "@/services/waterNotifications";
 import { Font } from "@/constants/Font";
 
 export default function Home() {
   const theme = Colors["dark"];
   const router = useRouter();
-  useWaterNotifications();
 
   // notification permissions
   useEffect(() => {
@@ -41,6 +40,8 @@ export default function Home() {
     }
     init();
   }, []);
+
+  scheduleWaterNotifications();
 
   // Disable Android back button on Home
   useEffect(() => {
