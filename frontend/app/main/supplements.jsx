@@ -7,15 +7,20 @@ import { Font } from "@/constants/Font";
 
 import LogSupplements from "../supplements/LogSupplementScreen";
 
-
-
 const Stack = createNativeStackNavigator();
 
-
+/**
+ * Main navigation container for the supplements feature
+ * Provides themed stack navigation with safe area handling for supplement logging
+ */
 export default function SupplementsMainScreen() {
+  // Gets safe area insets and theme for consistent UI across devices
   const insets = useSafeAreaInsets();
   const theme = Colors[useColorScheme() ?? "light"];
+  
+  // Ensures minimum top padding for header on devices without notch
   const topPad = Math.max(insets.top, 24);
+  
   return (
     <>
       <StatusBar style="light" translucent={false} />
@@ -37,12 +42,12 @@ export default function SupplementsMainScreen() {
           contentStyle: { backgroundColor: theme.background },
         }}
       >
+        {/* Main supplement logging screen for tracking supplement intake */}
         <Stack.Screen
           name="LogSupplements"
           component={LogSupplements}
           options={{ title: "Supplement Log" }}
         />
-        
       </Stack.Navigator>
     </>
   );

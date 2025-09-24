@@ -20,17 +20,24 @@ import CustomToast from "../../components/common/CustomToast";
 import globalStyles from "../../styles/globalStyles";
 import { login } from "../../services/authService";
 
+/**
+ * Login screen component with form validation and authentication
+ * Handles user login with email/password and navigates to home on success
+ */
 export default function Login() {
   const router = useRouter();
   const theme = Colors["dark"];
   const insets = useSafeAreaInsets();
 
-  //for state
+  // Form state management
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [busy, setBusy] = useState(false);
   const [hasAttemptedLogin, setHasAttemptedLogin] = useState(false);
 
-  // Email validation function
+  /**
+   * Validates email format and presence
+   * Returns cleaned email string or error message
+   */
   const validateEmail = (email) => {
     if (!email || !email.trim()) return "Email is required";
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -39,13 +46,18 @@ export default function Login() {
     return email.trim();
   };
 
-  // Password validation function
+  /**
+   * Validates password presence
+   * Returns password or error message
+   */
   const validatePassword = (password) => {
     if (!password || !password.trim()) return "Password is required";
     return password;
   };
 
-  // Update form field and clear errors if user has attempted login
+  /**
+   * Updates form field value and clears validation errors if user has previously attempted login
+   */
   const updateField = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
 
@@ -58,7 +70,10 @@ export default function Login() {
     }
   };
 
-  //validation and navigation
+  /**
+   * Handles login form submission with validation and error handling
+   * Navigates to home screen on successful authentication
+   */
   const handleLogin = async () => {
     const email = validateEmail(formData.email);
     const password = validatePassword(formData.password);
@@ -69,10 +84,13 @@ export default function Login() {
       CustomToast.success("Welcome Back!", "Login successful");
       router.replace("/home");
     } catch (err) {
+      // Provide user-friendly error messages based on server response
       const status = err?.response?.status;
       const serverMsg = err?.response?.data?.error;
       const msg = serverMsg || `Login failed${status ? ` (${status})` : ""}`;
       CustomToast.error(msg);
+      
+      // Log detailed error info for debugging when no server message is available
       if (!serverMsg)
         console.log("LOGIN ERROR:", {
           status,
@@ -89,23 +107,26 @@ export default function Login() {
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.background }]}
     >
+      {/* Keyboard avoidance with platform-specific behavior */}
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"} // changed to "height" on Android
-        keyboardVerticalOffset={Platform.OS === "ios" ? 60 : 0} // ios tweak
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 60 : 0}
       >
         <ScrollView
           contentContainerStyle={[
             styles.contentContainer,
             { paddingBottom: 40 + insets.bottom },
-          ]} // added safe area bottom
+          ]}
           showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled" // added for input taps
+          keyboardShouldPersistTaps="handled"
         >
+          {/* App logo section */}
           <View style={styles.logoContainer}>
             <FitahiLogo width={260} height={100} fill="#FFFFFF" />
           </View>
 
+          {/* Welcome text and instructions */}
           <Text
             style={[
               globalStyles.welcomeText,
@@ -128,6 +149,7 @@ export default function Login() {
             Please log in with your email and password
           </Text>
 
+          {/* Login form inputs */}
           <View style={styles.formContainer}>
             <CustomInput
               label="Email Address"
@@ -148,6 +170,7 @@ export default function Login() {
             />
           </View>
 
+          {/* Login submit button */}
           <View style={{ width: "100%", alignItems: "center", marginTop: 20 }}>
             <CustomButton
               title="Log In"
@@ -169,7 +192,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 80,
     alignItems: "center",
-    flexGrow: 1, // ensures ScrollView fills screen for proper keyboard behavior
+    flexGrow: 1,
   },
 
   logoContainer: { marginBottom: 30 },

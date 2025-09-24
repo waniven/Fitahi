@@ -9,13 +9,18 @@ import CreateWorkout from "../workout/CreateWorkoutScreen";
 import StartWorkoutScreen from "../workout/StartWorkoutScreen";
 import WorkoutResultScreen from "../workout/WorkoutResultScreen";
 
-
 const Stack = createNativeStackNavigator();
 
-
+/**
+ * Main navigation container for the workout feature
+ * Manages the complete workout flow from creation to completion and results
+ */
 export default function WorkoutMainScreen() {
+  // Gets safe area insets and theme for consistent UI across devices
   const insets = useSafeAreaInsets();
   const theme = Colors[useColorScheme() ?? "light"];
+  
+  // Ensures minimum top padding for header on devices without notch
   const topPad = Math.max(insets.top, 24);
 
   return (
@@ -40,11 +45,14 @@ export default function WorkoutMainScreen() {
           contentStyle: { backgroundColor: theme.background },
         }}
       >
+        {/* Main workout creation and selection screen */}
         <Stack.Screen
           name="CreateWorkout"
           component={CreateWorkout}
           options={{ title: "Workout Log" }}
         />
+        
+        {/* Active workout execution screen with dynamic title based on workout name */}
         <Stack.Screen
           name="StartWorkoutScreen"
           component={StartWorkoutScreen}
@@ -55,6 +63,8 @@ export default function WorkoutMainScreen() {
               "Start Workout",
           })}
         />
+        
+        {/* Post-workout results and summary screen */}
         <Stack.Screen
           name="WorkoutResult"
           component={WorkoutResultScreen}

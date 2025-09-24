@@ -11,35 +11,38 @@ import {
 } from "../../services/biometricService";
 import CustomToast from "@/components/common/CustomToast";
 
+/**
+ * Main biometrics screen that manages biometric data tracking and display
+ * Shows dashboard with entries or empty state, handles CRUD operations
+ */
 export default function BiometricsScreen() {
   const router = useRouter();
+  
+  // Controls the visibility of the biometric entry modal
   const [isModalVisible, setIsModalVisible] = useState(false);
+  
+  // Stores all biometric entries fetched from the backend
   const [biometricEntries, setBiometricEntries] = useState([]);
+  
+  // Controls loading state during initial data fetch
   const [loading, setLoading] = useState(true);
-  const [progress, setProgress] = useState(0); // animated progress
+  
+  // Tracks animated progress during data loading (0-1)
+  const [progress, setProgress] = useState(0);
 
+  // Fetches biometric entries on component mount with animated progress
   useEffect(() => {
     const fetchEntries = async () => {
       try {
-        // Start progress at 30%
         setProgress(0.3);
-
-        // fetch biometrics
         const data = await getBiometrics();
-
-        // update progress to 70% after fetch
         setProgress(0.7);
-
-        // set data
         setBiometricEntries(data);
-
-        // complete progress
         setProgress(1);
       } catch (err) {
         console.error("Failed to fetch biometrics:", err);
         CustomToast.error("Error", "Could not fetch biometrics.");
       } finally {
-        // add a short delay so users see the progress complete
         setTimeout(() => setLoading(false), 300);
       }
     };
@@ -47,11 +50,12 @@ export default function BiometricsScreen() {
     fetchEntries();
   }, []);
 
+  // Navigation handlers
   const handleBackPress = () => router.back();
   const handleAddBiometric = () => setIsModalVisible(true);
   const handleCloseModal = () => setIsModalVisible(false);
 
-  // handle biometric entry creation
+  // Creates a new biometric entry and adds it to the top of the list
   const handleSaveEntry = async (entryData) => {
     try {
       const created = await createBiometric(entryData);
@@ -62,22 +66,19 @@ export default function BiometricsScreen() {
     }
   };
 
-  // handle biometric entry deletion
+  // Deletes a biometric entry with confirmation toast showing the removed weight
   const handleDeleteEntry = async (entryId) => {
     try {
-      // Find the entry so we can get its weight
       const entry = biometricEntries.find((e) => e._id === entryId);
       if (!entry) return;
 
       await deleteBiometric(entryId);
 
-      // Show toast after successful deletion
       CustomToast.info(
         "Measurement Removed",
         `${entry.weight?.toFixed(1) || "?"}kg entry deleted from your log`
       );
 
-      // Update state to remove deleted entry
       setBiometricEntries((prev) => prev.filter((e) => e._id !== entryId));
     } catch (err) {
       console.error("Failed to delete biometric:", err);
@@ -85,14 +86,14 @@ export default function BiometricsScreen() {
     }
   };
 
-  // Show loading overlay while fetching
+  // Shows animated loading screen during data fetch
   if (loading) {
     return (
       <LoadingProgress progress={progress} message="Fetching biometrics..." />
     );
   }
 
-  // Show empty state if no entries
+  // Shows empty state with add button when no entries exist
   if (biometricEntries.length === 0) {
     return (
       <>
@@ -113,7 +114,7 @@ export default function BiometricsScreen() {
     );
   }
 
-  // Show dashboard if entries exist
+  // Shows dashboard with biometric entries and management capabilities
   return (
     <>
       <BiometricsDashboard

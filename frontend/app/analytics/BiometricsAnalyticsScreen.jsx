@@ -6,6 +6,10 @@ import AnalyticsUniversalCard from "../../components/analytics/AnalyticsUniversa
 import { getBiometrics } from "../../services/biometricService";
 import CustomToast from "@/components/common/CustomToast";
 
+/**
+ * Screen that displays a scrollable list of biometric log entries
+ * Shows historical biometric data in a standardized analytics format
+ */
 export default function BiometricsAnalyticsScreen() {
   const router = useRouter();
   const [biometricEntries, setBiometricEntries] = useState([]);

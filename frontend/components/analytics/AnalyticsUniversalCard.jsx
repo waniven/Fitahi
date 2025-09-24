@@ -259,6 +259,7 @@ const AnalyticsUniversalCard = ({
     </>
   );
 
+  // Conditionally wraps content in TouchableOpacity for interactive cards
   if (onPress) {
     return (
       <TouchableOpacity

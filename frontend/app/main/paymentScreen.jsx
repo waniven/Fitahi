@@ -4,20 +4,30 @@ import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput
 import { Colors } from '../../constants/Colors';
 import globalStyles from '../../styles/globalStyles';
 
+// Formats card number with spaces every 4 digits (1234 5678 9012 3456)
 const formatCardNumber = (num) => num.replace(/\D/g, '').replace(/(.{4})/g, '$1 ').trim();
+
+// Formats expiry date as MM/YY
 const formatExpiry = (text) => {
   const clean = text.replace(/\D/g, '');
   if (clean.length <= 2) return clean;
   return clean.slice(0, 2) + '/' + clean.slice(2, 4);
 };
 
+/**
+ * Payment form screen with credit card input and live preview
+ * Features card visualization, input validation, and formatted display
+ */
 export default function PaymentScreen() {
   const theme = Colors[useColorScheme() ?? 'light'];
+  
+  // Form state for all payment card fields
   const [cardNumber, setCardNumber] = useState('');
   const [cardName, setCardName] = useState('');
   const [expiry, setExpiry] = useState('');
   const [cvv, setCvv] = useState('');
 
+  // Validates payment form and handles submission
   const handleSubmit = () => {
     if (cardNumber.replace(/\s/g, '').length !== 16) return alert('Please enter a valid 16-digit card number.');
     if (!cardName.trim()) return alert('Please enter the cardholder name.');
@@ -31,6 +41,7 @@ export default function PaymentScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         <Text style={[globalStyles.textBold, styles.title, { color: theme.textPrimary }]}>Enter Payment Details</Text>
 
+        {/* Live credit card preview that updates as user types */}
         <View style={[styles.card, { backgroundColor: theme.tint }]}>
           <Text style={styles.chip}>💳</Text>
           <Text style={styles.cardNumber}>{cardNumber ? formatCardNumber(cardNumber) : '•••• •••• •••• ••••'}</Text>
@@ -46,6 +57,7 @@ export default function PaymentScreen() {
           </View>
         </View>
 
+        {/* Payment form inputs with validation and formatting */}
         <View style={styles.form}>
           <Text style={[globalStyles.textRegular, styles.inputLabel, { color: theme.textPrimary }]}>Card Number</Text>
           <TextInput style={[styles.input, { borderColor: theme.tint, color: theme.textPrimary }]} placeholder="1234 5678 9012 3456" placeholderTextColor={theme.textSecondary} keyboardType="numeric" maxLength={19} value={formatCardNumber(cardNumber)} onChangeText={(text) => setCardNumber(text.replace(/\D/g, ''))} />
@@ -53,6 +65,7 @@ export default function PaymentScreen() {
           <Text style={[globalStyles.textRegular, styles.inputLabel, { color: theme.textPrimary }]}>Cardholder Name</Text>
           <TextInput style={[styles.input, { borderColor: theme.tint, color: theme.textPrimary }]} placeholder="FULL NAME" placeholderTextColor={theme.textSecondary} value={cardName} onChangeText={setCardName} autoCapitalize="words" />
 
+          {/* Expiry and CVV in a horizontal row layout */}
           <View style={styles.row}>
             <View style={{ flex: 1, marginRight: 12 }}>
               <Text style={[globalStyles.textRegular, styles.inputLabel, { color: theme.textPrimary }]}>Expiry (MM/YY)</Text>
@@ -91,4 +104,3 @@ const styles = StyleSheet.create({
   submitButton: { paddingVertical: 14, borderRadius: 10, alignItems: 'center' },
   submitButtonText: { color: '#fff', fontSize: 18 },
 });
-

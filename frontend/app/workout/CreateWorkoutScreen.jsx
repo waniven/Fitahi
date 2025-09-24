@@ -22,13 +22,16 @@ import LoadingProgress from "@/components/LoadingProgress";
 import CustomToast from "../../components/common/CustomToast";
 import { scheduleWorkoutReminders } from "@/services/workoutNotifications";
 
-// CreateWorkout creates a workout which pops up a workout input and display the created workout
+/**
+ * Workout creation and management screen that handles workout CRUD operations
+ * Displays a list of existing workouts with options to create, edit, delete, and start workouts
+ */
 function CreateWorkout({ navigation }) {
   const scheme = useColorScheme();
   const theme = Colors[scheme ?? "light"];
   const { toggleChat } = useContext(AIContext);
 
-  // Back button to go back to Homepage
+  // Sets up navigation header with back button and AI chat toggle
   useLayoutEffect(() => {
     navigation.setOptions({
       headerLeft: () => (
@@ -55,7 +58,6 @@ function CreateWorkout({ navigation }) {
               elevation: 5,
             }}
           >
-            {/* C) Emoji fallback */}
             <Text style={{ color: theme.background, fontSize: 18 }}>💬</Text>
           </View>
         </TouchableOpacity>
@@ -63,43 +65,42 @@ function CreateWorkout({ navigation }) {
     });
   }, [navigation, theme, toggleChat]);
 
-  // states
+  // Main state for workout management
   const [modalIsVisible, setModalIsVisible] = useState(false);
   const [workout, setWorkout] = useState([]);
   const [selectedWorkout, setSelectedWorkout] = useState("");
+  
+  // Loading states with progress tracking
   const [isLoading, setIsLoading] = useState(true);
   const [loadingProgress, setLoadingProgress] = useState(0);
 
   const NAV_BAR_HEIGHT = 64;
   const BOX_MAX_HEIGHT = Math.round(Dimensions.get("window").height * 0.7);
-
   const isEmpty = workout.length === 0;
 
-  // fetching workouts when screen mounts
+  // Fetches workouts from backend with animated loading progress
   useEffect(() => {
     async function init() {
       try {
-        // simulate incremental progress while fetching
         setLoadingProgress(0.3);
         const data = await workoutService.getWorkouts();
         setLoadingProgress(0.7);
 
         setWorkout(data);
-        setLoadingProgress(1); // complete
+        setLoadingProgress(1);
       } catch (err) {
         CustomToast.error(
           "Fetch Failed",
           "Unable to load workouts, try again soon."
         );
       } finally {
-        // wait a short tick so users see the bar finish
         setTimeout(() => setIsLoading(false), 300);
       }
     }
     init();
   }, []);
 
-  // modal
+  // Modal control functions
   function startaddWorkoutName() {
     setModalIsVisible(true);
   }
@@ -108,12 +109,11 @@ function CreateWorkout({ navigation }) {
     setModalIsVisible(false);
   }
 
-  // create & update workout via backend
+  // Handles both creating new workouts and updating existing ones
   async function saveWorkout(workoutData) {
     try {
       let savedWorkout;
       if (selectedWorkout) {
-        // update existing workout
         savedWorkout = await workoutService.updateWorkout(
           selectedWorkout._id,
           workoutData
@@ -130,11 +130,11 @@ function CreateWorkout({ navigation }) {
       setSelectedWorkout(null);
       endaddWorkoutName();
     } catch (err) {
-      CustomToast.error("Save Failed", "Workout couldn’t be saved, try again.");
+      CustomToast.error("Save Failed", "Workout couldn't be saved, try again.");
     }
   }
 
-  // delete workout via backend
+  // Removes workout from backend and updates local state
   async function deleteWorkoutHandler(id) {
     try {
       await workoutService.deleteWorkout(id);
@@ -142,18 +142,18 @@ function CreateWorkout({ navigation }) {
     } catch (err) {
       CustomToast.error(
         "Deletion Failed",
-        "Workout couldn’t be deleted, try again."
+        "Workout couldn't be deleted, try again."
       );
     }
   }
 
-  // edit workout
+  // Opens edit modal for an existing workout
   function startEditWorkout(item) {
     setSelectedWorkout(item);
     setModalIsVisible(true);
   }
 
-  // render each workout exercise item
+  // Renders individual workout cards with edit, delete, and start options
   function renderItemData({ item }) {
     function startWorkoutSreen(item) {
       navigation.navigate("StartWorkoutScreen", { workoutDetail: item });
@@ -173,10 +173,10 @@ function CreateWorkout({ navigation }) {
     fontFamily: Font.semibold,
   };
 
-  // UI render
   return (
     <View style={[styles.screen, { backgroundColor: theme.background }]}>
       <View style={styles.content}>
+        {/* Modal for creating or editing workout details */}
         <WorkoutInput
           visible={modalIsVisible}
           workoutToEdit={selectedWorkout}
@@ -187,12 +187,12 @@ function CreateWorkout({ navigation }) {
           }}
         />
 
-        {/* Workouts list */}
+        {/* Scrollable list of existing workouts */}
         {!isEmpty && (
           <View style={[styles.invisibleBox, { maxHeight: BOX_MAX_HEIGHT }]}>
             <FlatList
               data={workout}
-              keyExtractor={(item) => item._id} // unique id from backend
+              keyExtractor={(item) => item._id}
               renderItem={renderItemData}
               contentContainerStyle={[
                 styles.listContent,
@@ -203,10 +203,9 @@ function CreateWorkout({ navigation }) {
           </View>
         )}
 
-        {/* Spacer so content doesn't collide with FAB/nav */}
         <View style={{ height: NAV_BAR_HEIGHT + 28 }} />
 
-        {/* No workout state */}
+        {/* Empty state with centered add button or floating action button for existing workouts */}
         {isEmpty ? (
           <View style={styles.fabContainerEmpty}>
             <Text style={[styles.emptyText, TextFont]}>
@@ -231,6 +230,7 @@ function CreateWorkout({ navigation }) {
         )}
       </View>
 
+      {/* Loading overlay with progress animation */}
       {isLoading && (
         <LoadingProgress
           progress={loadingProgress}
@@ -238,7 +238,6 @@ function CreateWorkout({ navigation }) {
         />
       )}
 
-      {/* bottom navigation */}
       <BottomNav />
     </View>
   );

@@ -21,12 +21,19 @@ import CustomToast from "@/components/common/CustomToast";
 
 const { width } = Dimensions.get("window");
 
+/**
+ * Onboarding quiz component that collects user fitness preferences and goals
+ * Features horizontal scrolling through questions with progress tracking and answer persistence
+ */
 export default function Quiz() {
   const theme = Colors["dark"];
   const router = useRouter();
   const flatListRef = useRef(null);
 
+  // Current question index for progress tracking and navigation
   const [currentIndex, setCurrentIndex] = useState(0);
+  
+  // Stores all user answers keyed by question ID
   const [answers, setAnswers] = useState({});
 
   const currentQuestion = questions[currentIndex];
@@ -83,13 +90,13 @@ export default function Quiz() {
     }
   };
 
-  // Handle answer selection
+  // Records answer selection and automatically advances to next question
   const handleAnswer = (questionId, option) => {
     setAnswers((prev) => ({ ...prev, [questionId]: option }));
     goNext();
   };
 
-  // Skip button, last question triggers save
+  // Handles skip button - saves quiz if on last question, otherwise advances
   const handleSkip = () => {
     if (isLastQuestion) {
       handleFinish();
@@ -98,7 +105,7 @@ export default function Quiz() {
     }
   };
 
-  // Send quiz answers to backend when done
+  // Submits all collected answers to the backend and navigates to completion screen
   const handleFinish = async () => {
     try {
       //calculate daily water based on weight, fall back avg recommended amount
@@ -152,17 +159,17 @@ export default function Quiz() {
     }
   };
 
+  // Renders individual question slides with appropriate input type (picker or multiple choice)
   const renderItem = ({ item }) => {
     const slideIsPicker = item.type === "picker";
 
     return (
       <View style={[styles.slide, { width }]}>
-        {/* Question Text */}
         <Text style={[styles.question, { color: "#fff" }]}>
           {item.question}
         </Text>
 
-        {/* Picker Question */}
+        {/* Numeric picker for age, weight, height etc. */}
         {slideIsPicker ? (
           <View style={styles.pickerContainer}>
             {Platform.OS === "web" ? (
@@ -219,7 +226,7 @@ export default function Quiz() {
             )}
           </View>
         ) : (
-          /* Multiple Choice Options */
+          /* Multiple choice buttons for categorical questions */
           <View style={styles.optionsBox}>
             {item.options.map((option, idx) => {
               const isSelected = answers[item.id] === option;
@@ -267,7 +274,7 @@ export default function Quiz() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: "#151924" }]}>
-      {/* Progress Bar */}
+      {/* Visual progress indicator showing completion percentage */}
       <View style={styles.progressBarBackground}>
         <View
           style={[
@@ -280,7 +287,7 @@ export default function Quiz() {
         />
       </View>
 
-      {/* Intro Text */}
+      {/* Welcome message shown only on the first question */}
       {currentIndex === 0 && (
         <View style={styles.headerContainer}>
           <Text style={[styles.headerTitle, { color: theme.tint }]}>
@@ -292,7 +299,7 @@ export default function Quiz() {
         </View>
       )}
 
-      {/* Questions List */}
+      {/* Horizontally scrollable list of quiz questions */}
       <FlatList
         ref={flatListRef}
         data={questions}
@@ -313,7 +320,7 @@ export default function Quiz() {
         scrollEventThrottle={16}
       />
 
-      {/* Bottom Buttons */}
+      {/* Fixed bottom navigation buttons for skip, next, and completion */}
       <View style={styles.bottomButtons}>
         <TouchableOpacity
           style={[styles.skipButton, { backgroundColor: theme.tint }]}

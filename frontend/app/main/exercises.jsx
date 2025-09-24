@@ -2,13 +2,19 @@ import { ScrollView, StyleSheet, Text, TouchableOpacity, useColorScheme } from '
 import { Colors } from "../../constants/Colors";
 import globalStyles from "../../styles/globalStyles";
 
+// Sample exercise data for demonstration purposes
 const dummyExercises = [
   { id: '1', name: 'Push Ups', duration: '10 mins' },
   { id: '2', name: 'Squats', duration: '15 mins' },
   { id: '3', name: 'Plank', duration: '5 mins' },
 ];
 
+/**
+ * Component that displays a list of available exercises
+ * Shows exercise cards with names and duration information
+ */
 export default function Exercises() {
+  // Gets current color scheme and applies appropriate theme colors
   const scheme = useColorScheme();
   const theme = Colors[scheme ?? 'light'];
 
@@ -21,7 +27,7 @@ export default function Exercises() {
         Exercises 🏋️‍♀️
       </Text>
 
-      {/* Exercise cards */}
+      {/* Renders clickable cards for each exercise with name and duration */}
       {dummyExercises.map((exercise) => (
         <TouchableOpacity
           key={exercise.id}
@@ -68,5 +74,3 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
 });
-
-
