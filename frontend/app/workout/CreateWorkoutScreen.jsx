@@ -20,6 +20,7 @@ import { AIContext } from "../ai/AIContext";
 import BottomNav from "@/components/navbar/BottomNav";
 import LoadingProgress from "@/components/LoadingProgress";
 import CustomToast from "../../components/common/CustomToast";
+import { scheduleWorkoutReminders } from "@/services/workoutNotifications";
 
 /**
  * Workout creation and management screen that handles workout CRUD operations
@@ -121,8 +122,10 @@ function CreateWorkout({ navigation }) {
           current.map((w) => (w._id === savedWorkout._id ? savedWorkout : w))
         );
       } else {
+        // create new workout + schedule weekly reminders based on days selected
         savedWorkout = await workoutService.createWorkout(workoutData);
         setWorkout((current) => [...current, savedWorkout]);
+        scheduleWorkoutReminders(savedWorkout);
       }
       setSelectedWorkout(null);
       endaddWorkoutName();

@@ -390,7 +390,7 @@ export default function ReminderModal({
                   {/* Time picker */}
                   <View style={styles.dateTimeColumn}>
                     <Text style={[textStyles.caption, styles.dateTimeLabel]}>
-                      TIME
+                      TIME *
                     </Text>
 
                     <TouchableOpacity
@@ -527,6 +527,7 @@ export default function ReminderModal({
                 style={styles.picker}
                 textColor="#000000"
                 themeVariant="light"
+                minimumDate={new Date()}
               />
             </View>
           </View>
@@ -590,6 +591,7 @@ export default function ReminderModal({
             mode="date"
             display="default"
             onChange={handleDateChange}
+            minimumDate={new Date()}
           />
         )}
 

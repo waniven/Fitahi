@@ -47,7 +47,7 @@ mongoose
     .connect(MONGODB_URI) //conect mongo
     .then(() => {
         console.log("Connected to Fitahi MongoDB server");
-        app.listen(PORT, () => { //start express server
+        app.listen(PORT, "0.0.0.0", () => { // start express server and don't bind to localhost only
             console.log(`Server Started, API running at http://localhost:${PORT}`);
         })
     })
