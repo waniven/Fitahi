@@ -1,5 +1,5 @@
 // global helper function to validate IDs and compare them to what's in the database
-const mongoose = require('mongoose');
+const mongoose = require('mongoose'); // import mongoose library for MongoDB
 
 const validateId = (id) => {
     if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -10,4 +10,5 @@ const validateId = (id) => {
     return true; // if ID is valid, return true
 };
 
+// export function for use in other files
 module.exports = validateId;

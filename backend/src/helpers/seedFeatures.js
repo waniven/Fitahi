@@ -1,10 +1,12 @@
-require("dotenv").config();
-const mongoose = require("mongoose");
-const Feature = require("../models/Feature");
+require("dotenv").config(); // load environment variables from .env
+const mongoose = require("mongoose"); // import mongoose library for MongoDB
+const Feature = require("../models/Feature"); // import Feature model schema
 
-// connect to MongoDB
+// connect to MongoDB using MONGODB_URI from .env
 mongoose.connect(process.env.MONGODB_URI);
 
+// features array containing all feature objects
+// each feature includes: name, description, and steps (array of strings)
 const features = [
   // workouts
   {
@@ -242,6 +244,8 @@ const features = [
   },
 ];
 
+// seed function: clears existing features and inserts new ones
+// logs success or error, then closes the database connection
 async function seed() {
   try {
     await Feature.deleteMany(); // clear old data
@@ -254,4 +258,5 @@ async function seed() {
   }
 }
 
+// run seed function
 seed();

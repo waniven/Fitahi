@@ -95,4 +95,5 @@ const workoutSchema = new Schema(
     { timestamps: true } // auto track createdAt and updatedAt
 );
 
+// export workout model
 module.exports = model('Workout', workoutSchema);

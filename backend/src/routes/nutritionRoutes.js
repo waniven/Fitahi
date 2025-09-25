@@ -12,6 +12,7 @@ router.post('/', auth, async (req, res, next) => {
     try {
         const { name, type, calories, protein, fat, carbs } = req.body;
 
+        //validation to require name and type
         if (!name || !type) {
             return res.status(400).json({ error: 'name and type are required' });
         }
@@ -113,17 +114,20 @@ router.get('/', auth, async (req, res, next) => {
 });
 
 /**
- * GET /api/nutrition
+ * GET /api/nutrition/all
  * get all nutrition logs for a user (not just today)
  */
 router.get('/all', auth, async (req, res, next) => {
     try {
+        //find all nutrition logs for current user, newest first
         const nutrition = await Nutrition.find({
             userId: req.user.id
         }).sort({ createdAt: -1 });
 
+        //return nutrition logs as json
         return res.json(nutrition);
     } catch (err) {
+        //pass error to global error handler
         return next(err);
     }
 });
