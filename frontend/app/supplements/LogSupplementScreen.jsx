@@ -77,15 +77,10 @@ function LogSupplements({ navigation }) {
   const [tab, setTab] = useState("today"); // <--- NEW: "today" | "all"
   const getId = (o) => String(o?.id ?? o?._id ?? "");
 
-  const inFlight = new Set(); // avoid double-firing
-
-  function keyFor(planId, date) {
-    return `${planId}::${date}`;
-  }
+  const inFlight = new Set(); // avoid double sending to backend
 
   const NAV_BAR_HEIGHT = 64;
   const BOX_MAX_HEIGHT = Math.round(Dimensions.get("window").height * 0.7);
-  const isEmpty = plans.length === 0;
 
   // openAdd to pop up the filling form
   function openAdd() {
@@ -99,23 +94,25 @@ function LogSupplements({ navigation }) {
     setShowInput(false);
   }
 
-  //load data from api
+  //load supplement data from api
   const loadSupplements = useCallback(async () => {
     try{
       const data = await getSupplements();
       setPlans(Array.isArray(data) ? data.map(normalizePlanFromServer) : []);
     } catch (err) {
       console.warn("Failed to load supplements:", err);
-      CustomToast.error("Failed to load supplements");
+      CustomToast.error("Failed to load supplements", err);
     }
 
   }, []);
 
+  //load supplement logs from api 
   const loadSupplementsLogs = useCallback(async () => {
     try {
       const data = await getTodaysSupplementLogs();
       //for each data do markStatus(planId, status)
       
+      //effect buttons for loaded item
       for (const { planId, status } of data) {
         if (planId == null) continue; 
         markStatus(planId, status);
@@ -123,10 +120,11 @@ function LogSupplements({ navigation }) {
 
     } catch (err) {
       console.warn("Failed to load supplement logs:", err);
-      CustomToast.error("Failed to load supplement logs");
+      CustomToast.error("Failed to load supplement logs", err);
     }
   });
 
+  //call functions to load info
   useEffect(() => {
     loadSupplements();
     loadSupplementsLogs();
@@ -134,10 +132,9 @@ function LogSupplements({ navigation }) {
 
   //saveSupplement is used to save supplement to plan and api
   async function saveSupplement(plan) {
-    //if has id then treat as update, else create
+    //if has id then treat as update, else create a new supplement
     const id = getId(plan) || getId(planToEdit);
     const isUpdate = Boolean(id);
-    
 
     //update entry
     if (isUpdate) {
@@ -146,11 +143,11 @@ function LogSupplements({ navigation }) {
 
         //api request
         await updateSupplement(planToEdit.id, plan);
-        CustomToast.success("Update successful");
+        CustomToast.supplementUpdated(plan.name);
         loadSupplements();
       } catch (err) {
         console.warn("Update failed:", err?.message || err);
-        CustomToast.error("Update Failed");
+        CustomToast.error("Update failed", plan.name);
         setPlans(prev); //rollback to old list
       }
       
@@ -158,12 +155,14 @@ function LogSupplements({ navigation }) {
       const prev = plans;
       //create new supplement
       try {
+        //await api for id
         const created = await createSupplement(plan);
+        //add to list
         setPlans(curr => [...curr, normalizePlanFromServer(created)]);
-        console.log("from server: ", created);
+        CustomToast.supplementSaved(plan.name);
       }  catch (err) {
         console.warn("Create failed:", err?.message || err);
-        CustomToast.error("Create Failed");
+        CustomToast.error("Create Failed", plan.name);
         setPlans(prev); //rollback to old list
       }
     }
@@ -178,11 +177,11 @@ function LogSupplements({ navigation }) {
 
     try {
       await deleteSupplement(id);
-      CustomToast.success("Supplement deleted");
+      CustomToast.supplementDeleted(id);
       loadSupplements();
     } catch (err) {
       console.warn("Delete failed:", err);
-      CustomToast.error("Delete Failed");
+      CustomToast.error("Delete Failed", err);
       setPlans(prev); //rollback to old list
     }
   }
@@ -197,6 +196,7 @@ function LogSupplements({ navigation }) {
   const todayStr = localISODate(new Date());
   const todayIdx = getMon0Sun6Index(new Date());
 
+  //display suppliemnts scheduled for today
   const todaysItems = useMemo(() => {
     const list = [];
     for (const p of plans) {
@@ -223,7 +223,7 @@ function LogSupplements({ navigation }) {
   const hasPlans = plans?.length > 0;
   const hasToday = (todaysItems?.length ?? 0) > 0;
 
-  // markStatus checks the status of today's supplement intaken
+  // markStatus checks the status of today supplement intaken
 const markStatus = async (planId, status) => {
   const key = String(planId);
   if (inFlight.has(key)) return;
@@ -232,7 +232,7 @@ const markStatus = async (planId, status) => {
   let prevSnapshot = null;
   let tempIdUsed = null; // track temp id so we can replace it with DB _id later
 
-  // 1) Optimistic update + snapshot for rollback
+  //backup for rollback 
   setPlans(prev => {
     prevSnapshot = prev;
 
@@ -240,18 +240,18 @@ const markStatus = async (planId, status) => {
       if (String(plan.id) !== key) return plan;
 
       const logs = Array.isArray(plan.logs) ? [...plan.logs] : [];
-      const idx = logs.length > 0 ? 0 : -1; // only "today" exists in UI
+      const idx = logs.length > 0 ? 0 : -1; 
 
       const existingId = idx >= 0 ? logs[idx].id : null;
-      const newId = existingId ?? `tmp_${plan.id}_${Date.now()}`; // TEMP id for UI only
+      const newId = existingId ?? `tmp_${plan.id}_${Date.now()}`; //temp id for UI
       if (!existingId) tempIdUsed = newId;
 
       const takenAt = status === "taken" ? Date.now() : null;
 
       const newLog = new SupplementsLog(
-        newId,          // UI id (temp if this is a create)
-        plan.id,        // supplement_id in your API
-        todayStr,       // fine to keep locally; not sent to API
+        newId, // UI id
+        plan.id, // for the suppliment in db 
+        todayStr, 
         status,
         takenAt
       );
@@ -263,7 +263,7 @@ const markStatus = async (planId, status) => {
     });
   });
 
-  // 2) Persist: update if one existed, else create (DB provides _id & userId)
+  //update if one exists else create, DB provides _id & userId
   try {
     const before = prevSnapshot?.find(p => String(p.id) === key);
     if (!before) throw new Error(`Plan ${key} not found in snapshot`);
@@ -271,17 +271,17 @@ const markStatus = async (planId, status) => {
     const existed = Array.isArray(before.logs) && before.logs.length > 0;
 
     if (existed) {
-      // UPDATE → send only real DB id + status
+      //UPDATE send DB id and status
       const existingLogId = before.logs[0].id;
       await updateSupplementLog({ id: existingLogId, status });
     } else {
-      // CREATE → do NOT send an id; send supplement_id + status
+      //CREATE send supplement_id and status
       const created = await createSupplementLog({
         supplement_id: planId,
         status
       });
 
-      // Replace temp id in state with DB _id so future updates work
+      //Replace temp id with DB _id
       if (created?._id && tempIdUsed) {
         setPlans(prev =>
           prev.map(p => {
@@ -296,14 +296,14 @@ const markStatus = async (planId, status) => {
     }
   } catch (err) {
     console.warn("Failed to persist supplement log:", err);
-    CustomToast?.error?.("Failed to update supplement log");
+    CustomToast?.error?.("Failed to update supplement log", err);
     if (prevSnapshot) setPlans(prevSnapshot); // rollback
   } finally {
     inFlight.delete(key);
   }
 };
 
-  // renderTodayCard: render to screen today card
+  //renderTodayCard, render to screen today card
   const renderTodayCard = ({ item }) => {
     const { plan, log } = item;
     const isTaken = log.status === "taken";
@@ -617,18 +617,19 @@ function getMon0Sun6Index(d) {
   return (d.getDay() + 6) % 7;
 }
 
-  function normalizePlanFromServer(p) {
-    const serverId = String(p._id ?? p.id);
-    return {
-      ...p,
-      _id: serverId,
-      id: serverId,
-      selectedDays: Array.isArray(p.selectedDays) ? p.selectedDays : [],
-      logs: Array.isArray(p.logs) ? p.logs : [],
-    };
-  }
+//deal with formatting
+function normalizePlanFromServer(p) {
+  const serverId = String(p._id ?? p.id);
+  return {
+    ...p,
+    _id: serverId,
+    id: serverId,
+    selectedDays: Array.isArray(p.selectedDays) ? p.selectedDays : [],
+    logs: Array.isArray(p.logs) ? p.logs : [],
+  };
+}
 
-// localISODate returns date format
+//localISODate returns date format
 function localISODate(d) {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
@@ -636,7 +637,7 @@ function localISODate(d) {
   return `${y}-${m}-${day}`;
 }
 
-// timeToMinutes return minutes total
+//timeToMinutes return minutes total
 function timeToMinutes(str) {
   if (!str) return 10 ** 6;
   const ampm = str.match(/^(\d{1,2}):(\d{2})\s?(AM|PM)$/i);

@@ -162,6 +162,30 @@ class CustomToast {
     );
   }
 
+  // supplement update success
+  static supplementUpdated(supplementTitle) {
+    this.success(
+      'Supplement Updated!',
+      `"${supplementTitle}" has been modified`
+    );
+  }
+
+  // supplement deletion confirmation
+  static supplementDeleted(supplementTitle) {
+    this.info(
+      'Supplement Deleted',
+      `"${supplementTitle}" has been removed`
+    );
+  }
+
+    // supplement creation success
+  static supplementSaved(supplementTitle) {
+    this.success(
+      'Supplement Added!',
+      `"${supplementTitle}" has been saved`
+    );
+  }
+
   // Reminder update success
   static reminderUpdated(reminderTitle) {
     this.success(
