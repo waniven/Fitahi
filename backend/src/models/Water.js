@@ -1,14 +1,20 @@
-const { Schema, model } = require ('mongoose');
+const { Schema, model } = require('mongoose');
 
-//water schema for the databse
+// water schema for the databse
 const waterSchema = new Schema(
     {
-        userId: { type: Schema.Types.ObjectId, ref: 'Users', required: true }, //owner of water log
+        // owner of water log
+        userId: { type: Schema.Types.ObjectId, ref: 'Users', required: true },
+
+        // time of water intake
         time: { type: Date, default: Date.now, required: true },
+
+        // amount of water
         amount: { type: Number, required: true }
     },
-    { timestamps: true } 
-)
+    // auto add createdAt and updatedAt
+    { timestamps: true }
+);
 
-//add document to water collection
+// export water model
 module.exports = model('Water', waterSchema);

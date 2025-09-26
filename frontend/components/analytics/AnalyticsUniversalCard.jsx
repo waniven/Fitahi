@@ -1,4 +1,3 @@
-// components/analytics/AnalyticsUniversalCard.jsx
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -39,10 +38,12 @@ const AnalyticsUniversalCard = ({
   cardSpacing = 16,
   ...props
 }) => {
+  // State for user's age
   const [age, setAge] = useState(null);
+  // State for user's daily water intake goal
   const [userIntakeGoal, setUserIntakeGoal] = useState(null);
 
-  // fetch current water goal from db
+  // Fetch current water goal and DOB from DB
   useEffect(() => {
     async function fetchUserInfo() {
       try {
@@ -60,7 +61,7 @@ const AnalyticsUniversalCard = ({
     fetchUserInfo();
   }, []);
 
-  // fetch DOB from userService once and calculate age
+  // Fetch DOB separately to calculate age
   useEffect(() => {
     async function fetchUserAge() {
       try {
@@ -78,7 +79,7 @@ const AnalyticsUniversalCard = ({
     fetchUserAge();
   }, []);
 
-  // bmi logic
+  // Parse BMI from entry or calculate using weight and height
   const parseBmiValue = () => {
     const raw = entry?.bmi ?? null;
     if (raw != null) {
@@ -96,6 +97,7 @@ const AnalyticsUniversalCard = ({
     return null;
   };
 
+  // Determine BMI status text and color
   const getBMIStatus = (bmi) => {
     if (bmi == null) return { text: "-", color: "#999" };
     if (bmi < 18.5) return { text: "Underweight", color: "#4FC3F7" };
@@ -104,6 +106,7 @@ const AnalyticsUniversalCard = ({
     return { text: "Obese", color: "#EF5350" };
   };
 
+  // Get timestamp depending on entry type
   const getTimestamp = () => {
     if (type === "water")
       return entry?.time ?? entry?.createdAt ?? entry?.timestamp;
@@ -117,6 +120,7 @@ const AnalyticsUniversalCard = ({
     );
   };
 
+  // Format timestamp into readable string
   const formatTimestamp = (timestamp) => {
     if (!timestamp) return "-";
     const date = new Date(timestamp);
@@ -132,21 +136,23 @@ const AnalyticsUniversalCard = ({
       .padStart(2, "0")}:${minutes}${ampm}`;
   };
 
+  // Convert seconds to minutes string
   const formatDurationText = (seconds) => {
     if (!seconds || isNaN(seconds)) return "-";
     const minutes = Math.round(seconds / 60);
     return `${minutes} minute${minutes !== 1 ? "s" : ""}`;
   };
 
+  // Handle card press
   const handlePress = () => onPress && onPress(entry);
   const waterGoal = entry?.goal ?? userIntakeGoal ?? "-";
 
+  // Get main display info depending on type
   const getMainDisplay = () => {
     if (type === "water") {
       return {
         value: entry?.amount != null ? entry.amount.toFixed(0) : "0",
         unit: "mL",
-
         subtitle: `Current water goal: ${waterGoal} mL`,
         color: Colors.light.primary,
       };
@@ -175,6 +181,7 @@ const AnalyticsUniversalCard = ({
     }
   };
 
+  // Get details string depending on type
   const getDetails = () => {
     if (type === "water") {
       return `💧💧💧`;
@@ -191,8 +198,10 @@ const AnalyticsUniversalCard = ({
     }
   };
 
+  // Main display object
   const mainDisplay = getMainDisplay();
 
+  // Dynamic styles for card container
   const dynamicStyles = StyleSheet.create({
     cardContainer: {
       backgroundColor: "#FFFFFF",
@@ -213,9 +222,12 @@ const AnalyticsUniversalCard = ({
 
   const CardContent = (
     <>
+      {/* Accent color bar */}
       <View style={[styles.accentBar, { backgroundColor: "#4F9AFF" }]} />
 
+      {/* Main card content container */}
       <View style={styles.contentContainer}>
+        {/* Header row with timestamp */}
         <View style={styles.headerRow}>
           <View style={styles.spacer} />
           <Text style={styles.timestamp}>
@@ -231,6 +243,7 @@ const AnalyticsUniversalCard = ({
           )}
         </View>
 
+        {/* Main value display */}
         <View style={styles.mainSection}>
           <Text style={[styles.mainValue, { color: "#4F9AFF" }]}>
             {mainDisplay.value}
@@ -240,12 +253,14 @@ const AnalyticsUniversalCard = ({
           )}
         </View>
 
+        {/* Subtitle section */}
         <View style={styles.subtitleSection}>
           <Text style={[styles.subtitle, { color: mainDisplay.color }]}>
             {mainDisplay.subtitle}
           </Text>
         </View>
 
+        {/* Details row */}
         <View style={styles.detailsRow}>
           <Text
             style={styles.detailText}
@@ -273,6 +288,7 @@ const AnalyticsUniversalCard = ({
     );
   }
 
+  // Static card view
   return (
     <View style={[dynamicStyles.cardContainer, style]}>{CardContent}</View>
   );

@@ -1,8 +1,8 @@
-// components/logcards/LogCard.jsx
 import React from "react";
 import { TouchableOpacity, Text, StyleSheet, View } from "react-native";
 import { Font } from "@/constants/Font";
 
+// LogCard: simple clickable card showing an icon and title
 export default function LogCard({ title, icon, color, width, onPress }) {
   return (
     <TouchableOpacity
@@ -10,22 +10,26 @@ export default function LogCard({ title, icon, color, width, onPress }) {
         styles.card,
         {
           backgroundColor: "#fff",
-          width: width * 0.9, 
+          width: width * 0.9, // set card width relative to parent
           borderColor: color,
         },
       ]}
       onPress={onPress}
       activeOpacity={0.8}
     >
+      {/* Main content of card */}
       <View style={styles.content}>
+        {/* Icon display */}
         <Text style={[styles.icon, { color }]} numberOfLines={1}>
           {icon}
         </Text>
+
+        {/* Title display */}
         <Text
           style={[styles.title, { color, fontFamily: Font.semibold }]}
           numberOfLines={2} // prevent text from being cut off
-          adjustsFontSizeToFit //  shrink font slightly if too long
-          minimumFontScale={0.8} 
+          adjustsFontSizeToFit // shrink font slightly if too long
+          minimumFontScale={0.8}
         >
           {title}
         </Text>
@@ -37,7 +41,7 @@ export default function LogCard({ title, icon, color, width, onPress }) {
 const styles = StyleSheet.create({
   card: {
     borderRadius: 16,
-    paddingVertical: 16, 
+    paddingVertical: 16,
     paddingHorizontal: 10,
     alignItems: "center",
     justifyContent: "center",
@@ -51,13 +55,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   icon: {
-    fontSize: 26, 
+    fontSize: 26,
     marginBottom: 6,
   },
   title: {
     fontSize: 13,
     textAlign: "center",
     fontWeight: "600",
-    flexWrap: "wrap", //if text is too long wrap
+    flexWrap: "wrap", // if text is too long wrap
   },
 });

@@ -112,7 +112,7 @@ export default function Index() {
       >
         <CustomButton
           title="Sign Up"
-          onPress={() => router.push("/auth/signup")}
+          onPress={() => router.push("/auth/Signup")}
           variant="primary"
           size="large"
           style={styles.button}
@@ -120,7 +120,7 @@ export default function Index() {
 
         <CustomButton
           title="Log In"
-          onPress={() => router.push("/auth/login")}
+          onPress={() => router.push("/auth/Login")}
           variant="primary"
           size="large"
           style={styles.button}

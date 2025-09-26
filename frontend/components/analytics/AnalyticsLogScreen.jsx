@@ -1,4 +1,3 @@
-// components/analytics/AnalyticsLogScreen.jsx
 import React from "react";
 import {
   View,

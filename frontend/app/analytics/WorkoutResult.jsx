@@ -1,4 +1,3 @@
-// app/analytics/WorkoutResult.jsx
 import React from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import WorkoutResultScreen from "../workout/WorkoutResultScreen";
@@ -8,12 +7,16 @@ import WorkoutResultScreen from "../workout/WorkoutResultScreen";
  * Transforms analytics workout data to match the expected WorkoutResultScreen format
  */
 export default function AnalyticsWorkoutResult() {
+  // router for navigation actions
   const router = useRouter();
+
+  // retrieve workoutData passed via query params from analytics screen
   const { workoutData } = useLocalSearchParams();
 
-  // Parses the JSON workout data passed from the analytics screen
+  // parses the JSON workout data passed from the analytics screen
   const parsedWorkoutData = JSON.parse(workoutData);
 
+  // mock navigation object to emulate WorkoutResultScreen navigation
   const mockNavigation = {
     popToTop: () => router.back(),
   };
@@ -25,7 +28,7 @@ export default function AnalyticsWorkoutResult() {
         workoutName:
           parsedWorkoutData.workout_id?.name ||
           parsedWorkoutData.workoutName ||
-          "Deleted Workout",
+          "Deleted Workout", // fallback if workout deleted
         id: parsedWorkoutData.workout_id?.id || parsedWorkoutData.id || null,
         dateCompleted:
           parsedWorkoutData.dateCompleted || new Date().toISOString(),
@@ -37,5 +40,6 @@ export default function AnalyticsWorkoutResult() {
     },
   };
 
+  {/* Render the actual WorkoutResultScreen with mapped props */}
   return <WorkoutResultScreen route={mockRoute} navigation={mockNavigation} />;
 }

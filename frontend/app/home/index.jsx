@@ -32,12 +32,12 @@ export default function Home() {
   const theme = Colors["dark"];
   const router = useRouter();
 
-  // notification permissions
+  // Request notification permissions on mount and reschedule reminders
   useEffect(() => {
     async function init() {
       await Notifications.requestNotificationPermissions();
 
-      // re-schedule all reminders once on app start
+      // Re-schedule all reminders once on app start
       if (reminders.length > 0) {
         await Notifications.rescheduleUpcomingNotifications(reminders);
       }
@@ -45,6 +45,7 @@ export default function Home() {
     init();
   }, []);
 
+  // Schedule water intake notifications
   scheduleWaterNotifications();
 
   // Prevent users from navigating back from the home screen on Android
@@ -76,7 +77,7 @@ export default function Home() {
     setViewingDate,
   } = useCalendarLogic();
 
-  // always sync to today when Home mounts
+  // Sync viewing date to today when Home mounts
   useEffect(() => {
     setViewingDate(formattedToday);
   }, [formattedToday]);
@@ -132,12 +133,12 @@ export default function Home() {
       style={[styles.container, { backgroundColor: theme.background }]}
     >
       <ScrollView contentContainerStyle={{ flexGrow: 1, paddingBottom: 140 }}>
-        {/* App branding section */}
+        {/* Render app branding/logo section */}
         <View style={styles.logoContainer}>
           <FitahiLogo width={320} height={140} fill="#FFFFFF" />
         </View>
 
-        {/* Calendar widget with reminder functionality */}
+        {/* Render calendar widget with reminder functionality */}
         <View style={[styles.widgetCard, { backgroundColor: "#fff" }]}>
           <Calendar
             style={{ borderRadius: 16, backgroundColor: "#fff" }}
@@ -166,7 +167,7 @@ export default function Home() {
             onDayPress={handleDayPress}
           />
 
-          {/* Selected date display and reminder creation button */}
+          {/* Render selected date display and add reminder button */}
           <View style={styles.dateHeader}>
             <Text
               style={[
@@ -193,7 +194,7 @@ export default function Home() {
             </TouchableOpacity>
           </View>
 
-          {/* Reminders list for selected date */}
+          {/* Render list of reminders for the selected date */}
           <View style={styles.remindersContainer}>
             {(() => {
               const dayReminders = getRemindersForDate(viewingDate);
@@ -218,7 +219,7 @@ export default function Home() {
                 <ScrollView
                   style={styles.remindersScroll}
                   contentContainerStyle={{ paddingVertical: 4 }}
-                  nestedScrollEnabled={true} 
+                  nestedScrollEnabled={true}
                   showsVerticalScrollIndicator={true}
                 >
                   {dayReminders.map((reminder) => (
@@ -271,11 +272,11 @@ export default function Home() {
           </View>
         </View>
 
-        {/* Quick access navigation cards for main app features */}
+        {/* Render quick access navigation cards */}
         <LogCards cards={quickLogCards} />
       </ScrollView>
 
-      {/* Modal for creating and editing reminders */}
+      {/* Render reminder modal for creating/editing reminders */}
       <ReminderModal
         visible={modalVisible}
         onClose={() => {
@@ -288,11 +289,11 @@ export default function Home() {
         selectedDate={viewingDate}
       />
 
-      {/* Fixed navigation and assistance components */}
+      {/* Render bottom navigation bar and floating AI assistant button */}
       <BottomNav />
       <FloatingAIButton />
 
-      {/* Global toast notification system */}
+      {/* Render global toast notifications */}
       <Toast />
     </SafeAreaView>
   );
@@ -330,7 +331,7 @@ const styles = StyleSheet.create({
     borderBottomColor: "#f0f0f0",
   },
   remindersScroll: {
-    maxHeight: 180, 
+    maxHeight: 180,
     marginTop: 4,
   },
   reminderContent: {

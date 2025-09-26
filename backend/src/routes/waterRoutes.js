@@ -96,12 +96,17 @@ router.get('/', auth, async (req, res, next) => {
  */
 router.get('/all', auth, async (req, res, next) => {
     try {
+        // fetch all water logs for the current user
         const water = await Water.find({
             userId: req.user.id
-        }).sort({ createdAt: -1 });
+        })
+            // sort by creation date descending (latest first)
+            .sort({ createdAt: -1 });
 
+        // return water logs as json
         return res.json(water);
     } catch (err) {
+        // forward error to error handler
         return next(err);
     }
 });

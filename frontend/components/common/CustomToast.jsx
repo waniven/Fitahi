@@ -1,4 +1,3 @@
-// components/common/CustomToast.jsx
 import Toast from 'react-native-toast-message';
 import { Colors } from '../../constants/Colors';
 

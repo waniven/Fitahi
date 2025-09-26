@@ -32,17 +32,17 @@ import { getBiometrics } from "@/services/biometricService";
 export default function AccountSettings() {
   const theme = Colors["dark"];
   const navigation = useNavigation();
-  
+
   // Profile image state with URI and base64 data for upload
   const [profileImage, setProfileImage] = useState(null);
-  
+
   // Date picker state for date of birth selection
   const [selectedDob, setSelectedDob] = useState(null);
-  
+
   // Loading and error states for data fetching
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
-  
+
   // Form validation error messages
   const [errors, setErrors] = useState({});
 
@@ -235,7 +235,7 @@ export default function AccountSettings() {
         dailyWater: form.waterGoal,
       };
 
-      // send to backend
+      // Send to backend
       await updateMe({
         firstname,
         lastname,
