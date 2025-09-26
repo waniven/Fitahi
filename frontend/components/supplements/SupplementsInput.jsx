@@ -60,7 +60,6 @@ export default function SupplementsInput({
       setDosage(entryToEdit.dosage ?? "");
       const parsed = parseTimeString(entryToEdit.timeOfDay);
       if (parsed) {
-        setTimeValue(parsed);
         setTimeOfDay(formatTime(parsed));
       } else {
         setTimeValue(new Date());
@@ -126,8 +125,8 @@ export default function SupplementsInput({
     }
 
     const plan = new SupplementsPlan(
-      entryToEdit?.id ??
-        `supp_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      entryToEdit,
+        //`supp_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
       name.trim(),
       cleaned,
       timeOfDay.trim(),

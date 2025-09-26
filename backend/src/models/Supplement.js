@@ -5,7 +5,7 @@ const supplementSchema = new Schema(
         userId: { type: Schema.Types.ObjectId, ref: 'Users', required: true }, // owner of supplement
         name: { type: String, required: true },
         dosage: { type: Number, required: true },
-        timeOfDay: { type: Date, requirted: true },
+        time: { type: String, required: true }, //store as "HH:mm"
         selectedDays: {// days of week workout is performed (valid array, 0–6 integer check, no duplicate days)
             type: [Number],
             required: true,

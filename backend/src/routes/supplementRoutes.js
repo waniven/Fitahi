@@ -1,5 +1,5 @@
 const express = require('express');
-const supplement = require('../models/Supplement');
+const Supplement = require('../models/Supplement');
 const validateId = require('../helpers/validateId');
 const auth = require('../middleware/auth');
 const router = express.Router();
@@ -11,9 +11,9 @@ const router = express.Router();
 router.post('/', auth, async (req, res, next) => {
     try {
         //save new supplement to DB from current user
-        const supplement = await supplement.create({
+        const supplement = await Supplement.create({
             ...req.body,
-            userID: req.user.id,
+            userId: req.user.id,
         });
 
         //return new supplement
@@ -35,7 +35,7 @@ router.patch('/:id', auth, async (req, res, next) => {
         validateId(id);
 
         //find and update target document for current user
-        const updatedsupplement = await supplement.findOneAndUpdate(
+        const updatedsupplement = await Supplement.findOneAndUpdate(
             { _id: id, userId: req.user.id },
             req.body,
             { new: true, runValidators: true }
@@ -59,7 +59,7 @@ router.patch('/:id', auth, async (req, res, next) => {
 */
 router.get('/', auth, async (req, res, next) => {
     try {
-        const allsupplements = await supplement.find({
+        const allsupplements = await Supplement.find({
             userId: req.user.id
         }).sort({ createdAt: -1 });
 
@@ -82,7 +82,7 @@ router.delete('/:id', auth, async (req, res, next) => {
         validateId(id);
 
         //find and delete
-        const deletedsupplement = await supplement.findByIdAndDelete({
+        const deletedsupplement = await Supplement.findByIdAndDelete({
             _id: id,
             userId: req.user.id,
         });

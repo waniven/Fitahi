@@ -74,6 +74,7 @@ function LogSupplements({ navigation }) {
   const [plans, setPlans] = useState([]); // SupplementsPlan[]
   const [planToEdit, setPlanToEdit] = useState(null);
   const [tab, setTab] = useState("today"); // <--- NEW: "today" | "all"
+  const getId = (o) => String(o?.id ?? o?._id ?? "");
 
   const NAV_BAR_HEIGHT = 64;
   const BOX_MAX_HEIGHT = Math.round(Dimensions.get("window").height * 0.7);
@@ -95,7 +96,7 @@ function LogSupplements({ navigation }) {
   const loadSupplements = useCallback(async () => {
     try{
       const data = await getSupplements();
-      setPlans(Array.isArray(data) ? data : []);
+      setPlans(Array.isArray(data) ? data.map(normalizePlanFromServer) : []);
     } catch (err) {
       console.warn("Failed to load supplements:", err);
       CustomToast.error("Failed to load supplements");
@@ -109,26 +110,19 @@ function LogSupplements({ navigation }) {
   //saveSupplement is used to save supplement to plan and api
   async function saveSupplement(plan) {
     //if has id then treat as update, else create
-    const isUpdate = ! !plan?.id;
+    const id = getId(plan) || getId(planToEdit);
+    const isUpdate = Boolean(id);
+    
 
     //update entry
     if (isUpdate) {
       const prev = plans;
-
-      //replace entry with new 
-      setPlans((curr) => curr.map((p) => (String(p.id) === String(plan.id) ? { ...p, ...plan } : p)));
-      closeInput();
-
       try {
+
         //api request
-        const updated = await updateSupplement(plan.id, plan);
-
-        // sync with server response
-        setPlans((curr) =>
-          curr.map((p) => (String(p.id) === String(plan.id) ? { ...p, ...updated } : p))
-        );
-
+        await updateSupplement(planToEdit.id, plan);
         CustomToast.success("Update successful");
+        loadSupplements();
       } catch (err) {
         console.warn("Update failed:", err?.message || err);
         CustomToast.error("Update Failed");
@@ -136,10 +130,12 @@ function LogSupplements({ navigation }) {
       }
       
     } else {
+      const prev = plans;
       //create new supplement
       try {
         const created = await createSupplement(plan);
-        setPlans((curr) => curr.map((p) => (p.id === tempId ? created : p)));
+        setPlans(curr => [...curr, normalizePlanFromServer(created)]);
+        console.log("from server: ", created);
       }  catch (err) {
         console.warn("Create failed:", err?.message || err);
         CustomToast.error("Create Failed");
@@ -158,6 +154,7 @@ function LogSupplements({ navigation }) {
     try {
       await deleteSupplement(id);
       CustomToast.success("Supplement deleted");
+      loadSupplements();
     } catch (err) {
       console.warn("Delete failed:", err);
       CustomToast.error("Delete Failed");
@@ -370,13 +367,13 @@ function LogSupplements({ navigation }) {
       <View style={{ marginVertical: -5 }}>
         <ListCardItemGeneral
           item={{
-            id: item.id,
+            id: item.id ?? item._id, 
             name: item.name,
             type: `${dosageTime || "—"}`,
           }}
           days={item.selectedDays} // <-- pass days here
           onEdit={() => startEditPlan(item)}
-          onDelete={() => deletePlan(item.id)}
+          onDelete={() => deletePlan(item.id ?? item._id)}
           onStart={null}
           showStart={false}
           labelName="Name"
@@ -537,6 +534,17 @@ export default LogSupplements;
 function getMon0Sun6Index(d) {
   return (d.getDay() + 6) % 7;
 }
+
+  function normalizePlanFromServer(p) {
+    const serverId = String(p._id ?? p.id);
+    return {
+      ...p,
+      _id: serverId,
+      id: serverId,
+      selectedDays: Array.isArray(p.selectedDays) ? p.selectedDays : [],
+      logs: Array.isArray(p.logs) ? p.logs : [],
+    };
+  }
 
 // localISODate returns date format
 function localISODate(d) {

@@ -6,7 +6,7 @@ const auth = require('../middleware/auth');
 const router = express.Router();
 
 //helper to validate MongoDB objectId
-const isValidId = (id) => mongoose.Types.ObjectId.isValid(id);
+const isValidId = require('../helpers/validateId');
 //helper to turn dob to age
 const dobToAge = require('../helpers/dobToAge');
 
