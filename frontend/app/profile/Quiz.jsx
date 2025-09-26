@@ -21,17 +21,24 @@ import CustomToast from "@/components/common/CustomToast";
 
 const { width } = Dimensions.get("window");
 
+/**
+ * Onboarding quiz component that collects user fitness preferences and goals
+ * Features horizontal scrolling through questions with progress tracking and answer persistence
+ */
 export default function Quiz() {
-  const theme = Colors["dark"];
-  const router = useRouter();
-  const flatListRef = useRef(null);
+  const theme = Colors["dark"]; // Set current theme color
+  const router = useRouter(); // Router for navigation
+  const flatListRef = useRef(null); // Ref to control FlatList scrolling
 
+  // Current question index for progress tracking and navigation
   const [currentIndex, setCurrentIndex] = useState(0);
+
+  // Stores all user answers keyed by question ID
   const [answers, setAnswers] = useState({});
 
-  const currentQuestion = questions[currentIndex];
-  const isPicker = currentQuestion.type === "picker";
-  const isLastQuestion = currentIndex === questions.length - 1;
+  const currentQuestion = questions[currentIndex]; // Current question object
+  const isPicker = currentQuestion.type === "picker"; // Check if current question uses a picker
+  const isLastQuestion = currentIndex === questions.length - 1; // Flag for last question
 
   const calculateCalories = async ({
     weight,
@@ -39,18 +46,18 @@ export default function Quiz() {
     trainingDays,
     fitnessGoal,
   }) => {
-    const age = await getAge();
+    const age = await getAge(); // Get user age
 
     const w = Number(weight);
     const h = Number(height);
     const a = Number(age);
 
-    //return a default values missing
+    // Return default value if any input is missing
     if (!w || !h || !a || !trainingDays) {
       return 2300;
     }
 
-    //factor based on how many days the user trains a week
+    // Factor based on how many days the user trains a week
     const numOfTrainingDays = String(trainingDays).replace(/\s+/g, " ").trim();
     let factor = 0;
 
@@ -59,7 +66,7 @@ export default function Quiz() {
     if (numOfTrainingDays === "5 - 6") factor = 1.725;
     if (numOfTrainingDays === "7") factor = 1.9;
 
-    //modifyer based on fitness goal
+    // Modifier based on fitness goal
     const goal = String(fitnessGoal || "").trim();
     let modifier = 0;
 
@@ -67,7 +74,7 @@ export default function Quiz() {
     if (goal === "Improve endurance") modifier = 0;
     if (goal === "Build muscle") modifier = 250;
 
-    return (10 * w + 6.25 * h - 5 * a + 5) * factor + modifier;
+    return (10 * w + 6.25 * h - 5 * a + 5) * factor + modifier; // Return calculated calories
   };
 
   // Go to next question
@@ -76,37 +83,37 @@ export default function Quiz() {
       flatListRef.current?.scrollToIndex({
         index: currentIndex + 1,
         animated: true,
-      });
-      setCurrentIndex(currentIndex + 1);
+      }); // Scroll to next question in FlatList
+      setCurrentIndex(currentIndex + 1); // Update question index
     } else {
-      router.replace("/profile/thankyou");
+      router.replace("/profile/ThankYou"); // Navigate to ThankYou screen
     }
   };
 
-  // Handle answer selection
+  // Records answer selection and automatically advances to next question
   const handleAnswer = (questionId, option) => {
-    setAnswers((prev) => ({ ...prev, [questionId]: option }));
-    goNext();
+    setAnswers((prev) => ({ ...prev, [questionId]: option })); // Save answer
+    goNext(); // Move to next question
   };
 
-  // Skip button, last question triggers save
+  // Handles skip button - saves quiz if on last question, otherwise advances
   const handleSkip = () => {
     if (isLastQuestion) {
-      handleFinish();
+      handleFinish(); // Submit quiz if last question
     } else {
-      goNext();
+      goNext(); // Otherwise go next
     }
   };
 
-  // Send quiz answers to backend when done
+  // Submits all collected answers to the backend and navigates to completion screen
   const handleFinish = async () => {
     try {
-      //calculate daily water based on weight, fall back avg recommended amount
+      // Calculate daily water based on weight, fallback to average recommended amount
       const dailyWater = Number(answers.Weight)
         ? Number(answers.Weight) * 35
         : 2500;
 
-      //calculate intakeGoals
+      // Calculate intakeGoals (calories)
       const dailyCalories = await calculateCalories({
         weight: answers.Weight,
         height: answers.Height,
@@ -114,10 +121,10 @@ export default function Quiz() {
         fitnessGoal: answers.FitnessGoal,
       });
 
-      //save intake goals
+      // Save intake goals
       await saveIntakeGoals({ dailyCalories, dailyWater });
 
-      // create first biometric log if both weight and height exist
+      // Create first biometric log if both weight and height exist
       if (answers.Weight && answers.Height) {
         try {
           await createBiometric({
@@ -129,40 +136,40 @@ export default function Quiz() {
           CustomToast.error(
             "Biometric log failed",
             "We couldn't save your first biometric log."
-          );
+          ); // Show error if biometric save fails
         }
       }
     } catch (error) {
       CustomToast.error(
         "Failed to save Intake Goal",
         "See account settings to update."
-      );
+      ); // Show error if intake goals save fails
     }
 
-    //save quiz and exit quiz screen
+    // Save quiz answers and exit quiz screen
     try {
       await saveQuiz(answers);
-      CustomToast.success("Quiz Completed!", "Your answers have been saved.");
-      router.replace("/profile/thankyou");
+      CustomToast.success("Quiz Completed!", "Your answers have been saved."); // Show success toast
+      router.replace("/profile/ThankYou"); // Navigate to ThankYou screen
     } catch (error) {
       CustomToast.error(
         "Quiz Submission Failed",
         "See account settings to update."
-      );
+      ); // Show error if quiz submission fails
     }
   };
 
+  // Renders individual question slides with appropriate input type (picker or multiple choice)
   const renderItem = ({ item }) => {
     const slideIsPicker = item.type === "picker";
 
     return (
       <View style={[styles.slide, { width }]}>
-        {/* Question Text */}
         <Text style={[styles.question, { color: "#fff" }]}>
           {item.question}
         </Text>
 
-        {/* Picker Question */}
+        {/* Numeric picker for age, weight, height etc. */}
         {slideIsPicker ? (
           <View style={styles.pickerContainer}>
             {Platform.OS === "web" ? (
@@ -219,7 +226,7 @@ export default function Quiz() {
             )}
           </View>
         ) : (
-          /* Multiple Choice Options */
+          /* Multiple choice buttons for categorical questions */
           <View style={styles.optionsBox}>
             {item.options.map((option, idx) => {
               const isSelected = answers[item.id] === option;
@@ -267,7 +274,7 @@ export default function Quiz() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: "#151924" }]}>
-      {/* Progress Bar */}
+      {/* Visual progress indicator showing completion percentage */}
       <View style={styles.progressBarBackground}>
         <View
           style={[
@@ -280,7 +287,7 @@ export default function Quiz() {
         />
       </View>
 
-      {/* Intro Text */}
+      {/* Welcome message shown only on the first question */}
       {currentIndex === 0 && (
         <View style={styles.headerContainer}>
           <Text style={[styles.headerTitle, { color: theme.tint }]}>
@@ -292,7 +299,7 @@ export default function Quiz() {
         </View>
       )}
 
-      {/* Questions List */}
+      {/* Horizontally scrollable list of quiz questions */}
       <FlatList
         ref={flatListRef}
         data={questions}
@@ -313,7 +320,7 @@ export default function Quiz() {
         scrollEventThrottle={16}
       />
 
-      {/* Bottom Buttons */}
+      {/* Fixed bottom navigation buttons for skip, next, and completion */}
       <View style={styles.bottomButtons}>
         <TouchableOpacity
           style={[styles.skipButton, { backgroundColor: theme.tint }]}

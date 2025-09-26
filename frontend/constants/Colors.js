@@ -1,8 +1,6 @@
-// constants/Colors.js
-
 export const Colors = {
   light: {
-    primary: "#00CFFF", // Electric Blue
+    primary: "#00CFFF",
     primaryDark: "#0099CC",
     primaryLight: "#66E0FF",
 
@@ -22,7 +20,7 @@ export const Colors = {
 
     inputField: "#E4F8FF",
     card: "#192233",
-    tint: "#00CFFF", // for buttons/dots in your code
+    tint: "#00CFFF", // For buttons/dots in our code
   },
   dark: {
     primary: "#00CFFF",

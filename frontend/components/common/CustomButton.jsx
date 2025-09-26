@@ -4,16 +4,8 @@ import { Colors } from '../../constants/Colors';
 import { Font } from '@/constants/Font';
 
 /**
- * CustomButton - A reusable button component with multiple variants and sizes
- * 
- * @param {string} title - The text displayed on the button
- * @param {function} onPress - Function called when button is pressed
- * @param {string} variant - Button style variant: 'primary', 'secondary', 'success', 'warning', 'error'
- * @param {string} size - Button size: 'small', 'medium', 'large'
- * @param {boolean} rounded - Whether to use smooth rounded corners (pill shape)
- * @param {boolean} disabled - Whether the button is disabled
- * @param {object} style - Additional custom styles for the button container
- * @param {object} textStyle - Additional custom styles for the button text
+ * Reusable button component with multiple variants, sizes, and styling options
+ * Supports primary/secondary/success/warning/error variants with consistent theming
  */
 const CustomButton = ({ 
   title, 
@@ -26,14 +18,11 @@ const CustomButton = ({
   textStyle 
 }) => {
   
-  /**
-   * Determines the appropriate button styles based on size, variant, and disabled state
-   * @returns {Array} Array of style objects to be applied to the button
-   */
+  // Computes button container styles based on size, variant, and state
   const getButtonStyles = () => {
     const baseStyle = [styles.button];
     
-    // Apply size-specific styles
+    // Applies size-specific dimensions and padding
     if (size === 'small') {
       baseStyle.push(styles.buttonSmall);
     } else if (size === 'large') {
@@ -42,12 +31,12 @@ const CustomButton = ({
       baseStyle.push(styles.buttonMedium);
     }
     
-    // Apply rounded corners if requested
+    // Enables pill-shaped rounded corners when requested
     if (rounded) {
       baseStyle.push(styles.buttonRounded);
     }
     
-    // Apply color variant styles
+    // Applies color scheme based on semantic variant
     if (variant === 'secondary') {
       baseStyle.push(styles.buttonSecondary);
     } else if (variant === 'success') {
@@ -57,10 +46,10 @@ const CustomButton = ({
     } else if (variant === 'error') {
       baseStyle.push(styles.buttonError);
     } else {
-      baseStyle.push(styles.buttonPrimary); // Default to primary
+      baseStyle.push(styles.buttonPrimary);
     }
     
-    // Apply disabled state styling if needed
+    // Applies disabled state styling with reduced opacity
     if (disabled) {
       baseStyle.push(styles.buttonDisabled);
     }
@@ -68,14 +57,11 @@ const CustomButton = ({
     return baseStyle;
   };
 
-  /**
-   * Determines the appropriate text styles based on size, variant, and disabled state
-   * @returns {Array} Array of style objects to be applied to the button text
-   */
+  // Computes text styles matching button variant and size
   const getTextStyles = () => {
     const baseStyle = [styles.text,{fontFamily: Font.bold}];
     
-    // Apply size-specific text styles
+    // Applies size-specific font sizing
     if (size === 'small') {
       baseStyle.push(styles.textSmall);
     } else if (size === 'large') {
@@ -84,14 +70,14 @@ const CustomButton = ({
       baseStyle.push(styles.textMedium);
     }
     
-    // Apply color variant text styles
+    // Applies variant-specific text colors for accessibility
     if (variant === 'secondary') {
-      baseStyle.push(styles.textSecondary); // Different text color for secondary buttons
+      baseStyle.push(styles.textSecondary);
     } else {
-      baseStyle.push(styles.textPrimary); // Standard white text for most buttons
+      baseStyle.push(styles.textPrimary);
     }
     
-    // Apply disabled text styling if needed
+    // Applies disabled text styling with reduced contrast
     if (disabled) {
       baseStyle.push(styles.textDisabled);
     }
@@ -101,10 +87,10 @@ const CustomButton = ({
 
   return (
     <TouchableOpacity
-      style={[...getButtonStyles(), style]} // Merge computed styles with custom styles
+      style={[...getButtonStyles(), style]}
       onPress={onPress}
       disabled={disabled}
-      activeOpacity={0.8} // Slight transparency on press for visual feedback
+      activeOpacity={0.8}
     >
       <Text style={[...getTextStyles(), textStyle]}>
         {title}
@@ -114,12 +100,11 @@ const CustomButton = ({
 };
 
 const styles = StyleSheet.create({
-  // Base button styles - shared across all variants
+  // Base container with consistent shadows and alignment
   button: {
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    // Shadow for iOS
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -127,16 +112,14 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
-    // Shadow for Android
     elevation: 5,
   },
   
-  // Rounded button variant for smooth pill shape
   buttonRounded: {
-    borderRadius: 28, // Smooth rounded corners
+    borderRadius: 28,
   },
   
-  // Button size variants
+  // Size variants with progressive scaling
   buttonSmall: {
     paddingVertical: 8,
     paddingHorizontal: 16,
@@ -153,36 +136,36 @@ const styles = StyleSheet.create({
     minHeight: 56,
   },
   
-  // Button color variants
+  // Semantic color variants following design system
   buttonPrimary: {
-    backgroundColor: Colors.dark.tint, // Electric blue - main CTA color
+    backgroundColor: Colors.dark.tint,
   },
   buttonSecondary: {
-    backgroundColor: Colors.light.backgroundAlt, // Blue background with border
+    backgroundColor: Colors.light.backgroundAlt,
     borderWidth: 1,
     borderColor: Colors.light.primary,
   },
   buttonSuccess: {
-    backgroundColor: Colors.light.success, // Green for positive actions
+    backgroundColor: Colors.light.success,
   },
   buttonWarning: {
-    backgroundColor: Colors.light.warning, // Yellow for caution actions
+    backgroundColor: Colors.light.warning,
   },
   buttonError: {
-    backgroundColor: Colors.light.error, // Red for destructive actions
+    backgroundColor: Colors.light.error,
   },
   buttonDisabled: {
-    backgroundColor: Colors.light.overlayLight, // Faded appearance
+    backgroundColor: Colors.light.overlayLight,
     opacity: 0.6,
   },
   
-  // Base text styles - shared across all variants
+  // Base text styling with font weight
   text: {
     fontWeight: '600',
     textAlign: 'center',
   },
   
-  // Text size variants
+  // Text size variants matching button sizes
   textSmall: {
     fontSize: 14,
   },
@@ -193,15 +176,15 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   
-  // Text color variants
+  // Text colors optimized for contrast on button backgrounds
   textPrimary: {
-    color: Colors.light.textPrimary, // White text for most buttons
+    color: Colors.light.textPrimary,
   },
   textSecondary: {
-    color: Colors.light.primary, // Blue text for secondary buttons
+    color: Colors.light.primary,
   },
   textDisabled: {
-    color: Colors.light.textSecondary, // Faded text for disabled state
+    color: Colors.light.textSecondary,
   },
 });
 

@@ -17,6 +17,7 @@ const reminderRoutes = require("./src/routes/reminderRoutes");
 const supplementRoutes = require("./src/routes/supplementRoutes");
 const supplementLogRoutes = require("./src/routes/supplementLogRoutes");
 
+// create express app
 const app = express();
 
 //parse JSON bodies
@@ -38,7 +39,10 @@ app.use("/api/supplementlogs", supplementLogRoutes);
 
 //global error handing
 app.use((err, _req, res, _next) => {
+    // log error
     console.error(err);
+
+    // send error response
     const status = err.status || 500;
     res.status(status).json({ error: err.message || 'Internal Server Error' });
 });
@@ -51,11 +55,13 @@ mongoose
     .connect(MONGODB_URI) //conect mongo
     .then(() => {
         console.log("Connected to Fitahi MongoDB server");
-        app.listen(PORT, () => { //start express server
+        // start express server and don't bind to all interfaces (not localhost only)
+        app.listen(PORT, "0.0.0.0", () => {
             console.log(`Server Started, API running at http://localhost:${PORT}`);
         })
     })
     .catch((err) => {
+        // log connection error and exit process
         console.error('MongoDB connection error:', err);
         process.exit(1);
     });

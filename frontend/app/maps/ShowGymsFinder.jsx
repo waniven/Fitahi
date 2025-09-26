@@ -27,7 +27,10 @@ import { AIContext } from "../ai/AIContext";
 
 const GOOGLE_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
 
-// ShowGymsFinder helps user locate nearest gyms to their locations
+/**
+ * Gym finder screen that helps users locate nearby gyms using their current location
+ * Features map view with markers, search functionality, and integration with device maps app
+ */
 export default function ShowGymsFinder({ navigation }) {
   const router = useRouter();
   const mapRef = useRef(null);
@@ -36,6 +39,7 @@ export default function ShowGymsFinder({ navigation }) {
   const scheme = useColorScheme();
   const theme = Colors[scheme ?? "light"];
 
+  // Default map region centered on NYC
   const DEFAULT_REGION = {
     latitude: 40.7128,
     longitude: -74.006,
@@ -43,14 +47,21 @@ export default function ShowGymsFinder({ navigation }) {
     longitudeDelta: 0.06,
   };
 
+  // Search and location state
   const [search, setSearch] = useState("");
   const [region, setRegion] = useState(DEFAULT_REGION);
-  const [coords, setCoords] = useState(null); // { latitude, longitude }
-  const [gyms, setGyms] = useState([]); // Places results
+  const [coords, setCoords] = useState(null);
+  
+  // Gym search results from Google Places API
+  const [gyms, setGyms] = useState([]);
+  
+  // Loading state for API requests
   const [loading, setLoading] = useState(false);
+  
+  // Currently selected gym for map highlighting
   const [selectedPlaceId, setSelectedPlaceId] = useState(null);
 
-  // useLayoutEffect sets go back Home button and set styles of AI button
+  // Sets up navigation header with back button and AI chat toggle
   useLayoutEffect(() => {
     const goBackOrHome = () => {
       if (navigation.canGoBack()) navigation.goBack();
@@ -88,14 +99,15 @@ export default function ShowGymsFinder({ navigation }) {
     });
   }, [navigation, theme, toggleChat]);
 
-  // Ask permission + get user location on mount
+  // Requests location permissions and gets user's current position on mount
   useEffect(() => {
     (async () => {
       try {
         let { status } = await Location.requestForegroundPermissionsAsync();
         console.log(status);
         if (status !== "granted") return;
-        // Faster initial fix: last known (may be null)
+        
+        // Gets last known position for faster initial display
         const last = await Location.getLastKnownPositionAsync();
         const loc =
           last ||
@@ -114,7 +126,7 @@ export default function ShowGymsFinder({ navigation }) {
         };
         setRegion(next);
 
-        // Move the map right away (don’t wait for Places)
+        // Animates map to user's location immediately
         if (mapRef.current) {
           mapRef.current.animateToRegion(next, 350);
         }
@@ -124,7 +136,7 @@ export default function ShowGymsFinder({ navigation }) {
     })();
   }, []);
 
-  // Helpers for Google Places
+  // Google Places API URL builders for nearby and text search
   const nearbyUrl = ({ lat, lng }) =>
     `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&rankby=distance&type=gym&key=${GOOGLE_KEY}`;
   const textSearchUrl = (query, { lat, lng }) =>
@@ -132,6 +144,7 @@ export default function ShowGymsFinder({ navigation }) {
       query
     )}+gym&location=${lat},${lng}&radius=5000&key=${GOOGLE_KEY}`;
 
+  // Fetches gym data from Google Places API and updates map markers
   async function fetchGyms(url) {
     if (!GOOGLE_KEY) {
       console.warn("Google Maps API key is missing!");
@@ -147,7 +160,8 @@ export default function ShowGymsFinder({ navigation }) {
       }
       const results = Array.isArray(json.results) ? json.results : [];
       setGyms(results);
-      // Fit markers
+      
+      // Fits map view to show all gym markers and user location
       if (results.length && mapRef.current) {
         const points = results
           .map((r) => r.geometry?.location)
@@ -168,13 +182,13 @@ export default function ShowGymsFinder({ navigation }) {
     }
   }
 
-  // onNearestPress is used to find nearest gyms
+  // Finds nearest gyms based on user's current location
   const onNearestPress = () => {
     if (!coords || !GOOGLE_KEY) return;
     fetchGyms(nearbyUrl({ lat: coords.latitude, lng: coords.longitude }));
   };
 
-  // onSearchPress is used to search for gyms
+  // Searches for gyms using user's search query
   const onSearchPress = () => {
     if (!coords || !search.trim() || !GOOGLE_KEY) return;
     fetchGyms(
@@ -185,6 +199,7 @@ export default function ShowGymsFinder({ navigation }) {
     );
   };
 
+  // Selects a gym and centers the map on its location
   const onSelectPlace = (place) => {
     setSelectedPlaceId(place.place_id);
     const ll = place.geometry?.location;
@@ -200,6 +215,7 @@ export default function ShowGymsFinder({ navigation }) {
     );
   };
 
+  // Opens the selected gym location in the device's default maps application
   const openInMaps = (place) => {
     const ll = place.geometry?.location;
     if (!ll) return;
@@ -213,6 +229,7 @@ export default function ShowGymsFinder({ navigation }) {
     Linking.openURL(url);
   };
 
+  // Renders individual gym list items with name, address, rating, and map button
   const renderRow = ({ item }) => {
     const ll = item.geometry?.location;
     const isSelected = selectedPlaceId === item.place_id;
@@ -279,7 +296,7 @@ export default function ShowGymsFinder({ navigation }) {
     );
   };
 
-  // auto “nearest gyms” when we get coords (optional)
+  // Automatically searches for nearest gyms when user location is obtained
   useEffect(() => {
     if (coords) onNearestPress();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -287,7 +304,7 @@ export default function ShowGymsFinder({ navigation }) {
 
   return (
     <View style={[styles.screen, { backgroundColor: theme.background }]}>
-      {/* Search bar */}
+      {/* Search interface with text input and action buttons */}
       <View
         style={[
           styles.searchBar,
@@ -341,13 +358,13 @@ export default function ShowGymsFinder({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      {/* Map */}
+      {/* Interactive map showing user location and gym markers */}
       <View style={styles.mapWrap}>
         <MapView
           ref={mapRef}
           style={StyleSheet.absoluteFillObject}
-          initialRegion={DEFAULT_REGION} // uncontrolled instead of region={region}
-          onRegionChangeComplete={(r) => setRegion(r)} // track region but don’t lock map
+          initialRegion={DEFAULT_REGION}
+          onRegionChangeComplete={(r) => setRegion(r)}
           showsUserLocation
           loadingEnabled
         >
@@ -366,6 +383,7 @@ export default function ShowGymsFinder({ navigation }) {
           })}
         </MapView>
 
+        {/* Loading overlay during API requests */}
         {loading && (
           <View style={styles.loadingOverlay}>
             <ActivityIndicator size="large" color={theme.tint} />
@@ -373,7 +391,7 @@ export default function ShowGymsFinder({ navigation }) {
         )}
       </View>
 
-      {/* Results list */}
+      {/* Scrollable list of gym search results */}
       <View style={styles.listWrap}>
         <FlatList
           data={gyms}

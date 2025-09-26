@@ -10,12 +10,17 @@ const auth = require("../middleware/auth");
 */
 router.post("/", auth, async (req, res) => {
     try {
+        // get user id from auth middleware
         const userId = req.user.id;
+
+        // use provided title or fallback to default
         const title = req.body.title || "New Conversation";
 
+        // create and save new conversation
         const convo = new Conversation({ userId, title });
         await convo.save();
 
+        // return conversation as json
         res.json(convo);
     } catch (err) {
         console.error(err);
@@ -29,8 +34,13 @@ router.post("/", auth, async (req, res) => {
 */
 router.get("/", auth, async (req, res) => {
     try {
+        // get user id from auth middleware
         const userId = req.user.id;
+
+        // find conversations sorted by most recent update
         const convos = await Conversation.find({ userId }).sort({ updatedAt: -1 });
+
+        // return conversations as json
         res.json(convos);
     } catch (err) {
         console.error(err);
@@ -44,6 +54,7 @@ router.get("/", auth, async (req, res) => {
 */
 router.delete("/:id", auth, async (req, res) => {
     try {
+        // get conversation id from route params
         const { id } = req.params;
 
         // delete all messages for this conversation
@@ -52,6 +63,7 @@ router.delete("/:id", auth, async (req, res) => {
         // delete the conversation itself
         await Conversation.findOneAndDelete({ _id: id, userId: req.user.id });
 
+        // return success response
         res.json({ success: true });
     } catch (err) {
         console.error(err);

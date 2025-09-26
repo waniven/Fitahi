@@ -1,29 +1,44 @@
-import React, { createContext, useState, useRef } from "react";
+import React, { createContext, useState } from "react";
 import AIChatbox from "./AIChatbox";
 
+// Context for sharing AI chat state across the application
 export const AIContext = createContext();
 
+/**
+ * Provider component that manages global AI chat state and renders the chatbox
+ * Wraps the entire app to provide chat functionality to any component
+ */
 export default function AIProvider({ children }) {
-    //controls visiblity of chatbox
+  // Controls the visibility state of the AI chatbox modal
   const [chatVisible, setChatVisible] = useState(false);
-  //store messages with darwin
+
+  // Stores all messages in the current conversation with Darwin AI
+  // Initialized with a welcome message from the AI
   const [messages, setMessages] = useState([
-    { id: "0", text: "Hey there! I'm Darwin. What can I assist you with today?", fromAI: true }
+    {
+      id: "0",
+      text: "Hey there! I'm Darwin. What can I assist you with today?",
+      fromAI: true,
+    },
   ]);
 
-  //toggles the chatbox open and close
+  /**
+   * Toggles the chatbox between open and closed states
+   */
   const toggleChat = () => setChatVisible((prev) => !prev);
 
   return (
-    //provide chat visiblity and message state to components
-    <AIContext.Provider value={{ chatVisible, toggleChat, messages, setMessages }}>
+    // Provides chat state and controls to all child components
+    <AIContext.Provider
+      value={{ chatVisible, toggleChat, messages, setMessages }}
+    >
       {children}
 
-      {/* Floating AI Button & Chatbox */}
+      {/* Conditionally renders the AI chatbox when visibility is enabled */}
       {chatVisible && (
         <AIChatbox
-          onClose={() => setChatVisible(false)} //close chatbox when x is pressed
-          messages={messages}   
+          onClose={() => setChatVisible(false)}
+          messages={messages}
           setMessages={setMessages}
         />
       )}

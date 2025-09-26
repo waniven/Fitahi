@@ -19,7 +19,9 @@ const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 */
 router.post("/", auth, async (req, res) => {
     try {
+        // extract text and conversation id from request
         const { text, conversationId } = req.body;
+        // get user id from auth middleware
         const userId = req.user.id;
 
         // create conversation if it doesn't exist
@@ -41,6 +43,7 @@ router.post("/", auth, async (req, res) => {
         // fetch user profile with quiz + goals
         const me = await User.findById(userId).lean();
 
+        // build user context string
         let userContext = "";
         if (me) {
             userContext = `
@@ -59,24 +62,26 @@ ALWAYS keep this context in mind when chatting or giving suggestions, do not mak
 `;
         }
 
-        // fetch last 4 messages for context
+        // fetch last 4 messages for context + chat history remembering
         const pastMessages = await Message.find({ conversationId: convoId })
             .sort({ timestamp: -1 })
             .limit(4)
             .lean();
 
+        // format past messages into chat history string
         const chatHistory = pastMessages
             .reverse()
             .map((m) => `${m.fromAI ? "AI" : "User"}: ${m.text}`)
             .join("\n");
 
+        // check if this is the first user message in convo
         const isFirstUserMessage = pastMessages.filter(m => !m.fromAI).length === 1;
 
-        // fetch features
+        // fetch features from db
         const features = await Feature.find({});
         const featureList = features.map(f => `- ${f.name}: ${f.description}`).join("\n");
 
-        // classification first
+        // build classification prompt (first)
         const classificationPrompt = `
 You are a classifier.
 
@@ -92,18 +97,21 @@ Rules:
 User: "${text}"
 `;
 
+        // run classification
         const classificationResult = await model.generateContent({
             contents: [{ role: "user", parts: [{ text: classificationPrompt }] }],
         });
 
+        // extract classification result
         const classification = classificationResult.response.text().trim();
 
+        // match feature if one exists
         let matchedFeature = null;
         if (classification !== "NO_FEATURE") {
             matchedFeature = features.find(f => f.name === classification);
         }
 
-        // then response generation
+        // build response prompt (second)
         let promptText;
 
         if (matchedFeature && matchedFeature.steps?.length > 0) {
@@ -165,6 +173,7 @@ Plain text only.
             contents: [{ role: "user", parts: [{ text: promptText }] }],
         });
 
+        // clean AI response
         const aiText = result.response.text().replace(/\*/g, "");
 
         // save AI message
@@ -179,6 +188,7 @@ Plain text only.
         // update conversation timestamp
         await Conversation.findByIdAndUpdate(convoId, { updatedAt: Date.now() });
 
+        // return user + AI messages
         res.json({ userMessage, aiMessage, conversationId: convoId });
     } catch (err) {
         console.error(err);
@@ -192,6 +202,7 @@ Plain text only.
 */
 router.get("/", auth, async (req, res) => {
     try {
+        // find messages for user sorted by timestamp
         const messages = await Message.find({ userId: req.user.id }).sort("timestamp");
         res.json(messages);
     } catch (err) {
@@ -205,11 +216,15 @@ router.get("/", auth, async (req, res) => {
 */
 router.get("/:conversationId", auth, async (req, res) => {
     try {
+        // extract conversation id from params
         const { conversationId } = req.params;
+
+        // find messages for this conversation
         const messages = await Message.find({
             userId: req.user.id,
             conversationId,
         }).sort("timestamp");
+
         res.json(messages);
     } catch (err) {
         res.status(500).json({ error: "Failed to fetch messages" });

@@ -10,9 +10,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { Type } from "../../constants/Font";
 
 const screenWidth = Dimensions.get("window").width;
-const cardWidth = screenWidth - 40; // Responsive width with 20px margin on each side
+const cardWidth = screenWidth - 40;
 
-// Configuration constants
+// BMI classification ranges with associated colors for status indication
 const BMI_RANGES = {
   underweight: { min: 0, max: 18.5, text: "Underweight", color: "#4FC3F7" },
   normal: { min: 18.5, max: 25, text: "Normal", color: "#66BB6A" },
@@ -20,7 +20,7 @@ const BMI_RANGES = {
   obese: { min: 30, max: 100, text: "Obese", color: "#EF5350" },
 };
 
-// Local text styles using Font constants
+// Typography styles using Font constants for consistent text rendering
 const textStyles = {
   bodyMedium: { fontSize: 16, ...Type.regular },
   bodySmall: { fontSize: 16, ...Type.regular },
@@ -28,7 +28,10 @@ const textStyles = {
   bmiStatus: { fontSize: 16, ...Type.bold },
 };
 
-// Reusable component for displaying biometric data with BMI calculation and weight display
+/**
+ * Biometric data card component displaying weight, BMI status, and measurement details
+ * Features BMI calculation, color-coded health status, and optional deletion functionality
+ */
 const BiometricDataCard = ({
   entry,
   onDelete,
@@ -36,17 +39,17 @@ const BiometricDataCard = ({
   style,
   bmiRanges = BMI_RANGES,
 }) => {
-  // Calculate BMI from height and weight
+  // Calculates BMI from weight (kg) and height (cm) with null handling
   const calculateBMI = (weightKg, heightCm) => {
-    if (!weightKg || !heightCm) return null; // handle missing data
+    if (!weightKg || !heightCm) return null;
     const heightM = heightCm / 100;
     const bmi = weightKg / (heightM * heightM);
     return Math.round(bmi * 10) / 10;
   };
 
-  // Determine BMI status category with color coding
+  // Determines BMI health status category with appropriate color coding
   const getBMIStatus = (bmi) => {
-    if (bmi == null) return { text: "--", color: "#999" }; // fallback
+    if (bmi == null) return { text: "--", color: "#999" };
     if (bmi < bmiRanges.underweight.max) {
       return {
         text: bmiRanges.underweight.text,
@@ -67,7 +70,7 @@ const BiometricDataCard = ({
     }
   };
 
-  // Format timestamp to display date and time like "08 Aug, 07:00am"
+  // Formats timestamp to readable date and time format (08 Aug, 07:00am)
   const formatTimestamp = (timestamp) => {
     if (!timestamp) return "--";
     const date = new Date(timestamp);
@@ -84,9 +87,9 @@ const BiometricDataCard = ({
       .padStart(2, "0")}:${minutes}${ampm}`;
   };
 
-  // Handle delete
+  // Handles entry deletion using backend ID
   const handleDelete = () => {
-    onDelete(entry._id); // using _id from backend
+    onDelete(entry._id);
   };
 
   const bmi = calculateBMI(entry.weight, entry.height);
@@ -97,6 +100,7 @@ const BiometricDataCard = ({
       <View style={styles.accentBar} />
 
       <View style={styles.contentContainer}>
+        {/* Header with timestamp and optional delete button */}
         <View style={styles.headerRow}>
           <View style={styles.spacer} />
           <Text style={[textStyles.bodySmall, styles.timestamp]}>
@@ -112,6 +116,7 @@ const BiometricDataCard = ({
           )}
         </View>
 
+        {/* Main weight display section */}
         <View style={styles.weightSection}>
           <Text style={[textStyles.weightValue, styles.weightValue]}>
             {entry.weight?.toFixed(2) || "--"}
@@ -119,6 +124,7 @@ const BiometricDataCard = ({
           <Text style={[textStyles.bodyMedium, styles.weightUnit]}>kg</Text>
         </View>
 
+        {/* BMI status with color-coded health category */}
         <View style={styles.bmiSection}>
           <Text
             style={[
@@ -135,6 +141,7 @@ const BiometricDataCard = ({
           </Text>
         </View>
 
+        {/* Additional measurement details */}
         <View style={styles.detailsRow}>
           <Text style={[textStyles.bodySmall, styles.detailText]}>
             Height: {entry.height?.toFixed(1) || "--"} cm
@@ -149,15 +156,15 @@ const styles = StyleSheet.create({
   cardContainer: {
     backgroundColor: "#FFFFFF",
     borderRadius: 16,
-    marginVertical: 6, // Match other cards' vertical spacing
-    marginHorizontal: 0, // Match other cards' horizontal spacing
-    width: cardWidth, // Responsive width
-    minHeight: 140, // Increased from 118 for better content spacing
+    marginVertical: 6,
+    marginHorizontal: 0,
+    width: cardWidth,
+    minHeight: 140,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 4, // Match other cards' shadow radius
-    elevation: 3, // Match other cards' elevation
+    shadowRadius: 4,
+    elevation: 3,
     position: "relative",
     alignSelf: "center",
   },
@@ -165,9 +172,9 @@ const styles = StyleSheet.create({
   accentBar: {
     position: "absolute",
     left: 20,
-    top: 12, // Proportional top margin
+    top: 12,
     width: 8,
-    height: 116, // Scaled proportionally: (140 - 24) for top/bottom margins
+    height: 116,
     backgroundColor: "#4F9AFF",
     borderRadius: 4,
   },
@@ -175,17 +182,17 @@ const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
     padding: 16,
-    paddingLeft: 44, // Match universal card alignment
-    paddingTop: 10, // Match universal card top padding
+    paddingLeft: 44,
+    paddingTop: 10,
     paddingRight: 16,
-    paddingBottom: 16, // Match universal card bottom padding
+    paddingBottom: 16,
   },
 
   headerRow: {
     flexDirection: "row",
     justifyContent: "flex-end",
     alignItems: "center",
-    marginBottom: 6, // Match universal card margin
+    marginBottom: 6,
     minHeight: 20,
   },
 
@@ -196,8 +203,8 @@ const styles = StyleSheet.create({
   timestamp: {
     color: "#666",
     textAlign: "right",
-    fontSize: 15, // Match universal card timestamp size
-    ...Type.regular, // Add Type styling
+    fontSize: 15,
+    ...Type.regular,
   },
 
   deleteButton: {
@@ -208,53 +215,53 @@ const styles = StyleSheet.create({
   weightSection: {
     flexDirection: "row",
     alignItems: "baseline",
-    marginBottom: 4, // Match universal card main section margin
-    marginTop: -10, // Match universal card negative margin
+    marginBottom: 4,
+    marginTop: -10,
   },
 
   weightValue: {
     color: "#4F9AFF",
-    lineHeight: 34, // Match universal card line height
-    fontSize: 30, // Match universal card main value size
-    ...Type.bold, // Add Type styling
+    lineHeight: 34,
+    fontSize: 30,
+    ...Type.bold,
   },
 
   weightUnit: {
     color: "#666",
     marginLeft: 4,
-    fontSize: 16, // Match universal card unit size
-    ...Type.regular, // Add Type styling
+    fontSize: 16,
+    ...Type.regular,
   },
 
   bmiSection: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 6, // Match universal card subtitle margin
+    marginBottom: 6,
     flexWrap: "wrap",
   },
 
   bmiStatus: {
-    fontSize: 15, // Match universal card subtitle size
-    ...Type.bold, // Add Type styling
+    fontSize: 15,
+    ...Type.bold,
   },
 
   bmiValue: {
     color: "#666",
-    fontSize: 14, // Match universal card detail text size
-    ...Type.regular, // Add Type styling
+    fontSize: 14,
+    ...Type.regular,
   },
 
   detailsRow: {
-    marginTop: 4, // Match universal card details margin
+    marginTop: 4,
     justifyContent: "flex-end",
-    flex: 1, // Match universal card flex expansion
+    flex: 1,
   },
 
   detailText: {
     color: "#333",
-    fontSize: 14, // Match universal card detail text size
-    ...Type.regular, // Add Type styling
-    lineHeight: 18, // Match universal card line height
+    fontSize: 14,
+    ...Type.regular,
+    lineHeight: 18,
   },
 });
 

@@ -52,6 +52,7 @@ router.delete('/:id', auth, async (req, res, next) => {
             userId: req.user.id,
         });
 
+        // biometric entry not found
         if (!deletedBiometric) {
             return res.status(404).json({ error: 'Biometric entry not found' });
         }

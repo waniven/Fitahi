@@ -1,4 +1,3 @@
-// screens/SignUp.jsx
 import React, { useState } from "react";
 import {
   ScrollView,
@@ -11,7 +10,7 @@ import {
 import {
   SafeAreaView,
   useSafeAreaInsets,
-} from "react-native-safe-area-context"; // <-- added useSafeAreaInsets
+} from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Colors } from "../../constants/Colors";
 import globalStyles from "../../styles/globalStyles";
@@ -21,7 +20,10 @@ import { signup } from "@/services/userService";
 import { login } from "@/services/authService";
 import CustomToast from "../../components/common/CustomToast";
 
-// Validation functions
+/**
+ * Validates name fields (firstName, lastName)
+ * Checks for presence, minimum length, and valid characters
+ */
 const nameValidation = (name) => {
   if (!name || !name.trim()) return "This field is required";
   if (name.trim().length < 2) return "Name must be at least 2 characters";
@@ -30,6 +32,10 @@ const nameValidation = (name) => {
   return null;
 };
 
+/**
+ * Validates email format and presence
+ * Uses regex pattern to ensure proper email structure
+ */
 const emailValidation = (email) => {
   if (!email || !email.trim()) return "Email is required";
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -38,6 +44,10 @@ const emailValidation = (email) => {
   return null;
 };
 
+/**
+ * Validates password strength requirements
+ * Enforces minimum length and character type requirements
+ */
 const passwordValidation = (password) => {
   if (!password || !password.trim()) return "Password is required";
   if (password.length < 8) return "Password must be at least 8 characters";
@@ -49,6 +59,10 @@ const passwordValidation = (password) => {
   return null;
 };
 
+/**
+ * Validates date of birth with age restrictions
+ * Ensures user is between 13 and 120 years old
+ */
 const dateValidation = (date) => {
   if (!date) return "Please select your date of birth";
   const today = new Date();
@@ -60,12 +74,16 @@ const dateValidation = (date) => {
   return null;
 };
 
-// User registration form component with validation and toast notifications
+/**
+ * User registration form component with comprehensive validation
+ * Handles account creation and automatic login upon success
+ */
 export default function SignUp() {
   const router = useRouter();
   const theme = Colors["dark"];
-  const insets = useSafeAreaInsets(); // <-- added
+  const insets = useSafeAreaInsets();
 
+  // Form data state for all user inputs
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -73,17 +91,21 @@ export default function SignUp() {
     password: "",
   });
 
+  // UI and validation state management
   const [busy, setBusy] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
   const [errors, setErrors] = useState({});
   const [formError, setFormError] = useState("");
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 
-  // Updates form data for a specific field
+  /**
+   * Updates form data for a specific field and clears validation errors
+   * Only performs live validation after first submission attempt
+   */
   const updateField = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
 
-    // Only clear errors if user has already attempted to submit
+    // Clear field errors on input change after first validation attempt
     if (hasAttemptedSubmit && errors[field]) {
       let fieldError = null;
       switch (field) {
@@ -104,7 +126,9 @@ export default function SignUp() {
     }
   };
 
-  // Handles date selection with validation
+  /**
+   * Handles date selection with live validation after first attempt
+   */
   const handleDateChange = (date) => {
     setSelectedDate(date);
 
@@ -114,7 +138,10 @@ export default function SignUp() {
     }
   };
 
-  // Validates all form fields
+  /**
+   * Validates all form fields and returns validation status
+   * Sets error state for any invalid fields
+   */
   const validateForm = () => {
     const newErrors = {};
 
@@ -138,7 +165,8 @@ export default function SignUp() {
   };
 
   /**
-   * Handles form submission with toast notifications
+   * Handles form submission with account creation and automatic login
+   * Navigates to profile quiz on successful registration
    */
   const handleContinue = async () => {
     setHasAttemptedSubmit(true);
@@ -158,14 +186,17 @@ export default function SignUp() {
           "Welcome to Fitahi!",
           "Account created successfully"
         );
-        router.push("/profile/quiz");
+        router.push("/profile/Quiz");
       } catch (err) {
+        // Provide user-friendly error messages based on server response
         const status = err?.response?.status;
         const serverMsg = err?.response?.data?.error;
         const msg =
           serverMsg || `Sign up failed${status ? ` (${status})` : ""}`;
         CustomToast.error(msg);
         console.log(msg);
+        
+        // Log detailed error info for debugging when no server message is available
         if (!serverMsg)
           console.log("SIGNUP ERROR:", {
             status,
@@ -185,19 +216,21 @@ export default function SignUp() {
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.background }]}
     >
+      {/* Keyboard avoidance with platform-specific behavior */}
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"} // Android uses height
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={Platform.OS === "ios" ? 60 : 0}
       >
         <ScrollView
           contentContainerStyle={[
             styles.contentContainer,
             { paddingBottom: 40 + insets.bottom },
-          ]} // safe area bottom
+          ]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
+          {/* Welcome message and instructions */}
           <Text
             style={[
               globalStyles.welcomeText,
@@ -220,6 +253,7 @@ export default function SignUp() {
             Now let's set up your profile.
           </Text>
 
+          {/* Registration form with validation */}
           <View style={styles.formContainer}>
             <CustomInput
               label="First Name"
@@ -270,6 +304,7 @@ export default function SignUp() {
             />
           </View>
 
+          {/* Submit button */}
           <View style={{ width: "100%", alignItems: "center", marginTop: 20 }}>
             <CustomButton
               title="Continue"
@@ -291,7 +326,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 80,
     alignItems: "center",
-    flexGrow: 1, // ensures ScrollView fills screen for proper keyboard behavior
+    flexGrow: 1,
   },
 
   formContainer: { width: "100%", alignItems: "center" },

@@ -6,28 +6,40 @@ import AnalyticsUniversalCard from "../../components/analytics/AnalyticsUniversa
 import { getBiometrics } from "../../services/biometricService";
 import CustomToast from "@/components/common/CustomToast";
 
+/**
+ * Screen that displays a scrollable list of biometric log entries
+ * Shows historical biometric data in a standardized analytics format
+ */
 export default function BiometricsAnalyticsScreen() {
+  // router for navigation actions
   const router = useRouter();
+
+  // stores all fetched biometric entries
   const [biometricEntries, setBiometricEntries] = useState([]);
+
+  // loading state for fetch process
   const [loading, setLoading] = useState(true);
 
+  // fetch biometrics on mount
   useEffect(() => {
     async function fetchBiometrics() {
       try {
         const data = await getBiometrics();
-        setBiometricEntries(data);
+        setBiometricEntries(data); // save data in state
       } catch (err) {
         CustomToast.error("Could not load Biometric logs", "Please try again.");
       } finally {
-        setLoading(false);
+        setLoading(false); // stop loading state
       }
     }
 
     fetchBiometrics();
   }, []);
 
+  // handler to navigate back
   const handleBack = () => router.back();
 
+  // show loading screen while fetching
   if (loading) {
     return (
       <AnalyticsLogScreen
@@ -38,6 +50,7 @@ export default function BiometricsAnalyticsScreen() {
     );
   }
 
+  // show empty state if no entries exist
   if (biometricEntries.length === 0) {
     return (
       <AnalyticsLogScreen
@@ -48,17 +61,20 @@ export default function BiometricsAnalyticsScreen() {
     );
   }
 
+  // list of biometric entries in scrollable view
   return (
     <AnalyticsLogScreen
       title="Biometrics Logs"
       subtitle="Your previous logs:"
       onBackPress={handleBack}
     >
+      {/* Scrollable container for all biometric cards */}
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingBottom: 20 }}
         showsVerticalScrollIndicator={false}
       >
+        {/* Map over all biometric entries and render as cards */}
         {biometricEntries.map((entry, index) => (
           <AnalyticsUniversalCard
             key={entry._id || index}
