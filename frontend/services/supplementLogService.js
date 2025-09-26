@@ -7,8 +7,8 @@ export async function getTodaysSupplementLogs() {
 };
 
 //POST a new supplementLog for the current user
-export async function createSupplementLog({ id, status }) {
-    const res = await api.post("/supplementlogs", { id, status });
+export async function createSupplementLog({ supplement_id, status }) {
+    const res = await api.post("/supplementlogs", { supplement_id, status });
     return res.data;
 };
 

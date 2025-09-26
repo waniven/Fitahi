@@ -23,7 +23,7 @@ import CustomToast from "@/components/common/CustomToast";
 
 //import api service
 import { getSupplements, createSupplement, updateSupplement, deleteSupplement } from "../../services/supplementService";
-import { getSupplementLogs, createSupplementLog, updateSupplementLog, deleteSupplementLog } from "../../services/supplementLogService";
+import { getTodaysSupplementLogs, createSupplementLog, updateSupplementLog } from "../../services/supplementLogService";
 
 // LogSupplements allows user create supplement plans and log them
 function LogSupplements({ navigation }) {
@@ -77,6 +77,12 @@ function LogSupplements({ navigation }) {
   const [tab, setTab] = useState("today"); // <--- NEW: "today" | "all"
   const getId = (o) => String(o?.id ?? o?._id ?? "");
 
+  const inFlight = new Set(); // avoid double-firing
+
+  function keyFor(planId, date) {
+    return `${planId}::${date}`;
+  }
+
   const NAV_BAR_HEIGHT = 64;
   const BOX_MAX_HEIGHT = Math.round(Dimensions.get("window").height * 0.7);
   const isEmpty = plans.length === 0;
@@ -102,11 +108,29 @@ function LogSupplements({ navigation }) {
       console.warn("Failed to load supplements:", err);
       CustomToast.error("Failed to load supplements");
     }
+
   }, []);
+
+  const loadSupplementsLogs = useCallback(async () => {
+    try {
+      const data = await getTodaysSupplementLogs();
+      //for each data do markStatus(planId, status)
+      
+      for (const { planId, status } of data) {
+        if (planId == null) continue; 
+        markStatus(planId, status);
+      }
+
+    } catch (err) {
+      console.warn("Failed to load supplement logs:", err);
+      CustomToast.error("Failed to load supplement logs");
+    }
+  });
 
   useEffect(() => {
     loadSupplements();
-  }, [loadSupplements]);
+    loadSupplementsLogs();
+  }, [loadSupplements],[loadSupplementsLogs]);
 
   //saveSupplement is used to save supplement to plan and api
   async function saveSupplement(plan) {
@@ -183,7 +207,7 @@ function LogSupplements({ navigation }) {
       let log = logs.find((l) => l?.date === todayStr);
       if (!log) {
         log = new SupplementsLog(
-          `log_${p.id}_${todayStr}`,
+          //`log_${p.id}_${todayStr}`,
           p.id,
           todayStr,
           "scheduled",
@@ -200,27 +224,84 @@ function LogSupplements({ navigation }) {
   const hasToday = (todaysItems?.length ?? 0) > 0;
 
   // markStatus checks the status of today's supplement intaken
-  function markStatus(planId, status) {
-    setPlans((prev) =>
-      prev.map((plan) => {
-        if (String(plan.id) !== String(planId)) return plan;
-        const logs = Array.isArray(plan.logs) ? [...plan.logs] : [];
-        const i = logs.findIndex((l) => l?.date === todayStr);
+const markStatus = async (planId, status) => {
+  const key = String(planId);
+  if (inFlight.has(key)) return;
+  inFlight.add(key);
 
-        const newLog = new SupplementsLog(
-          i >= 0 ? logs[i].id : `log_${plan.id}_${todayStr}`,
-          plan.id,
-          todayStr,
-          status,
-          status === "taken" ? Date.now() : null
+  let prevSnapshot = null;
+  let tempIdUsed = null; // track temp id so we can replace it with DB _id later
+
+  // 1) Optimistic update + snapshot for rollback
+  setPlans(prev => {
+    prevSnapshot = prev;
+
+    return prev.map(plan => {
+      if (String(plan.id) !== key) return plan;
+
+      const logs = Array.isArray(plan.logs) ? [...plan.logs] : [];
+      const idx = logs.length > 0 ? 0 : -1; // only "today" exists in UI
+
+      const existingId = idx >= 0 ? logs[idx].id : null;
+      const newId = existingId ?? `tmp_${plan.id}_${Date.now()}`; // TEMP id for UI only
+      if (!existingId) tempIdUsed = newId;
+
+      const takenAt = status === "taken" ? Date.now() : null;
+
+      const newLog = new SupplementsLog(
+        newId,          // UI id (temp if this is a create)
+        plan.id,        // supplement_id in your API
+        todayStr,       // fine to keep locally; not sent to API
+        status,
+        takenAt
+      );
+
+      if (idx >= 0) logs[idx] = newLog;
+      else logs.push(newLog);
+
+      return { ...plan, logs };
+    });
+  });
+
+  // 2) Persist: update if one existed, else create (DB provides _id & userId)
+  try {
+    const before = prevSnapshot?.find(p => String(p.id) === key);
+    if (!before) throw new Error(`Plan ${key} not found in snapshot`);
+
+    const existed = Array.isArray(before.logs) && before.logs.length > 0;
+
+    if (existed) {
+      // UPDATE → send only real DB id + status
+      const existingLogId = before.logs[0].id;
+      await updateSupplementLog({ id: existingLogId, status });
+    } else {
+      // CREATE → do NOT send an id; send supplement_id + status
+      const created = await createSupplementLog({
+        supplement_id: planId,
+        status
+      });
+
+      // Replace temp id in state with DB _id so future updates work
+      if (created?._id && tempIdUsed) {
+        setPlans(prev =>
+          prev.map(p => {
+            if (String(p.id) !== key) return p;
+            const logs = Array.isArray(p.logs) ? [...p.logs] : [];
+            const i = logs.findIndex(l => l?.id === tempIdUsed);
+            if (i >= 0) logs[i] = { ...logs[i], id: created._id };
+            return { ...p, logs };
+          })
         );
-
-        if (i >= 0) logs[i] = newLog;
-        else logs.push(newLog);
-        return { ...plan, logs };
-      })
-    );
+      }
+    }
+  } catch (err) {
+    console.warn("Failed to persist supplement log:", err);
+    CustomToast?.error?.("Failed to update supplement log");
+    if (prevSnapshot) setPlans(prevSnapshot); // rollback
+  } finally {
+    inFlight.delete(key);
   }
+};
 
   // renderTodayCard: render to screen today card
   const renderTodayCard = ({ item }) => {
