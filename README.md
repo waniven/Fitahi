@@ -24,7 +24,7 @@ After downloading our repository, also ensure that you have downloaded the neces
 
 ## ⚙️ Backend Setup
 
-1. In the **Fitahi** folder, navigate to the **backend** directory:
+1. Open a terminal and, in the **Fitahi** folder, navigate to the **backend** directory:
 
    ```bash
    cd backend
@@ -44,7 +44,7 @@ After downloading our repository, also ensure that you have downloaded the neces
 
 ## 📱 Frontend Setup
 
-1. In the **Fitahi** folder, navigate to the **frontend** directory:
+1. Open another terminal and, in the **Fitahi** folder, navigate to the **frontend** directory:
 
    ```bash
    cd frontend
