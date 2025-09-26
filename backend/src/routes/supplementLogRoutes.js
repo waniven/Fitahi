@@ -1,71 +1,68 @@
 const express = require('express');
-const SupplementLog = require('../models/Supplementlog');
+const SupplementLog = require('../models/SupplementLog');
 const validateId = require('../helpers/validateId');
 const auth = require('../middleware/auth');
 const router = express.Router();
 
 /*
  * POST /api/supplementlog
- * create a new supplement log
+ * Create or update today’s supplement log (upsert)
 */
 router.post('/', auth, async (req, res, next) => {
     try {
-        //save new supplement log
-        const supplementlog = await SupplementLog.create({
-            ...req.body,
-            userId: req.user.id,
-        });
+        const todayStr = new Date().toISOString().slice(0, 10); // Get YYYY-MM-DD
+        const { supplement_id, status } = req.body;
+
+        // Find today's log for this user & supplement, create if not exist
+        const supplementlog = await SupplementLog.findOneAndUpdate(
+            { userId: req.user.id, supplement_id, date: todayStr },
+            { $set: { status, date: todayStr } },
+            { upsert: true, new: true, runValidators: true }
+        );
 
         return res.status(201).json(supplementlog);
     } catch (err) {
-        //pass to global error handler in server.js
         return next(err);
     }
 });
 
 /*
  * PATCH /api/supplementlog/:id
- * update supplement log
+ * Update a specific supplement log
 */
 router.patch('/:id', auth, async (req, res, next) => {
     try {
-        //load and checkid
         const { id } = req.params;
-        validateId(id);
+        validateId(id); // Ensure valid MongoDB ObjectId
 
-        //find and update target document for current user
-        const updatedSupplementLog = await SupplementLog.findByIdAndUpdate(
-            { _id: id, userId: req.user.id },
+        const updatedSupplementLog = await SupplementLog.findOneAndUpdate(
+            { _id: id, userId: req.user.id }, // Only allow owner to update
             req.body,
             { new: true, runValidators: true }
-        )
+        );
 
         if (!updatedSupplementLog) {
             return res.status(404).json({ error: 'supplement log not found' });
         }
 
-        //return updated supplement
         return res.json(updatedSupplementLog);
     } catch (err) {
-        //pass to global error handler in server.js
         return next(err);
     }
 });
 
 /*
  * GET /api/supplementlog/
- * todays suppliment logs 
+ * Get today’s supplement logs for the user
 */
 router.get('/', auth, async (req, res, next) => {
-    const startOfToday = new Date();
-    startOfToday.setHours(0, 0, 0, 0);
-    const endOfToday = new Date();
-    endOfToday.setHours(23, 59, 59, 999);
+    const todayStr = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
 
     try {
+        // Find all logs for today and populate supplement details
         const logs = await SupplementLog.find({
             userId: req.user.id,
-            createdAt: { $gte: startOfToday, $lte: endOfToday }
+            date: todayStr,
         }).populate('supplement_id');
 
         return res.json(logs);

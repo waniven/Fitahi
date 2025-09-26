@@ -1,4 +1,11 @@
-import { useState, useContext, useLayoutEffect, useMemo, useEffect, useCallback } from "react";
+import {
+  useState,
+  useContext,
+  useLayoutEffect,
+  useMemo,
+  useEffect,
+  useCallback,
+} from "react";
 import {
   Text,
   FlatList,
@@ -21,18 +28,27 @@ import SupplementsLog from "@/components/supplements/models/SupplementsLog";
 import BottomNav from "@/components/navbar/BottomNav";
 import CustomToast from "@/components/common/CustomToast";
 
-//import api service
-import { getSupplements, createSupplement, updateSupplement, deleteSupplement } from "../../services/supplementService";
-import { getTodaysSupplementLogs, createSupplementLog, updateSupplementLog } from "../../services/supplementLogService";
+// Import API services for supplements and logs
+import {
+  getSupplements,
+  createSupplement,
+  updateSupplement,
+  deleteSupplement,
+} from "../../services/supplementService";
+import {
+  getTodaysSupplementLogs,
+  createSupplementLog,
+  updateSupplementLog,
+} from "../../services/supplementLogService";
 
-// LogSupplements allows user create supplement plans and log them
+// Main screen for creating supplement plans and logging intake
 function LogSupplements({ navigation }) {
   const scheme = useColorScheme();
   const theme = Colors[scheme ?? "light"];
   const { toggleChat } = useContext(AIContext);
   const router = useRouter();
 
-  // useLayoutEffect sets go back Home button and set styles of AI button
+  // Configure header buttons (back & AI chat) on screen mount
   useLayoutEffect(() => {
     const goBackOrHome = () => {
       if (navigation.canGoBack()) navigation.goBack();
@@ -70,14 +86,14 @@ function LogSupplements({ navigation }) {
     });
   }, [navigation, theme, toggleChat]);
 
-  // Default configuration for this screen
+  // State for modal, plans, editing plan, and selected tab
   const [showInput, setShowInput] = useState(false);
-  const [plans, setPlans] = useState([]); // SupplementsPlan[]
+  const [plans, setPlans] = useState([]); // list of supplements plans
   const [planToEdit, setPlanToEdit] = useState(null);
-  const [tab, setTab] = useState("today"); // <--- NEW: "today" | "all"
+  const [tab, setTab] = useState("today"); // view: "today" or "all"
   const getId = (o) => String(o?.id ?? o?._id ?? "");
 
-  const inFlight = new Set(); // avoid double-firing
+  const inFlight = new Set(); // prevent double API requests
 
   function keyFor(planId, date) {
     return `${planId}::${date}`;
@@ -87,93 +103,99 @@ function LogSupplements({ navigation }) {
   const BOX_MAX_HEIGHT = Math.round(Dimensions.get("window").height * 0.7);
   const isEmpty = plans.length === 0;
 
-  // openAdd to pop up the filling form
+  // Open input modal to add a new supplement plan
   function openAdd() {
     setPlanToEdit(null);
     setShowInput(true);
   }
 
-  // closeInput to close the filling form
+  // Close the input modal
   function closeInput() {
     setPlanToEdit(null);
     setShowInput(false);
   }
 
-  //load data from api
+  // Load supplement plans from API
   const loadSupplements = useCallback(async () => {
-    try{
+    try {
       const data = await getSupplements();
       setPlans(Array.isArray(data) ? data.map(normalizePlanFromServer) : []);
     } catch (err) {
       console.warn("Failed to load supplements:", err);
       CustomToast.error("Failed to load supplements");
     }
-
   }, []);
 
+  // Load today's supplement logs from API
   const loadSupplementsLogs = useCallback(async () => {
     try {
       const data = await getTodaysSupplementLogs();
-      //for each data do markStatus(planId, status)
-      
-      for (const { planId, status } of data) {
-        if (planId == null) continue; 
-        markStatus(planId, status);
-      }
+      const todayStr = localISODate(new Date());
 
+      setPlans((prev) =>
+        prev.map((p) => {
+          const matching = data
+            .filter(
+              (l) =>
+                String(l.supplement_id?._id || l.supplement_id) === String(p.id)
+            )
+            .map((l) => ({
+              ...l,
+              id: l._id ?? l.id,
+              supplement_id: String(l.supplement_id?._id || l.supplement_id),
+              date: l.date || todayStr,
+            }));
+
+          // keep previous logs except today, then add today's logs
+          const otherLogs = (p.logs || []).filter((l) => l.date !== todayStr);
+          return { ...p, logs: [...otherLogs, ...matching] };
+        })
+      );
     } catch (err) {
       console.warn("Failed to load supplement logs:", err);
       CustomToast.error("Failed to load supplement logs");
     }
-  });
+  }, []);
 
+  // Load plans and logs on mount
   useEffect(() => {
     loadSupplements();
     loadSupplementsLogs();
-  }, [loadSupplements],[loadSupplementsLogs]);
+  }, [loadSupplements, loadSupplementsLogs]);
 
-  //saveSupplement is used to save supplement to plan and api
+  // Save new or updated supplement plan
   async function saveSupplement(plan) {
-    //if has id then treat as update, else create
     const id = getId(plan) || getId(planToEdit);
     const isUpdate = Boolean(id);
-    
 
-    //update entry
     if (isUpdate) {
       const prev = plans;
       try {
-
-        //api request
         await updateSupplement(planToEdit.id, plan);
         CustomToast.success("Update successful");
         loadSupplements();
       } catch (err) {
         console.warn("Update failed:", err?.message || err);
         CustomToast.error("Update Failed");
-        setPlans(prev); //rollback to old list
+        setPlans(prev);
       }
-      
     } else {
       const prev = plans;
-      //create new supplement
       try {
         const created = await createSupplement(plan);
-        setPlans(curr => [...curr, normalizePlanFromServer(created)]);
+        setPlans((curr) => [...curr, normalizePlanFromServer(created)]);
         console.log("from server: ", created);
-      }  catch (err) {
+      } catch (err) {
         console.warn("Create failed:", err?.message || err);
         CustomToast.error("Create Failed");
-        setPlans(prev); //rollback to old list
+        setPlans(prev);
       }
     }
   }
 
-  // deletePlan is used to delete supplement plan
+  // Delete a supplement plan
   async function deletePlan(id) {
     const prev = plans;
-
-    //remove from array
     setPlans((curr) => curr.filter((p) => String(p.id) !== String(id)));
 
     try {
@@ -183,20 +205,21 @@ function LogSupplements({ navigation }) {
     } catch (err) {
       console.warn("Delete failed:", err);
       CustomToast.error("Delete Failed");
-      setPlans(prev); //rollback to old list
+      setPlans(prev);
     }
   }
 
-  // startEditPlan is used to edit plan
+  // Start editing a plan
   function startEditPlan(item) {
     setPlanToEdit(item);
     setShowInput(true);
   }
 
-  // Check today intake
+  // Today's date and index for filtering
   const todayStr = localISODate(new Date());
   const todayIdx = getMon0Sun6Index(new Date());
 
+  // Get today's supplement plans with logs, sorted by time
   const todaysItems = useMemo(() => {
     const list = [];
     for (const p of plans) {
@@ -206,13 +229,7 @@ function LogSupplements({ navigation }) {
       const logs = Array.isArray(p.logs) ? p.logs : [];
       let log = logs.find((l) => l?.date === todayStr);
       if (!log) {
-        log = new SupplementsLog(
-          //`log_${p.id}_${todayStr}`,
-          p.id,
-          todayStr,
-          "scheduled",
-          null
-        );
+        log = new SupplementsLog(p.id, todayStr, "scheduled", null);
       }
 
       list.push({ plan: p, log, sortKey: timeToMinutes(p.timeOfDay) });
@@ -223,87 +240,93 @@ function LogSupplements({ navigation }) {
   const hasPlans = plans?.length > 0;
   const hasToday = (todaysItems?.length ?? 0) > 0;
 
-  // markStatus checks the status of today's supplement intaken
-const markStatus = async (planId, status) => {
-  const key = String(planId);
-  if (inFlight.has(key)) return;
-  inFlight.add(key);
+  // Toggle today's supplement log status (taken, skipped)
+  const markStatus = async (planId, newStatus) => {
+    const todayStr = localISODate(new Date());
+    const tempId = `tmp_${planId}_${todayStr}`;
 
-  let prevSnapshot = null;
-  let tempIdUsed = null; // track temp id so we can replace it with DB _id later
+    // Optimistically update UI
+    setPlans((prev) =>
+      prev.map((p) =>
+        String(p.id) === String(planId)
+          ? {
+              ...p,
+              logs: [
+                ...(p.logs || []).filter((l) => l.date !== todayStr),
+                {
+                  id: tempId,
+                  supplement_id: planId,
+                  date: todayStr,
+                  status: newStatus,
+                },
+              ],
+            }
+          : p
+      )
+    );
 
-  // 1) Optimistic update + snapshot for rollback
-  setPlans(prev => {
-    prevSnapshot = prev;
-
-    return prev.map(plan => {
-      if (String(plan.id) !== key) return plan;
-
-      const logs = Array.isArray(plan.logs) ? [...plan.logs] : [];
-      const idx = logs.length > 0 ? 0 : -1; // only "today" exists in UI
-
-      const existingId = idx >= 0 ? logs[idx].id : null;
-      const newId = existingId ?? `tmp_${plan.id}_${Date.now()}`; // TEMP id for UI only
-      if (!existingId) tempIdUsed = newId;
-
-      const takenAt = status === "taken" ? Date.now() : null;
-
-      const newLog = new SupplementsLog(
-        newId,          // UI id (temp if this is a create)
-        plan.id,        // supplement_id in your API
-        todayStr,       // fine to keep locally; not sent to API
-        status,
-        takenAt
-      );
-
-      if (idx >= 0) logs[idx] = newLog;
-      else logs.push(newLog);
-
-      return { ...plan, logs };
-    });
-  });
-
-  // 2) Persist: update if one existed, else create (DB provides _id & userId)
-  try {
-    const before = prevSnapshot?.find(p => String(p.id) === key);
-    if (!before) throw new Error(`Plan ${key} not found in snapshot`);
-
-    const existed = Array.isArray(before.logs) && before.logs.length > 0;
-
-    if (existed) {
-      // UPDATE → send only real DB id + status
-      const existingLogId = before.logs[0].id;
-      await updateSupplementLog({ id: existingLogId, status });
-    } else {
-      // CREATE → do NOT send an id; send supplement_id + status
-      const created = await createSupplementLog({
-        supplement_id: planId,
-        status
+    try {
+      // Check if a real log exists
+      let existingLog = null;
+      setPlans((prev) => {
+        const plan = prev.find((p) => String(p.id) === String(planId));
+        if (plan) {
+          existingLog = (plan.logs || []).find(
+            (l) => l.date === todayStr && !String(l.id).startsWith("tmp_")
+          );
+        }
+        return prev;
       });
 
-      // Replace temp id in state with DB _id so future updates work
-      if (created?._id && tempIdUsed) {
-        setPlans(prev =>
-          prev.map(p => {
-            if (String(p.id) !== key) return p;
-            const logs = Array.isArray(p.logs) ? [...p.logs] : [];
-            const i = logs.findIndex(l => l?.id === tempIdUsed);
-            if (i >= 0) logs[i] = { ...logs[i], id: created._id };
-            return { ...p, logs };
-          })
+      if (existingLog) {
+        // Update existing log
+        await updateSupplementLog(existingLog.id, {
+          status: newStatus,
+          date: todayStr,
+        });
+      } else {
+        // Create new log
+        const created = await createSupplementLog({
+          supplement_id: planId,
+          status: newStatus,
+          date: todayStr,
+        });
+
+        // Replace temporary log with real log
+        setPlans((prev) =>
+          prev.map((p) =>
+            String(p.id) === String(planId)
+              ? {
+                  ...p,
+                  logs: p.logs.map((l) =>
+                    l.id === tempId
+                      ? { ...l, id: created._id ?? created.id }
+                      : l
+                  ),
+                }
+              : p
+          )
         );
       }
-    }
-  } catch (err) {
-    console.warn("Failed to persist supplement log:", err);
-    CustomToast?.error?.("Failed to update supplement log");
-    if (prevSnapshot) setPlans(prevSnapshot); // rollback
-  } finally {
-    inFlight.delete(key);
-  }
-};
+    } catch (err) {
+      console.warn("Failed to persist supplement log:", err);
+      CustomToast.error("Failed to save log");
 
-  // renderTodayCard: render to screen today card
+      // Rollback on failure
+      setPlans((prev) =>
+        prev.map((p) =>
+          String(p.id) === String(planId)
+            ? {
+                ...p,
+                logs: (p.logs || []).filter((l) => l.id !== tempId),
+              }
+            : p
+        )
+      );
+    }
+  };
+
+  // Render a single card for today's supplement
   const renderTodayCard = ({ item }) => {
     const { plan, log } = item;
     const isTaken = log.status === "taken";
@@ -314,11 +337,11 @@ const markStatus = async (planId, status) => {
         style={[
           styles.todayCard,
           {
-            backgroundColor: theme.textPrimary /* ListCardItemGeneral */,
+            backgroundColor: theme.textPrimary,
           },
         ]}
       >
-        {/* Column 1 */}
+        {/* Column 1: Plan info */}
         <View style={{ flex: 1 }}>
           <Text
             style={[
@@ -377,7 +400,7 @@ const markStatus = async (planId, status) => {
           </View>
         </View>
 
-        {/* Column 2 */}
+        {/* Column 2: Status toggles */}
         <View style={styles.col2}>
           <Text
             style={[
@@ -437,23 +460,20 @@ const markStatus = async (planId, status) => {
     );
   };
 
-  // renderPlanRow renders to screen plan in row
+  // Render a row in "All logs" view
   const renderPlanRow = ({ item }) => {
     const dosageTime = [item.dosage || "", item.timeOfDay || ""]
       .filter(Boolean)
       .join(", ");
-    const days = item.selectedDays || [];
-    const daysLine = toDayLabels(days || []);
-
     return (
       <View style={{ marginVertical: -5 }}>
         <ListCardItemGeneral
           item={{
-            id: item.id ?? item._id, 
+            id: item.id ?? item._id,
             name: item.name,
             type: `${dosageTime || "—"}`,
           }}
-          days={item.selectedDays} // <-- pass days here
+          days={item.selectedDays}
           onEdit={() => startEditPlan(item)}
           onDelete={() => deletePlan(item.id ?? item._id)}
           onStart={null}
@@ -466,10 +486,11 @@ const markStatus = async (planId, status) => {
     );
   };
 
+  // Render screen
   return (
     <View style={[styles.screen, { backgroundColor: theme.background }]}>
       <View style={styles.content}>
-        {/* Add/Edit Modal */}
+        {/* Add/Edit supplement modal */}
         <SupplementsInput
           visible={showInput}
           onCancel={closeInput}
@@ -477,7 +498,7 @@ const markStatus = async (planId, status) => {
           entryToEdit={planToEdit}
         />
 
-        {/* Top toggle buttons — only show after we have at least one plan */}
+        {/* Toggle buttons for Today / All logs */}
         {hasPlans && (
           <View
             style={[
@@ -529,7 +550,7 @@ const markStatus = async (planId, status) => {
           </View>
         )}
 
-        {/* Content area */}
+        {/* Main content: Today's items or All logs */}
         {hasPlans ? (
           tab === "today" ? (
             hasToday ? (
@@ -561,7 +582,7 @@ const markStatus = async (planId, status) => {
                 renderItem={renderPlanRow}
                 contentContainerStyle={[
                   styles.listContent,
-                  { paddingBottom: NAV_BAR_HEIGHT + 120 }, // Room for FAB + nav
+                  { paddingBottom: NAV_BAR_HEIGHT + 120 },
                 ]}
                 showsVerticalScrollIndicator
               />
@@ -576,7 +597,7 @@ const markStatus = async (planId, status) => {
                 { color: theme.textPrimary, fontFamily: Font.semibold },
               ]}
             >
-              Keep on top of your intake (we will remind you)
+              Keep on top of your intake.
             </Text>
             <Fab
               floating={false}
@@ -588,10 +609,10 @@ const markStatus = async (planId, status) => {
           </View>
         )}
 
-        {/* Spacer so content doesn't collide with FAB/nav */}
+        {/* Spacer for FAB and bottom nav */}
         <View style={{ height: NAV_BAR_HEIGHT + 28 }} />
 
-        {/* FAB */}
+        {/* Floating Add button */}
         {hasPlans && (
           <Fab
             onPress={openAdd}
@@ -603,7 +624,7 @@ const markStatus = async (planId, status) => {
         )}
       </View>
 
-      {/* bottom navigation */}
+      {/* Bottom navigation */}
       <BottomNav />
     </View>
   );
@@ -612,23 +633,25 @@ const markStatus = async (planId, status) => {
 export default LogSupplements;
 
 /* ---------- helpers ---------- */
-// getMon0Sun6Index returns day of the week in index
+
+// Returns day index: Monday=0 … Sunday=6
 function getMon0Sun6Index(d) {
   return (d.getDay() + 6) % 7;
 }
 
-  function normalizePlanFromServer(p) {
-    const serverId = String(p._id ?? p.id);
-    return {
-      ...p,
-      _id: serverId,
-      id: serverId,
-      selectedDays: Array.isArray(p.selectedDays) ? p.selectedDays : [],
-      logs: Array.isArray(p.logs) ? p.logs : [],
-    };
-  }
+// Normalize server response for supplements plan
+function normalizePlanFromServer(p) {
+  const serverId = String(p._id ?? p.id);
+  return {
+    ...p,
+    _id: serverId,
+    id: serverId,
+    selectedDays: Array.isArray(p.selectedDays) ? p.selectedDays : [],
+    logs: Array.isArray(p.logs) ? p.logs : [],
+  };
+}
 
-// localISODate returns date format
+// Format date to YYYY-MM-DD
 function localISODate(d) {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
@@ -636,7 +659,7 @@ function localISODate(d) {
   return `${y}-${m}-${day}`;
 }
 
-// timeToMinutes return minutes total
+// Convert time string (hh:mm AM/PM) to total minutes
 function timeToMinutes(str) {
   if (!str) return 10 ** 6;
   const ampm = str.match(/^(\d{1,2}):(\d{2})\s?(AM|PM)$/i);
@@ -653,18 +676,12 @@ function timeToMinutes(str) {
   return 10 ** 6;
 }
 
-// Map 0..6 -> Mon..Sun labels
+// Weekday labels
 const DAY_LABELS = ["M", "T", "W", "T", "F", "S", "S"];
 
-/**
- * Turn an array of weekday indices into a label string.
- * Examples:
- *   toDayLabels([0,2,4]) -> "M, W, F"
- *   toDayLabels([0,1,2,3,4,5,6]) -> "Every day"
- */
+// Convert array of indices to readable day labels
 function toDayLabels(indices = []) {
   if (!Array.isArray(indices)) return "";
-  // dedupe + keep only valid 0..6
   const uniq = [...new Set(indices)].filter((i) => i >= 0 && i <= 6);
   if (uniq.length === 7) return "Every day";
   return uniq
@@ -677,7 +694,6 @@ function toDayLabels(indices = []) {
 const styles = StyleSheet.create({
   screen: { flex: 1, paddingTop: 12 },
   content: { flex: 1, paddingHorizontal: 16 },
-
   segmentBar: {
     flexDirection: "row",
     borderWidth: 1,
@@ -692,14 +708,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  segmentText: {
-    fontFamily: Font.bold,
-    fontSize: 14,
-  },
-
+  segmentText: { fontFamily: Font.bold, fontSize: 14 },
   invisibleBox: { overflow: "hidden" },
   listContent: { paddingHorizontal: 12, paddingVertical: 10, gap: 8 },
-
   fabContainerEmpty: {
     position: "absolute",
     left: 0,
@@ -712,7 +723,6 @@ const styles = StyleSheet.create({
     ...(Platform.OS === "android" ? { elevation: 10 } : {}),
   },
   emptyText: { fontSize: 24, margin: 20, textAlign: "center" },
-
   bottomNav: {
     position: "absolute",
     left: 0,
@@ -726,8 +736,6 @@ const styles = StyleSheet.create({
     zIndex: 1000,
     ...(Platform.OS === "android" ? { elevation: 20 } : {}),
   },
-
-  // TODAY card
   todayCard: {
     flexDirection: "row",
     alignItems: "flex-start",
@@ -741,7 +749,6 @@ const styles = StyleSheet.create({
   smallLabel: { fontSize: 12 },
   bigName: { fontSize: 18, marginTop: 2 },
   value: { fontSize: 16, marginTop: 2 },
-
   col2: { width: 90, alignItems: "center" },
   squareToggle: {
     width: 28,
