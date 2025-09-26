@@ -1,31 +1,35 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { StatusBar } from "expo-status-bar";
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColorScheme } from "react-native";
 import { Colors } from "@/constants/Colors";
 import { Font } from "@/constants/Font";
 
 import LogSupplements from "../supplements/LogSupplementScreen";
 
+// Create the stack navigator for this section
 const Stack = createNativeStackNavigator();
 
-/**
- * Main navigation container for the supplements feature
- * Provides themed stack navigation with safe area handling for supplement logging
- */
+// Main component for the Supplements stack
 export default function SupplementsMainScreen() {
-  // Gets safe area insets and theme for consistent UI across devices
+  // Get safe area insets for devices with notches/status bars
   const insets = useSafeAreaInsets();
+
+  // Determine theme based on system color scheme
   const theme = Colors[useColorScheme() ?? "light"];
-  
-  // Ensures minimum top padding for header on devices without notch
+
+  // Ensure a minimum top padding for header
   const topPad = Math.max(insets.top, 24);
-  
+
   return (
     <>
+      {/* Set status bar style for this screen */}
       <StatusBar style="light" translucent={false} />
+
+      {/* Configure stack navigator for the supplements section */}
       <Stack.Navigator
         screenOptions={{
+          // Styling for the header
           headerStyle: {
             backgroundColor: theme.background,
             borderBottomColor: "#fff",
@@ -35,14 +39,19 @@ export default function SupplementsMainScreen() {
             paddingTop: topPad,
             height: 56 + topPad,
           },
+          // Color of header text and icons
           headerTintColor: theme.textPrimary,
+          // Align header title to center
           headerTitleAlign: "center",
+          // Font style for header title
           headerTitleStyle: { fontFamily: Font.bold },
+          // Show shadow under header
           headerShadowVisible: true,
+          // Background color for content below header
           contentStyle: { backgroundColor: theme.background },
         }}
       >
-        {/* Main supplement logging screen for tracking supplement intake */}
+        {/* Define the main screen in this stack */}
         <Stack.Screen
           name="LogSupplements"
           component={LogSupplements}

@@ -1,4 +1,11 @@
-import { useState, useContext, useLayoutEffect, useMemo } from "react";
+import {
+  useState,
+  useContext,
+  useLayoutEffect,
+  useMemo,
+  useEffect,
+  useCallback,
+} from "react";
 import {
   Text,
   FlatList,
@@ -19,18 +26,29 @@ import { useRouter } from "expo-router";
 import ListCardItemGeneral from "@/components/ListCardItemGeneral";
 import SupplementsLog from "@/components/supplements/models/SupplementsLog";
 import BottomNav from "@/components/navbar/BottomNav";
+import CustomToast from "@/components/common/CustomToast";
 
-/**
- * Supplement logging screen that manages supplement plans and daily tracking
- * Allows users to create supplement schedules and mark daily intake status
- */
+// Import API services for supplements and logs
+import {
+  getSupplements,
+  createSupplement,
+  updateSupplement,
+  deleteSupplement,
+} from "../../services/supplementService";
+import {
+  getTodaysSupplementLogs,
+  createSupplementLog,
+  updateSupplementLog,
+} from "../../services/supplementLogService";
+
+// Main screen for creating supplement plans and logging intake
 function LogSupplements({ navigation }) {
   const scheme = useColorScheme();
   const theme = Colors[scheme ?? "light"];
   const { toggleChat } = useContext(AIContext);
   const router = useRouter();
 
-  // Sets up navigation header with back button and AI chat toggle
+  // Configure header buttons (back & AI chat) on screen mount
   useLayoutEffect(() => {
     const goBackOrHome = () => {
       if (navigation.canGoBack()) navigation.goBack();
@@ -68,59 +86,140 @@ function LogSupplements({ navigation }) {
     });
   }, [navigation, theme, toggleChat]);
 
-  // Main state for supplement management
+  // State for modal, plans, editing plan, and selected tab
   const [showInput, setShowInput] = useState(false);
-  const [plans, setPlans] = useState([]);
+  const [plans, setPlans] = useState([]); // list of supplements plans
   const [planToEdit, setPlanToEdit] = useState(null);
-  
-  // Tab state for switching between today's schedule and all plans
-  const [tab, setTab] = useState("today");
+  const [tab, setTab] = useState("today"); // view: "today" or "all"
+  const getId = (o) => String(o?.id ?? o?._id ?? "");
+
+  const inFlight = new Set(); // prevent double API requests
+
+  function keyFor(planId, date) {
+    return `${planId}::${date}`;
+  }
 
   const NAV_BAR_HEIGHT = 64;
   const BOX_MAX_HEIGHT = Math.round(Dimensions.get("window").height * 0.7);
   const isEmpty = plans.length === 0;
 
-  // Modal control functions
+  // Open input modal to add a new supplement plan
   function openAdd() {
     setPlanToEdit(null);
     setShowInput(true);
   }
 
+  // Close the input modal
   function closeInput() {
     setPlanToEdit(null);
     setShowInput(false);
   }
 
-  // Saves new or edited supplement plan to the plans array
-  function saveSupplement(plan) {
-    setPlans((curr) => {
-      const idx = curr.findIndex((p) => String(p.id) === String(plan.id));
-      if (idx >= 0) {
-        const copy = [...curr];
-        copy[idx] = plan;
-        return copy;
+  // Load supplement plans from API
+  const loadSupplements = useCallback(async () => {
+    try {
+      const data = await getSupplements();
+      setPlans(Array.isArray(data) ? data.map(normalizePlanFromServer) : []);
+    } catch (err) {
+      console.warn("Failed to load supplements:", err);
+      CustomToast.error("Failed to load supplements");
+    }
+  }, []);
+
+  // Load today's supplement logs from API
+  const loadSupplementsLogs = useCallback(async () => {
+    try {
+      const data = await getTodaysSupplementLogs();
+      const todayStr = localISODate(new Date());
+
+      setPlans((prev) =>
+        prev.map((p) => {
+          const matching = data
+            .filter(
+              (l) =>
+                String(l.supplement_id?._id || l.supplement_id) === String(p.id)
+            )
+            .map((l) => ({
+              ...l,
+              id: l._id ?? l.id,
+              supplement_id: String(l.supplement_id?._id || l.supplement_id),
+              date: l.date || todayStr,
+            }));
+
+          // keep previous logs except today, then add today's logs
+          const otherLogs = (p.logs || []).filter((l) => l.date !== todayStr);
+          return { ...p, logs: [...otherLogs, ...matching] };
+        })
+      );
+    } catch (err) {
+      console.warn("Failed to load supplement logs:", err);
+      CustomToast.error("Failed to load supplement logs");
+    }
+  }, []);
+
+  // Load plans and logs on mount
+  useEffect(() => {
+    loadSupplements();
+    loadSupplementsLogs();
+  }, [loadSupplements, loadSupplementsLogs]);
+
+  // Save new or updated supplement plan
+  async function saveSupplement(plan) {
+    const id = getId(plan) || getId(planToEdit);
+    const isUpdate = Boolean(id);
+
+    if (isUpdate) {
+      const prev = plans;
+      try {
+        await updateSupplement(planToEdit.id, plan);
+        CustomToast.success("Update successful");
+        loadSupplements();
+      } catch (err) {
+        console.warn("Update failed:", err?.message || err);
+        CustomToast.error("Update Failed");
+        setPlans(prev);
       }
-      return [...curr, plan];
-    });
-    closeInput();
+    } else {
+      const prev = plans;
+      try {
+        const created = await createSupplement(plan);
+        setPlans((curr) => [...curr, normalizePlanFromServer(created)]);
+        console.log("from server: ", created);
+      } catch (err) {
+        console.warn("Create failed:", err?.message || err);
+        CustomToast.error("Create Failed");
+        setPlans(prev);
+      }
+    }
   }
 
-  // Removes a supplement plan from the list
-  function deletePlan(id) {
-    setPlans((curr) => curr.filter((p) => p.id !== id));
+  // Delete a supplement plan
+  async function deletePlan(id) {
+    const prev = plans;
+    setPlans((curr) => curr.filter((p) => String(p.id) !== String(id)));
+
+    try {
+      await deleteSupplement(id);
+      CustomToast.success("Supplement deleted");
+      loadSupplements();
+    } catch (err) {
+      console.warn("Delete failed:", err);
+      CustomToast.error("Delete Failed");
+      setPlans(prev);
+    }
   }
 
-  // Opens edit modal for an existing supplement plan
+  // Start editing a plan
   function startEditPlan(item) {
     setPlanToEdit(item);
     setShowInput(true);
   }
 
-  // Gets today's date and day index for filtering scheduled supplements
+  // Today's date and index for filtering
   const todayStr = localISODate(new Date());
   const todayIdx = getMon0Sun6Index(new Date());
 
-  // Filters and sorts supplement plans scheduled for today
+  // Get today's supplement plans with logs, sorted by time
   const todaysItems = useMemo(() => {
     const list = [];
     for (const p of plans) {
@@ -130,13 +229,7 @@ function LogSupplements({ navigation }) {
       const logs = Array.isArray(p.logs) ? p.logs : [];
       let log = logs.find((l) => l?.date === todayStr);
       if (!log) {
-        log = new SupplementsLog(
-          `log_${p.id}_${todayStr}`,
-          p.id,
-          todayStr,
-          "scheduled",
-          null
-        );
+        log = new SupplementsLog(p.id, todayStr, "scheduled", null);
       }
 
       list.push({ plan: p, log, sortKey: timeToMinutes(p.timeOfDay) });
@@ -147,30 +240,93 @@ function LogSupplements({ navigation }) {
   const hasPlans = plans?.length > 0;
   const hasToday = (todaysItems?.length ?? 0) > 0;
 
-  // Updates the intake status for a specific supplement plan on today's date
-  function markStatus(planId, status) {
+  // Toggle today's supplement log status (taken, skipped)
+  const markStatus = async (planId, newStatus) => {
+    const todayStr = localISODate(new Date());
+    const tempId = `tmp_${planId}_${todayStr}`;
+
+    // Optimistically update UI
     setPlans((prev) =>
-      prev.map((plan) => {
-        if (String(plan.id) !== String(planId)) return plan;
-        const logs = Array.isArray(plan.logs) ? [...plan.logs] : [];
-        const i = logs.findIndex((l) => l?.date === todayStr);
-
-        const newLog = new SupplementsLog(
-          i >= 0 ? logs[i].id : `log_${plan.id}_${todayStr}`,
-          plan.id,
-          todayStr,
-          status,
-          status === "taken" ? Date.now() : null
-        );
-
-        if (i >= 0) logs[i] = newLog;
-        else logs.push(newLog);
-        return { ...plan, logs };
-      })
+      prev.map((p) =>
+        String(p.id) === String(planId)
+          ? {
+              ...p,
+              logs: [
+                ...(p.logs || []).filter((l) => l.date !== todayStr),
+                {
+                  id: tempId,
+                  supplement_id: planId,
+                  date: todayStr,
+                  status: newStatus,
+                },
+              ],
+            }
+          : p
+      )
     );
-  }
 
-  // Renders individual supplement cards for today's view with intake tracking
+    try {
+      // Check if a real log exists
+      let existingLog = null;
+      setPlans((prev) => {
+        const plan = prev.find((p) => String(p.id) === String(planId));
+        if (plan) {
+          existingLog = (plan.logs || []).find(
+            (l) => l.date === todayStr && !String(l.id).startsWith("tmp_")
+          );
+        }
+        return prev;
+      });
+
+      if (existingLog) {
+        // Update existing log
+        await updateSupplementLog(existingLog.id, {
+          status: newStatus,
+          date: todayStr,
+        });
+      } else {
+        // Create new log
+        const created = await createSupplementLog({
+          supplement_id: planId,
+          status: newStatus,
+          date: todayStr,
+        });
+
+        // Replace temporary log with real log
+        setPlans((prev) =>
+          prev.map((p) =>
+            String(p.id) === String(planId)
+              ? {
+                  ...p,
+                  logs: p.logs.map((l) =>
+                    l.id === tempId
+                      ? { ...l, id: created._id ?? created.id }
+                      : l
+                  ),
+                }
+              : p
+          )
+        );
+      }
+    } catch (err) {
+      console.warn("Failed to persist supplement log:", err);
+      CustomToast.error("Failed to save log");
+
+      // Rollback on failure
+      setPlans((prev) =>
+        prev.map((p) =>
+          String(p.id) === String(planId)
+            ? {
+                ...p,
+                logs: (p.logs || []).filter((l) => l.id !== tempId),
+              }
+            : p
+        )
+      );
+    }
+  };
+
+  // Render a single card for today's supplement
   const renderTodayCard = ({ item }) => {
     const { plan, log } = item;
     const isTaken = log.status === "taken";
@@ -185,7 +341,7 @@ function LogSupplements({ navigation }) {
           },
         ]}
       >
-        {/* Supplement details column */}
+        {/* Column 1: Plan info */}
         <View style={{ flex: 1 }}>
           <Text
             style={[
@@ -244,7 +400,7 @@ function LogSupplements({ navigation }) {
           </View>
         </View>
 
-        {/* Status tracking column with taken/skipped toggles */}
+        {/* Column 2: Status toggles */}
         <View style={styles.col2}>
           <Text
             style={[
@@ -304,25 +460,22 @@ function LogSupplements({ navigation }) {
     );
   };
 
-  // Renders supplement plan items in the "All logs" view with edit/delete options
+  // Render a row in "All logs" view
   const renderPlanRow = ({ item }) => {
     const dosageTime = [item.dosage || "", item.timeOfDay || ""]
       .filter(Boolean)
       .join(", ");
-    const days = item.selectedDays || [];
-    const daysLine = toDayLabels(days || []);
-
     return (
       <View style={{ marginVertical: -5 }}>
         <ListCardItemGeneral
           item={{
-            id: item.id,
+            id: item.id ?? item._id,
             name: item.name,
             type: `${dosageTime || "—"}`,
           }}
           days={item.selectedDays}
           onEdit={() => startEditPlan(item)}
-          onDelete={() => deletePlan(item.id)}
+          onDelete={() => deletePlan(item.id ?? item._id)}
           onStart={null}
           showStart={false}
           labelName="Name"
@@ -333,10 +486,11 @@ function LogSupplements({ navigation }) {
     );
   };
 
+  // Render screen
   return (
     <View style={[styles.screen, { backgroundColor: theme.background }]}>
       <View style={styles.content}>
-        {/* Modal for adding/editing supplement plans */}
+        {/* Add/Edit supplement modal */}
         <SupplementsInput
           visible={showInput}
           onCancel={closeInput}
@@ -344,7 +498,7 @@ function LogSupplements({ navigation }) {
           entryToEdit={planToEdit}
         />
 
-        {/* Tab selector between today's schedule and all plans */}
+        {/* Toggle buttons for Today / All logs */}
         {hasPlans && (
           <View
             style={[
@@ -396,7 +550,7 @@ function LogSupplements({ navigation }) {
           </View>
         )}
 
-        {/* Main content area with conditional rendering based on state */}
+        {/* Main content: Today's items or All logs */}
         {hasPlans ? (
           tab === "today" ? (
             hasToday ? (
@@ -435,7 +589,7 @@ function LogSupplements({ navigation }) {
             </View>
           )
         ) : (
-          // Empty state with centered add button and instructional text
+          // Empty state
           <View style={styles.fabContainerEmpty}>
             <Text
               style={[
@@ -443,7 +597,7 @@ function LogSupplements({ navigation }) {
                 { color: theme.textPrimary, fontFamily: Font.semibold },
               ]}
             >
-              Keep on top of your intake (we will remind you)
+              Keep on top of your intake.
             </Text>
             <Fab
               floating={false}
@@ -455,9 +609,10 @@ function LogSupplements({ navigation }) {
           </View>
         )}
 
+        {/* Spacer for FAB and bottom nav */}
         <View style={{ height: NAV_BAR_HEIGHT + 28 }} />
 
-        {/* Floating action button for adding new supplement plans */}
+        {/* Floating Add button */}
         {hasPlans && (
           <Fab
             onPress={openAdd}
@@ -469,6 +624,7 @@ function LogSupplements({ navigation }) {
         )}
       </View>
 
+      {/* Bottom navigation */}
       <BottomNav />
     </View>
   );
@@ -476,12 +632,26 @@ function LogSupplements({ navigation }) {
 
 export default LogSupplements;
 
-// Converts day of week to Monday=0, Sunday=6 index
+/* ---------- helpers ---------- */
+
+// Returns day index: Monday=0 … Sunday=6
 function getMon0Sun6Index(d) {
   return (d.getDay() + 6) % 7;
 }
 
-// Formats date as YYYY-MM-DD string
+// Normalize server response for supplements plan
+function normalizePlanFromServer(p) {
+  const serverId = String(p._id ?? p.id);
+  return {
+    ...p,
+    _id: serverId,
+    id: serverId,
+    selectedDays: Array.isArray(p.selectedDays) ? p.selectedDays : [],
+    logs: Array.isArray(p.logs) ? p.logs : [],
+  };
+}
+
+// Format date to YYYY-MM-DD
 function localISODate(d) {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
@@ -489,7 +659,7 @@ function localISODate(d) {
   return `${y}-${m}-${day}`;
 }
 
-// Converts time string to minutes for sorting purposes
+// Convert time string (hh:mm AM/PM) to total minutes
 function timeToMinutes(str) {
   if (!str) return 10 ** 6;
   const ampm = str.match(/^(\d{1,2}):(\d{2})\s?(AM|PM)$/i);
@@ -506,9 +676,10 @@ function timeToMinutes(str) {
   return 10 ** 6;
 }
 
+// Weekday labels
 const DAY_LABELS = ["M", "T", "W", "T", "F", "S", "S"];
 
-// Converts array of day indices to readable day labels string
+// Convert array of indices to readable day labels
 function toDayLabels(indices = []) {
   if (!Array.isArray(indices)) return "";
   const uniq = [...new Set(indices)].filter((i) => i >= 0 && i <= 6);
@@ -519,10 +690,10 @@ function toDayLabels(indices = []) {
     .join(", ");
 }
 
+/* ---------- styles ---------- */
 const styles = StyleSheet.create({
   screen: { flex: 1, paddingTop: 12 },
   content: { flex: 1, paddingHorizontal: 16 },
-
   segmentBar: {
     flexDirection: "row",
     borderWidth: 1,
@@ -537,14 +708,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  segmentText: {
-    fontFamily: Font.bold,
-    fontSize: 14,
-  },
-
+  segmentText: { fontFamily: Font.bold, fontSize: 14 },
   invisibleBox: { overflow: "hidden" },
   listContent: { paddingHorizontal: 12, paddingVertical: 10, gap: 8 },
-
   fabContainerEmpty: {
     position: "absolute",
     left: 0,
@@ -557,7 +723,6 @@ const styles = StyleSheet.create({
     ...(Platform.OS === "android" ? { elevation: 10 } : {}),
   },
   emptyText: { fontSize: 24, margin: 20, textAlign: "center" },
-
   bottomNav: {
     position: "absolute",
     left: 0,
@@ -571,8 +736,6 @@ const styles = StyleSheet.create({
     zIndex: 1000,
     ...(Platform.OS === "android" ? { elevation: 20 } : {}),
   },
-
-  // TODAY card
   todayCard: {
     flexDirection: "row",
     alignItems: "flex-start",
@@ -586,7 +749,6 @@ const styles = StyleSheet.create({
   smallLabel: { fontSize: 12 },
   bigName: { fontSize: 18, marginTop: 2 },
   value: { fontSize: 16, marginTop: 2 },
-
   col2: { width: 90, alignItems: "center" },
   squareToggle: {
     width: 28,
