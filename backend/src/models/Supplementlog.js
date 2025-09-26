@@ -1,12 +1,12 @@
 const { Schema, model } = require('mongoose');
 
-const supplimentLogSchema = new Schema(
+const supplementLogSchema = new Schema(
     {
-        userId: { type: Schema.Types.ObjectId, ref: 'Users', required: true }, // owner of supplement log 
-        supplement_id: { type: Schema.Types.ObjectId, ref:'Supplement', required: true }, //reference to suppliment
-        status: { type: String, trim: true, enum: ['taken', 'skipped', 'scheduled'] },
-    }, { timestamps: true } //add create and update dates
+        userId: { type: Schema.Types.ObjectId, ref: 'Users', required: true },
+        supplement_id: { type: Schema.Types.ObjectId, ref: 'Supplement', required: true },
+        status: { type: String, enum: ['taken', 'skipped', 'scheduled'], required: true },
+    },
+    { timestamps: true }
 );
 
-//export
-module.exports = model('SupplementLog', supplimentLogSchema);
+module.exports = model('SupplementLog', supplementLogSchema);

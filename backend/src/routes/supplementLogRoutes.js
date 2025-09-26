@@ -12,9 +12,9 @@ router.post('/', auth, async (req, res, next) => {
     try {
         //save new supplement log
         const supplementlog = await SupplementLog.create({
-                ...req.body,
-                userId: req.user.id,
-            });
+            ...req.body,
+            userId: req.user.id,
+        });
 
         return res.status(201).json(supplementlog);
     } catch (err) {
@@ -41,7 +41,7 @@ router.patch('/:id', auth, async (req, res, next) => {
         )
 
         if (!updatedSupplementLog) {
-            return res.status(404).json({ error:'supplement log not found' });
+            return res.status(404).json({ error: 'supplement log not found' });
         }
 
         //return updated supplement
@@ -57,27 +57,19 @@ router.patch('/:id', auth, async (req, res, next) => {
  * todays suppliment logs 
 */
 router.get('/', auth, async (req, res, next) => {
-    
-    //start and end of day so we can filter for logs today
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
-
     const endOfToday = new Date();
     endOfToday.setHours(23, 59, 59, 999);
 
     try {
-        //find todays supplement logs for current user
-        const supplementLog = SupplementLog.find({
+        const logs = await SupplementLog.find({
             userId: req.user.id,
-            createdAt: {
-                $gte: startOfToday,
-                $lte: endOfToday
-            }
-        })
+            createdAt: { $gte: startOfToday, $lte: endOfToday }
+        }).populate('supplement_id');
 
-        return (supplementLog);
+        return res.json(logs);
     } catch (err) {
-        //pass to global error handler in server.js
         return next(err);
     }
 });
