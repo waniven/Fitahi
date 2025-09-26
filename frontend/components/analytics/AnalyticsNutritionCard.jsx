@@ -1,4 +1,3 @@
-// components/analytics/AnalyticsNutritionCard.jsx
 import React from "react";
 import { View, Text, StyleSheet, Dimensions } from "react-native";
 import { Type } from "../../constants/Font";
@@ -21,9 +20,9 @@ const AnalyticsNutritionCard = ({
     carbs,
     fat,
     createdAt,
-    _id,
-  } = entry;
+  } = entry; // Destructure entry props
 
+  // Format timestamp to readable string
   const formatTimestamp = (timestamp) => {
     if (!timestamp) return "-";
     const date = new Date(timestamp);
@@ -36,42 +35,56 @@ const AnalyticsNutritionCard = ({
     return `${day} ${month}, ${hours}:${minutes}${ampm}`;
   };
 
+  // Capitalize first letter of meal type
   const formatMealType = (mealType) =>
     mealType.charAt(0).toUpperCase() + mealType.slice(1);
 
   return (
     <View style={[styles.container, style]} {...props}>
+      {/* Header section with food name */}
       <View
         style={[
           styles.headerSection,
           { paddingRight: showDeleteButton ? 35 : 0 },
         ]}
       >
+        {/* Display food name */}
         <Text style={styles.foodNameText} numberOfLines={2}>
           {name}
         </Text>
       </View>
 
+      {/* Meta section with timestamp and meal type */}
       <View style={styles.metaSection}>
+        {/* Show created date */}
         <Text style={styles.timestampText}>{formatTimestamp(createdAt)}</Text>
+
+        {/* Show meal type */}
         <View style={styles.mealTypeBadge}>
           <Text style={styles.mealTypeText}>{formatMealType(mealType)}</Text>
         </View>
       </View>
 
+      {/* Nutrition information badges */}
       <View style={styles.nutritionSection}>
         <View style={styles.nutritionRow}>
+          {/* Calories badge */}
           <View style={[styles.nutritionBadge, styles.caloriesBadge]}>
             <Text style={styles.badgeText}>Calories: {calories} kcal</Text>
           </View>
+
+          {/* Protein badge */}
           <View style={[styles.nutritionBadge, styles.proteinBadge]}>
             <Text style={styles.badgeText}>Protein: {protein} g</Text>
           </View>
         </View>
         <View style={styles.nutritionRow}>
+          {/* Carbs badge */}
           <View style={[styles.nutritionBadge, styles.carbsBadge]}>
             <Text style={styles.badgeText}>Carbs: {carbs} g</Text>
           </View>
+
+          {/* Fat badge */}
           <View style={[styles.nutritionBadge, styles.fatBadge]}>
             <Text style={styles.badgeText}>Fat: {fat} g</Text>
           </View>
@@ -79,7 +92,7 @@ const AnalyticsNutritionCard = ({
       </View>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {

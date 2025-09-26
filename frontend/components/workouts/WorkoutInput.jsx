@@ -14,19 +14,23 @@ import {
   useColorScheme,
 } from "react-native";
 
+// Days of the week for selection
 const DAYS = ["M", "T", "W", "T", "F", "S", "S"];
 
+// WorkoutInput - Modal component for creating/editing a workout
 function WorkoutInput(props) {
-  const scheme = useColorScheme();
-  const theme = Colors[scheme ?? "light"];
+  const scheme = useColorScheme(); // light or dark mode
+  const theme = Colors[scheme ?? "light"]; // select theme
 
+  // form state
   const [enteredWorkoutName, setEnteredWorkoutName] = useState("");
   const [selectedWorkoutType, setWorkoutType] = useState("");
   const [selectedDays, setSelectedDays] = useState([]);
   const [showErrors, setShowErrors] = useState(false);
-  const [workout, setWorkout] = useState(null);
-  const [modalIsVisible, setModalIsVisible] = useState(false);
+  const [workout, setWorkout] = useState(null); // current workout object
+  const [modalIsVisible, setModalIsVisible] = useState(false); // exercise modal visibility
 
+  // load workout data when modal opens or when editing an existing workout
   useEffect(() => {
     if (props.visible) {
       if (props.workoutToEdit) {
@@ -41,14 +45,17 @@ function WorkoutInput(props) {
     }
   }, [props.visible, props.workoutToEdit]);
 
+  // Open exercise modal
   function startAddExercise() {
     setModalIsVisible(true);
   }
 
+  // Close exercise modal
   function endAddExercise() {
     setModalIsVisible(false);
   }
 
+  // Reset form fields
   function resetForm() {
     setEnteredWorkoutName("");
     setWorkoutType("");
@@ -56,20 +63,24 @@ function WorkoutInput(props) {
     setShowErrors(false);
   }
 
+  // Handle workout name input
   function workoutInputHandler(enteredText) {
     setEnteredWorkoutName(enteredText);
   }
 
+  // Handle workout type selection
   function workoutTypeInputHandler(type) {
     setWorkoutType(type);
   }
 
+  // Toggle selected day
   function toggleDay(idx) {
     setSelectedDays((prev) =>
       prev.includes(idx) ? prev.filter((i) => i !== idx) : [...prev, idx]
     );
   }
 
+  // Validate inputs and open exercise modal
   function addWorkoutHandler() {
     const isNameValid = enteredWorkoutName.trim().length > 0;
     const isTypeValid = !!selectedWorkoutType;
@@ -81,7 +92,7 @@ function WorkoutInput(props) {
       if (!isNameValid) missing.push("workout name");
       if (!isTypeValid) missing.push("workout type");
       if (!isDaysValid) missing.push("workout days");
-      return;
+      return; // stop if any validation fails
     }
 
     // Build workout object with latest info
@@ -93,19 +104,21 @@ function WorkoutInput(props) {
       exercises: workout?.exercises || props.workoutToEdit?.exercises || [],
     };
 
-    setWorkout(draft); // make sure the workout object always has name/type/days + existing exercises
-    startAddExercise();
+    setWorkout(draft); // save workout object
+    startAddExercise(); // open exercise modal
   }
 
+  // Cancel adding workout and reset
   function cancelAddWorkout() {
     resetForm();
     props.onCancel?.();
   }
 
+  // Save exercises from ExerciseInput modal
   function onSaveExercises(exercisesPayload) {
     if (!workout) return;
 
-    // Validation for exercise names
+    // Validate exercise names
     for (let i = 0; i < exercisesPayload.length; i++) {
       const ex = exercisesPayload[i];
       if (!ex.exerciseName || ex.exerciseName.trim() === "") {
@@ -113,9 +126,9 @@ function WorkoutInput(props) {
       }
     }
 
-    // Merge exercises and ensure correct mapping
+    // Merge exercises with workout object
     const workoutToSend = {
-      ...workout, // includes workoutName, workoutType, selectedDays
+      ...workout,
       exercises: exercisesPayload.map((ex) => ({
         exerciseName: ex.exerciseName.trim(),
         numOfSets: Number(ex.numOfSets) || 1,
@@ -129,18 +142,20 @@ function WorkoutInput(props) {
 
     props.onAddWorkout(workoutToSend);
 
-    // Reset state
+    // Reset state after save
     setWorkout(null);
     setModalIsVisible(false);
     resetForm();
     props.onCancel?.();
   }
 
+  // Dynamic styles and validation flags
   const TextFont = { color: theme.background };
   const isTypeInvalid = showErrors && !selectedWorkoutType;
   const isNameInvalid = showErrors && enteredWorkoutName.trim().length === 0;
   const isDayInvalid = showErrors && selectedDays.length === 0;
 
+  // Main render
   return (
     <Modal
       visible={props.visible}
@@ -152,7 +167,10 @@ function WorkoutInput(props) {
         <View
           style={[styles.modalContent, { backgroundColor: theme.textPrimary }]}
         >
+          {/* Close button */}
           <ModalCloseButton onPress={cancelAddWorkout} />
+
+          {/* Header */}
           <Text style={[styles.header, TextFont, { fontFamily: Font.bold }]}>
             Workout Specifications
           </Text>
@@ -160,7 +178,7 @@ function WorkoutInput(props) {
             What will you be working on?
           </Text>
 
-          {/* name input */}
+          {/* Name input */}
           <Text
             style={[styles.textTitle, TextFont, { fontFamily: Font.semibold }]}
           >
@@ -190,7 +208,7 @@ function WorkoutInput(props) {
             </Text>
           )}
 
-          {/* type selection */}
+          {/* Workout type selection */}
           <Text
             style={[styles.textTitle, TextFont, { fontFamily: Font.semibold }]}
           >
@@ -214,6 +232,7 @@ function WorkoutInput(props) {
                 },
               ]}
             >
+              {/* Type buttons */}
               {[
                 { label: "Cardio", value: "cardio" },
                 { label: "Strength", value: "strength" },
@@ -260,7 +279,7 @@ function WorkoutInput(props) {
             )}
           </View>
 
-          {/* day selection */}
+          {/* Day selection */}
           <Text
             style={[
               styles.text,
@@ -327,7 +346,7 @@ function WorkoutInput(props) {
             </Text>
           )}
 
-          {/* exercise modal */}
+          {/* Exercise modal */}
           <ExerciseInput
             visible={modalIsVisible}
             workout={workout}
@@ -335,7 +354,7 @@ function WorkoutInput(props) {
             onSave={onSaveExercises}
           />
 
-          {/* floating Next button */}
+          {/* Floating Next button */}
           <PrimaryButton
             title="Next"
             onPress={addWorkoutHandler}

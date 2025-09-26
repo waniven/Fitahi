@@ -1,4 +1,3 @@
-// components/common/CustomButtonThree.jsx
 import React from 'react';
 import { TouchableOpacity, StyleSheet } from 'react-native';
 import { Colors } from '../../constants/Colors';

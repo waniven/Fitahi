@@ -6,21 +6,24 @@ import { Colors } from "../../constants/Colors";
 import globalStyles from "../../styles/globalStyles";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+// BottomNav - Fixed bottom navigation bar with 4 tabs, respecting safe area
 export default function BottomNav() {
-  const theme = Colors["dark"];
-  const router = useRouter();
-  const insets = useSafeAreaInsets();
+  const theme = Colors["dark"]; // use dark theme colors
+  const router = useRouter(); // router for navigation
+  const insets = useSafeAreaInsets(); // safe area for iPhone X / notch support
 
+  // Main render
   return (
     <View
       style={[
         styles.bottomNav,
         {
           backgroundColor: "#fff",
-          paddingBottom: 12 + insets.bottom, // respect safe area
+          paddingBottom: 12 + insets.bottom, // add safe area padding
         },
       ]}
     >
+      {/* Home Tab */}
       <TouchableOpacity
         style={styles.navItem}
         onPress={() => router.push("/home")}
@@ -29,6 +32,7 @@ export default function BottomNav() {
         <Text style={[globalStyles.navText, { color: theme.tint }]}>Home</Text>
       </TouchableOpacity>
 
+      {/* Analytics Tab */}
       <TouchableOpacity
         style={styles.navItem}
         onPress={() => router.push("/main/analytics")}
@@ -39,6 +43,7 @@ export default function BottomNav() {
         </Text>
       </TouchableOpacity>
 
+      {/* Supplements Tab */}
       <TouchableOpacity
         style={styles.navItem}
         onPress={() => router.push("/main/supplements")}
@@ -49,6 +54,7 @@ export default function BottomNav() {
         </Text>
       </TouchableOpacity>
 
+      {/* Settings Tab */}
       <TouchableOpacity
         style={styles.navItem}
         onPress={() => router.push("/profile/AccountSettings")}
@@ -63,18 +69,20 @@ export default function BottomNav() {
 }
 
 const styles = StyleSheet.create({
+  // container for bottom nav
   bottomNav: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    borderTopLeftRadius: 20,
+    flexDirection: "row", // horizontal layout
+    justifyContent: "space-around", // evenly spaced tabs
+    borderTopLeftRadius: 20, // rounded corners
     borderTopRightRadius: 20,
-    position: "absolute",
+    position: "absolute", // fixed at bottom
     bottom: 0,
     width: "100%",
-    pointerEvents: "box-none",
+    pointerEvents: "box-none", // allow touches to pass through gaps
     paddingTop: 12,
   },
+  // individual nav item
   navItem: {
-    alignItems: "center",
+    alignItems: "center", // icon + text centered
   },
 });

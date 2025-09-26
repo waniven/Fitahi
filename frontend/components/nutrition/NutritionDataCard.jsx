@@ -1,9 +1,7 @@
-// components/nutrition/NutritionDataCard.jsx
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Font, Type, TextVariants } from '../../constants/Font';
-import CustomToast from '../common/CustomToast';
+import { Type } from '../../constants/Font';
 
 const screenWidth = Dimensions.get('window').width;
 

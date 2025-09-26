@@ -29,32 +29,33 @@ const chartWidth = screenWidth - 60;
 const chartContainerWidth = screenWidth - 40;
 
 const AnalyticsDashboard = () => {
-  const router = useRouter();
-  const theme = Colors["dark"];
+  const router = useRouter(); // Router for navigation
+  const theme = Colors["dark"]; // Current theme colors
 
-  // state for logs
-  const [waterEntries, setWaterEntries] = useState([]);
-  const [workoutEntries, setWorkoutEntries] = useState([]);
-  const [nutritionEntries, setNutritionEntries] = useState([]);
-  const [biometricEntries, setBiometricEntries] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [progress, setProgress] = useState(0);
+  // State for different logs and loading
+  const [waterEntries, setWaterEntries] = useState([]); // Water intake logs
+  const [workoutEntries, setWorkoutEntries] = useState([]); // Workout session logs
+  const [nutritionEntries, setNutritionEntries] = useState([]); // Nutrition logs
+  const [biometricEntries, setBiometricEntries] = useState([]); // Biometric logs
+  const [loading, setLoading] = useState(true); // Loading state for data fetch
+  const [progress, setProgress] = useState(0); // Progress for loading indicator
 
-  // fetch logs on mount
+  // Fetch all logs when component mounts
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setLoading(true);
-        setProgress(0);
+        setLoading(true); // Start loading
+        setProgress(0); // Reset progress
 
         let water = [],
           workouts = [],
           nutrition = [],
           biometrics = [];
 
+        // Fetch water logs
         try {
           water = await getAllWater();
-          setProgress(0.25);
+          setProgress(0.25); // Update progress
         } catch (err) {
           CustomToast.error(
             "Could not load Water Intake logs",
@@ -62,6 +63,7 @@ const AnalyticsDashboard = () => {
           );
         }
 
+        // Fetch workout logs
         try {
           workouts = await getWorkoutResults();
           setProgress(0.5);
@@ -69,6 +71,7 @@ const AnalyticsDashboard = () => {
           CustomToast.error("Could not load Workout logs", "Please try again.");
         }
 
+        // Fetch nutrition logs
         try {
           nutrition = await getAllNutrition();
           setProgress(0.75);
@@ -79,6 +82,7 @@ const AnalyticsDashboard = () => {
           );
         }
 
+        // Fetch biometric logs
         try {
           biometrics = await getBiometrics();
           setProgress(1);
@@ -89,6 +93,7 @@ const AnalyticsDashboard = () => {
           );
         }
 
+        // Update state with fetched data
         setWaterEntries(water);
         setWorkoutEntries(workouts);
         setNutritionEntries(nutrition);
@@ -99,16 +104,17 @@ const AnalyticsDashboard = () => {
           "Please try again soon."
         );
       } finally {
-        setLoading(false);
+        setLoading(false); // End loading
       }
     };
 
     fetchData();
-  }, []);
+  }, []); // Run once on mount
 
-  // helpers
+  // Helper to convert seconds to minutes
   const secondsToMinutes = (seconds) => seconds / 60;
 
+  // Helper to get start and end dates for current week
   const getWeekBounds = () => {
     const now = new Date();
     const day = now.getDay(); // 0=Sun … 6=Sat
@@ -124,8 +130,9 @@ const AnalyticsDashboard = () => {
     return { startOfWeek, endOfWeek };
   };
 
-  const { startOfWeek, endOfWeek } = getWeekBounds();
+  const { startOfWeek, endOfWeek } = getWeekBounds(); // Current week range
 
+  // Check if there are logs for current week
   const hasWaterLogs = waterEntries.some((entry) => {
     const date = new Date(entry.timestamp || entry.createdAt);
     return date >= startOfWeek && date < endOfWeek;
@@ -146,7 +153,7 @@ const AnalyticsDashboard = () => {
     return date >= startOfWeek && date < endOfWeek;
   });
 
-  // water data
+  // Prepare water chart data for current week
   const prepareWaterData = () => {
     const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
     const waterByDay = Array(7).fill(0);
@@ -154,7 +161,7 @@ const AnalyticsDashboard = () => {
     waterEntries.forEach((entry) => {
       const date = new Date(entry.timestamp || entry.createdAt);
       if (date >= startOfWeek && date < endOfWeek) {
-        const dayIndex = (date.getDay() + 6) % 7; // shift Mon=0
+        const dayIndex = (date.getDay() + 6) % 7; // Monday=0
         waterByDay[dayIndex] += entry.amount || 0;
       }
     });
@@ -162,13 +169,13 @@ const AnalyticsDashboard = () => {
     return { labels: days, datasets: [{ data: waterByDay }] };
   };
 
-  // workout data
+  // Prepare workout chart data for current week
   const prepareWorkoutData = () => {
     const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
     const workoutByDay = Array(7).fill(0);
 
     workoutEntries.forEach((entry) => {
-      if (!entry.totalTimeSpent) return; // skip invalid
+      if (!entry.totalTimeSpent) return; // Skip if no data
       const date = new Date(entry.dateCompleted || entry.timestamp);
       if (date >= startOfWeek && date < endOfWeek) {
         const dayIndex = (date.getDay() + 6) % 7;
@@ -176,13 +183,10 @@ const AnalyticsDashboard = () => {
       }
     });
 
-    return {
-      labels: days,
-      datasets: [{ data: workoutByDay }],
-    };
+    return { labels: days, datasets: [{ data: workoutByDay }] };
   };
 
-  // nutrition data
+  // Prepare stacked nutrition chart data for current week
   const prepareNutritionStackedData = () => {
     const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
     const dailyMacros = [];
@@ -220,7 +224,7 @@ const AnalyticsDashboard = () => {
     };
   };
 
-  // biometrics data
+  // Prepare biometrics chart data for current week
   const prepareBiometricsData = () => {
     const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
     const weights = Array(7).fill(null);
@@ -241,17 +245,19 @@ const AnalyticsDashboard = () => {
     return { labels: days, datasets: [{ data: weights }] };
   };
 
+  // Prepare data for charts
   const waterData = prepareWaterData();
   const workoutData = prepareWorkoutData();
   const nutritionStackedData = prepareNutritionStackedData();
   const biometricsData = prepareBiometricsData();
-  const maxY = Math.max(...nutritionStackedData.data.flat());
 
+  // Show loading progress while fetching data
   if (loading) {
     return (
       <SafeAreaView
         style={[styles.safeArea, { backgroundColor: theme.background }]}
       >
+        {/* Show loading progress bar */}
         <LoadingProgress progress={progress} message="Fetching analytics..." />
       </SafeAreaView>
     );
@@ -530,7 +536,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 16,
     paddingVertical: 20,
-    paddingHorizontal: 10, // reduced padding to center bars
+    paddingHorizontal: 10,
     marginHorizontal: 20,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 3 },

@@ -5,19 +5,27 @@ import { getMe } from "@/services/userService";
 
 export function scheduleWaterNotifications() {
     useEffect(() => {
-        let notificationsActive = true; // stop service after final goal message
+        // stop service after final goal message
+        let notificationsActive = true;
+
+        // will hold past water intake records
         let waterEntries = [];
+
+        // default daily goal (mL)
         let dailyGoal = 2000;
 
-        // helper: refresh water + goal
+        // helper: refresh water + goal from backend
         const refreshWaterData = async () => {
             try {
                 const me = await getMe();
+                // update daily goal from user settings
                 dailyGoal = me.intakeGoals?.dailyWater ?? 2000;
 
                 const res = await getWater();
-                const waterData = Array.isArray(res) ? res : res?.data; // handle raw array or axios-style {data}
+                // handle either raw array or Axios-style {data}
+                const waterData = Array.isArray(res) ? res : res?.data;
 
+                // map water entries into standardized format for calculations
                 waterEntries = Array.isArray(waterData)
                     ? waterData.map((doc) => ({
                         id: doc._id,
@@ -30,7 +38,7 @@ export function scheduleWaterNotifications() {
             }
         };
 
-        // helper: compute stats
+        // helper: compute water stats
         const getWaterStats = () => {
             const now = new Date();
             const lastEntry = waterEntries.length
@@ -44,8 +52,9 @@ export function scheduleWaterNotifications() {
         // first load
         refreshWaterData();
 
+        // main interval loop to check for notifications
         const interval = setInterval(async () => {
-            if (!notificationsActive) return;
+            if (!notificationsActive) return; // stop if goal already reached
 
             // refresh entries/goal on each tick
             await refreshWaterData();
@@ -57,7 +66,10 @@ export function scheduleWaterNotifications() {
             // skip night hours (10pm – 8am)
             if (hour >= 22 || hour < 8) return;
 
+            // fallback if no entries yet
             const lastTime = lastEntry ?? new Date(0);
+
+            // time since last drink in hours
             const diffHours = (now - lastTime) / 1000 / 60 / 60;
 
             // production = trigger after 3+ hours of inactivity  >= 3
@@ -66,9 +78,11 @@ export function scheduleWaterNotifications() {
                 let title, message;
 
                 if (remaining > 0) {
+                    // user hasn't met goal yet
                     title = `💧 You are ${remaining} mL away from your water goal today!`;
                     message = `Don't forget to hydrate!`;
                 } else {
+                    // user has met daily goal
                     title = `💧🎉 Well done meeting your water goal today! Keep it up!`;
                     message = `You've reached your daily water intake goal.`;
                     notificationsActive = false; // stop further notifications after this final message
@@ -87,6 +101,7 @@ export function scheduleWaterNotifications() {
         // production = check every 1 hour = 60 * 60 * 1000
         // testing = check every 30 seconds = 0.5 * 60 * 1000
 
+        // cleanup: stop interval when component unmounts
         return () => clearInterval(interval);
     }, []);
 }

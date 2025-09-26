@@ -1,8 +1,7 @@
-// components/water/WaterDataCard.jsx
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { Font, Type, TextVariants } from "../../constants/Font";
+import { Type } from "../../constants/Font";
 
 // Local text styles using Font constants
 const textStyles = {

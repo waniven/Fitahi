@@ -1,4 +1,3 @@
-// components/nutrition/NutritionEntryModal.jsx
 import React, { useState, useEffect } from 'react';
 import { 
   View, 
@@ -11,8 +10,7 @@ import {
   ScrollView
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '../../constants/Colors';
-import { Font, Type, TextVariants } from '../../constants/Font';
+import { Type } from '../../constants/Font';
 import CustomButton from '../common/CustomButton';
 import CustomToast from '../common/CustomToast';
 

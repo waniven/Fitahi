@@ -1,10 +1,5 @@
-// components/common/LogScreen.jsx
 import React from "react";
 import { View, Text, StyleSheet, StatusBar, Platform, useColorScheme } from "react-native";
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
 import CustomButtonTwo from "./CustomButtonTwo";
 import CustomButtonThree from "./CustomButtonThree";
 import FloatingAIButton from "../../app/ai/FloatingAIButton";

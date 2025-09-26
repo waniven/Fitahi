@@ -1,4 +1,3 @@
-// components/water/WaterEntryModal.jsx
 import React, { useState } from 'react';
 import { 
   View, 
@@ -12,8 +11,7 @@ import {
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '../../constants/Colors';
-import { Font, Type, TextVariants } from '../../constants/Font';
+import { Type } from '../../constants/Font';
 import CustomButton from '../common/CustomButton';
 import CustomToast from '../common/CustomToast';
 

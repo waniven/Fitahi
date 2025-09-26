@@ -26,15 +26,13 @@ const CustomInput = ({
   onDateChange,
   ...props
 }) => {
+  // Local state for focus, error handling, and date picker
   const [isFocused, setIsFocused] = useState(false);
   const [localError, setLocalError] = useState('');
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [tempDate, setTempDate] = useState(null);
 
-  /**
-   * Handles text input changes and validation
-   * @param {string} text - Input text value
-   */
+  // Handle text input changes and validation
   const handleTextChange = (text) => {
     if (onChangeText) {
       onChangeText(text);
@@ -50,9 +48,7 @@ const CustomInput = ({
     }
   };
 
-  /**
-   * Handles input focus state and date picker activation
-   */
+  // Handle input focus and date picker activation
   const handleFocus = () => {
     if (isDatePicker) {
       setTempDate(selectedDate || new Date());
@@ -62,9 +58,7 @@ const CustomInput = ({
     setIsFocused(true);
   };
 
-  /**
-   * Handles input blur state and validation
-   */
+  // Handle input blur and validation
   const handleBlur = () => {
     setIsFocused(false);
     
@@ -78,32 +72,29 @@ const CustomInput = ({
     }
   };
 
-  /**
-   * Formats date for display in readable format
-   * @param {Date} date - Date object to format
-   * @returns {string} Formatted date string
-   */
+  // Format date for display
   const formatDate = (date) => {
     if (!date) return '';
     const options = { year: 'numeric', month: 'long', day: 'numeric' };
     return date.toLocaleDateString(undefined, options);
   };
 
+  // Determine error state and display
   const displayError = errorMessage || localError;
   const hasError = !!displayError;
 
-  /**
-   * Determines border color based on input state
-   * @returns {string} Color value for border
-   */
+  // Determine border color based on state
   const getBorderColor = () => {
     if (hasError) return Colors.light.error;
     if (isFocused || (isDatePicker && showDatePicker)) return Colors.light.primary;
     return Colors.light.overlayLight;
   };
 
+  // Main render
   return (
     <View style={[styles.container, style]}>
+      
+      {/* Label with required indicator */}
       {label && (
         <Text style={[styles.label, {fontFamily: Font.semibold}]}>
           {label.toUpperCase()}
@@ -111,6 +102,7 @@ const CustomInput = ({
         </Text>
       )}
       
+      {/* Input container */}
       <TouchableOpacity
         style={[
           styles.inputContainer,
@@ -122,6 +114,7 @@ const CustomInput = ({
         disabled={!isDatePicker}
         activeOpacity={isDatePicker ? 0.7 : 1}
       >
+        {/* Date picker input */}
         {isDatePicker ? (
           <View style={styles.datePickerContainer}>
             <Text style={[
@@ -133,6 +126,7 @@ const CustomInput = ({
             <Text style={styles.chevron}>›</Text>
           </View>
         ) : (
+          // Regular text input
           <TextInput
             style={[styles.input, inputStyle, {fontFamily: Font.regular}]}
             placeholder={placeholder}
@@ -149,9 +143,12 @@ const CustomInput = ({
         )}
       </TouchableOpacity>
       
+      {/* iOS date picker modal */}
       {isDatePicker && showDatePicker && Platform.OS === 'ios' && (
         <View style={styles.datePickerOverlay}>
           <View style={styles.datePickerModal}>
+            
+            {/* Date picker header with cancel/done buttons */}
             <View style={styles.datePickerHeader}>
               <TouchableOpacity 
                 onPress={() => {
@@ -176,6 +173,8 @@ const CustomInput = ({
                 <Text style={[styles.datePickerButtonText, styles.doneButton]}>Done</Text>
               </TouchableOpacity>
             </View>
+
+            {/* Date picker spinner */}
             <DateTimePicker
               value={tempDate || selectedDate || new Date()}
               mode="date"
@@ -195,6 +194,7 @@ const CustomInput = ({
         </View>
       )}
       
+      {/* Android date picker */}
       {isDatePicker && showDatePicker && Platform.OS === 'android' && (
         <DateTimePicker
           value={selectedDate || new Date()}
@@ -212,6 +212,7 @@ const CustomInput = ({
         />
       )}
       
+      {/* Error message display */}
       {hasError && (
         <Text style={[styles.errorText, {fontFamily: Font.regular}]}>
           {displayError}
@@ -277,7 +278,6 @@ const styles = StyleSheet.create({
   
   inputError: {
     borderColor: '#FF5252',
-    // Removed the background color tint to keep white background
   },
   
   inputDisabled: {
