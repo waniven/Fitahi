@@ -1,4 +1,3 @@
-// app/main/nutrition.jsx
 import React, { useEffect, useState } from "react";
 import { useRouter } from "expo-router";
 import LogScreen from "../../components/common/LogScreen";
@@ -24,24 +23,31 @@ import * as reminderService from "@/services/reminderService";
 const Nutrition = () => {
   const router = useRouter();
 
+  // State for modal visibility for adding/editing food entries
   const [modalVisible, setModalVisible] = useState(false);
+
+  // State to determine whether to show dashboard or log screen
   const [showDashboard, setShowDashboard] = useState(false);
+
+  // State to store nutrition entries
   const [nutritionEntries, setNutritionEntries] = useState(
     sampleEntries.nutritionEntries
   );
+
+  // Loading and error state for API requests
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  //fall back values calories: 2300, protein: 30% / 4, carbs: 50% / 4, fat: 20% / 9
+  // Default macro and calorie goals: 2300, protein: 30% / 4, carbs: 50% / 4, fat: 20% / 9
   const [calorieGoal, setCalorieGoal] = useState(2300);
   const [carbGoal, setCarbGoal] = useState(287.5);
   const [proteinGoal, setProteinGoal] = useState(172.5);
   const [fatGoal, setFatGoal] = useState(51.1111111111);
 
-  //back button logic
+  // Handle back navigation
   const handleBackPress = () => router.back();
 
-  // helper function to schedule reminder to hydrate 30 mins after meal
+  // Schedule water reminder 30 minutes after adding a meal
   const scheduleWaterReminder = async () => {
     try {
       const reminderTime = new Date();
@@ -57,45 +63,48 @@ const Nutrition = () => {
         ).padStart(2, "0")}`,
       };
 
-      // save to backend so it appears on calendar
+      // Save reminder to backend
       const saved = await reminderService.createReminder(waterReminderData);
 
-      // schedule notification
+      // Schedule local notification
       const ids = await notificationService.scheduleReminderNotification(
         saved,
         1
       );
       saved.notificationIds = ids;
 
-      // update local state in Nutrition.jsx if needed (or refetch reminders in Home)
+      // Log scheduled reminder
       console.log("Water reminder scheduled and saved:", saved);
     } catch (err) {
       console.warn("Failed to schedule water reminder", err);
     }
   };
 
+  // Open food entry modal
   const handleAddFood = () => {
     setModalVisible(true);
   };
 
+  // Close food entry modal
   const handleCloseModal = () => {
     setModalVisible(false);
   };
 
-  //calories: from API, protein: 30% / 4, carbs: 50% / 4, fat: 20% / 9
+  // Calculate and update macro breakdown based on calories (from API) - protein: 30% / 4, carbs: 50% / 4, fat: 20% / 9
   const macroBreakdown = (calories) => {
     const cals = Number(calories) || 2300;
     const carbGoal = (cals * 0.5) / 4;
     const proteinGoal = (cals * 0.3) / 4;
     const fatGoal = (cals * 0.2) / 9;
 
-    //rounded to 1 dp
+    // Update state rounded to 1 decimal place
     setCalorieGoal(cals);
     setCarbGoal(parseFloat(carbGoal.toFixed(1)));
     setProteinGoal(parseFloat(proteinGoal.toFixed(1)));
     setFatGoal(parseFloat(fatGoal.toFixed(1)));
   };
 
+  // Normalize backend nutrition entry to UI format
   const toUI = (row) => ({
     id: row.id ?? row._id ?? row.uuid,
     name: row.name,
@@ -108,7 +117,7 @@ const Nutrition = () => {
     timestamp: row.timestamp ?? row.createdAt ?? new Date().toISOString(),
   });
 
-  //load from api
+  // Load nutrition data and user intake goals on mount
   useEffect(() => {
     let mounted = true;
 
@@ -116,7 +125,7 @@ const Nutrition = () => {
       setLoading(true);
       setError(null);
 
-      //load daily calorie info from getMe api route
+      // Load daily calorie info from user profile
       try {
         const me = await getMe();
         macroBreakdown(me.intakeGoals?.dailyCalories);
@@ -125,6 +134,7 @@ const Nutrition = () => {
         console.warn("GET /me failed", err);
       }
 
+      // Load nutrition entries
       try {
         const res = await getNutrition();
         const rows = Array.isArray(res?.data)
@@ -134,19 +144,13 @@ const Nutrition = () => {
           : [];
         const normalized = rows.map(toUI);
 
-        if (!mounted) {
-          return;
-        }
+        if (!mounted) return;
 
         setNutritionEntries(normalized);
 
-        if (rows.length > 0) {
-          setShowDashboard(true);
-        }
+        if (rows.length > 0) setShowDashboard(true);
       } catch (err) {
-        if (!mounted) {
-          return;
-        }
+        if (!mounted) return;
 
         CustomToast.error("Error loading nutrition logs");
         console.warn("GET /nutrition failed", err);
@@ -156,11 +160,13 @@ const Nutrition = () => {
       }
     };
     loadNutrition();
+
     return () => {
       mounted = false;
     };
   }, []);
 
+  // Save new nutrition entry
   const handleSaveNutritionEntry = async (newEntry) => {
     try {
       const entryToSave = {
@@ -177,15 +183,18 @@ const Nutrition = () => {
 
       console.log("New nutrition entry saved:", normalizedSaved);
 
+      // Update state with new entry
       setNutritionEntries((prevEntries) => [...prevEntries, normalizedSaved]);
-      // Navigate to dashboard after adding entry
+
+      // Show dashboard after adding entry
       setShowDashboard(true);
+
       CustomToast.nutritionSaved(
         saved.name ?? newEntry.name,
         newEntry.mealType
       );
 
-      // schedule water reminder to go off 30 mins after having food
+      // Schedule water reminder after meal
       scheduleWaterReminder();
     } catch (err) {
       console.warn("New Nutrition log save failed:", err);
@@ -195,6 +204,7 @@ const Nutrition = () => {
     }
   };
 
+  // Delete a nutrition entry
   const handleDeleteEntry = async (entryId) => {
     const toDelete = nutritionEntries.find(
       (e) => String(e.id) === String(entryId)
@@ -204,7 +214,7 @@ const Nutrition = () => {
     try {
       await deleteNutrition(entryId);
 
-      //update local array
+      // Update local nutrition entries array
       setNutritionEntries((prevEntries) => {
         const newEntries = prevEntries.filter((entry) => entry.id !== entryId);
         console.log("New entries after delete:", newEntries);
@@ -216,6 +226,7 @@ const Nutrition = () => {
         }
         return newEntries;
       });
+
       CustomToast.nutritionDeleted(deletedName);
     } catch (err) {
       console.warn("Delete failed:", err);
@@ -223,10 +234,11 @@ const Nutrition = () => {
     }
   };
 
-  // Show dashboard if we have entries and showDashboard is true
+  // Render nutrition dashboard if entries exist
   if (showDashboard && nutritionEntries.length > 0) {
     return (
       <>
+        {/* Render nutrition dashboard with entries and daily goals */}
         <NutritionDashboard
           entries={nutritionEntries}
           onDeleteEntry={handleDeleteEntry}
@@ -240,6 +252,7 @@ const Nutrition = () => {
           }}
         />
 
+        {/* Render modal for adding/editing nutrition entry */}
         <NutritionEntryModal
           visible={modalVisible}
           onClose={handleCloseModal}
@@ -249,9 +262,10 @@ const Nutrition = () => {
     );
   }
 
-  // Show initial log screen
+  // Render initial log screen if no entries
   return (
     <>
+      {/* Render base log screen for nutrition */}
       <LogScreen
         title="Nutrition Log"
         subtitle="Log your food"
@@ -261,6 +275,7 @@ const Nutrition = () => {
         onAddPress={handleAddFood}
       />
 
+      {/* Render modal for adding nutrition entry */}
       <NutritionEntryModal
         visible={modalVisible}
         onClose={handleCloseModal}

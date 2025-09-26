@@ -23,6 +23,7 @@ const CHAT_SIDE = 20;
 const CHAT_BOTTOM = 40;
 const INPUT_ROW_HEIGHT = 56;
 
+// AI chatbox component
 export default function AIChatbox({ onClose, messages, setMessages }) {
   // Theme configuration - uses dark scheme as default
   const scheme = "dark";
@@ -32,7 +33,7 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
   const [chatMessages, setChatMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  
+
   // History modal and conversation management
   const [historyVisible, setHistoryVisible] = useState(false);
   const [conversations, setConversations] = useState([]);
@@ -63,16 +64,20 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
     const clean = text?.trim();
     if (!clean) return;
 
+    // Reset input and set loading state
     setInput("");
     setLoading(true);
     typingController.current = { cancelled: false };
 
     try {
+      // Send message and get AI response
       const { userMessage, aiMessage, conversationId } =
         await messageService.sendMessage(clean, activeConvo?._id);
 
+      // Stop if typing was cancelled
       if (typingController.current.cancelled) return;
 
+      // Update active conversation id
       setActiveConvo({ ...activeConvo, _id: conversationId });
 
       // Ensure messages have unique IDs for React keys
@@ -85,6 +90,7 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
         id: aiMessage.id || (Date.now() + 1).toString(),
       };
 
+      // Update local chat state and parent state
       setChatMessages((prev) => [...prev, safeUserMsg, safeAiMsg]);
       setMessages((prev) => [...prev, safeUserMsg, safeAiMsg]);
     } catch (err) {
@@ -98,8 +104,10 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
         description = "Check your network connection!";
       }
 
+      // Show toast for error
       CustomToast.error("Darwin Unavailable", description);
     } finally {
+      // Reset loading state
       setLoading(false);
     }
   };
@@ -110,8 +118,11 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
   const loadConversations = async () => {
     try {
       const convos = await messageService.getConversations();
+
+      // Update conversation state
       setConversations(convos);
     } catch (err) {
+      // Show error toast if fetching fails
       CustomToast.error(
         "Load Failed",
         "Unable to load conversations, try again."
@@ -129,12 +140,20 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
    */
   const selectConversation = async (convo) => {
     try {
+      // Set the active conversation
       setActiveConvo(convo);
+
+      // Fetch messages for the selected conversation
       const msgs = await messageService.getMessagesByConversation(convo._id);
+
+      // Update local chat and parent state
       setChatMessages(msgs);
       setMessages(msgs);
+
+      // Close history modal
       setHistoryVisible(false);
     } catch {
+      // Show toast if loading messages fails
       CustomToast.error("Load Failed", "Unable to load messages, try again.");
     }
   };
@@ -145,11 +164,16 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
   const newConversation = async () => {
     try {
       const convo = await messageService.createConversation();
+
+      // Set as active and clear chat state
       setActiveConvo(convo);
       setChatMessages([]);
       setMessages([]);
+
+      // Close history modal
       setHistoryVisible(false);
     } catch {
+      // Show toast if creation fails
       CustomToast.error(
         "Conversation Not Created",
         "Unable to create conversation."
@@ -162,7 +186,10 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
    */
   const deleteConversation = async (convoId) => {
     try {
+      // Call API to delete conversation
       await messageService.deleteConversation(convoId);
+
+      // Remove conversation from list
       setConversations((prev) => prev.filter((c) => c._id !== convoId));
 
       // Clear active conversation if it was deleted
@@ -174,6 +201,7 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
         setLoading(false);
       }
     } catch (err) {
+      // Show toast if deletion fails
       CustomToast.error("Deletion Failed", "Unable to delete conversation.");
     }
   };

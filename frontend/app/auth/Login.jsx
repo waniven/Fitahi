@@ -25,13 +25,22 @@ import { login } from "../../services/authService";
  * Handles user login with email/password and navigates to home on success
  */
 export default function Login() {
+  // router for navigation actions
   const router = useRouter();
+
+  // theme colors
   const theme = Colors["dark"];
+
+  // safe area insets for proper padding
   const insets = useSafeAreaInsets();
 
-  // Form state management
+  // form state for email/password input
   const [formData, setFormData] = useState({ email: "", password: "" });
+
+  // busy/loading state for login request
   const [busy, setBusy] = useState(false);
+
+  // tracks if the user has attempted login (for validation feedback)
   const [hasAttemptedLogin, setHasAttemptedLogin] = useState(false);
 
   /**
@@ -61,6 +70,7 @@ export default function Login() {
   const updateField = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
 
+    // clear validation errors dynamically
     if (hasAttemptedLogin && errors[field]) {
       let fieldError = null;
       if (field === "email") fieldError = validateEmail(value);
@@ -79,17 +89,17 @@ export default function Login() {
     const password = validatePassword(formData.password);
 
     try {
-      setBusy(true);
-      await login(email, password);
+      setBusy(true); // set loading state
+      await login(email, password); // attempt authentication
       CustomToast.success("Welcome Back!", "Login successful");
-      router.replace("/home");
+      router.replace("/home"); // navigate to home on success
     } catch (err) {
       // Provide user-friendly error messages based on server response
       const status = err?.response?.status;
       const serverMsg = err?.response?.data?.error;
       const msg = serverMsg || `Login failed${status ? ` (${status})` : ""}`;
       CustomToast.error(msg);
-      
+
       // Log detailed error info for debugging when no server message is available
       if (!serverMsg)
         console.log("LOGIN ERROR:", {
@@ -99,7 +109,7 @@ export default function Login() {
           code: err?.code,
         });
     } finally {
-      setBusy(false);
+      setBusy(false); // clear loading state
     }
   };
 
@@ -113,6 +123,7 @@ export default function Login() {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={Platform.OS === "ios" ? 60 : 0}
       >
+        {/* Scrollable container for the login form */}
         <ScrollView
           contentContainerStyle={[
             styles.contentContainer,

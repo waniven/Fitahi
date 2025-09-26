@@ -186,7 +186,7 @@ export default function SignUp() {
           "Welcome to Fitahi!",
           "Account created successfully"
         );
-        router.push("/profile/quiz");
+        router.push("/profile/Quiz");
       } catch (err) {
         // Provide user-friendly error messages based on server response
         const status = err?.response?.status;

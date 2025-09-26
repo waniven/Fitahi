@@ -1,4 +1,4 @@
-import React, { createContext, useState, useRef } from "react";
+import React, { createContext, useState } from "react";
 import AIChatbox from "./AIChatbox";
 
 // Context for sharing AI chat state across the application
@@ -11,11 +11,15 @@ export const AIContext = createContext();
 export default function AIProvider({ children }) {
   // Controls the visibility state of the AI chatbox modal
   const [chatVisible, setChatVisible] = useState(false);
-  
+
   // Stores all messages in the current conversation with Darwin AI
   // Initialized with a welcome message from the AI
   const [messages, setMessages] = useState([
-    { id: "0", text: "Hey there! I'm Darwin. What can I assist you with today?", fromAI: true }
+    {
+      id: "0",
+      text: "Hey there! I'm Darwin. What can I assist you with today?",
+      fromAI: true,
+    },
   ]);
 
   /**
@@ -25,14 +29,16 @@ export default function AIProvider({ children }) {
 
   return (
     // Provides chat state and controls to all child components
-    <AIContext.Provider value={{ chatVisible, toggleChat, messages, setMessages }}>
+    <AIContext.Provider
+      value={{ chatVisible, toggleChat, messages, setMessages }}
+    >
       {children}
 
       {/* Conditionally renders the AI chatbox when visibility is enabled */}
       {chatVisible && (
         <AIChatbox
           onClose={() => setChatVisible(false)}
-          messages={messages}   
+          messages={messages}
           setMessages={setMessages}
         />
       )}
