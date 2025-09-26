@@ -57,7 +57,7 @@ export default function SupplementsInput({
     if (!visible) return;
     if (entryToEdit) {
       setName(entryToEdit.name ?? "");
-      setDosage(entryToEdit.dosage ?? "");
+      setDosage(entryToEdit.dosage != null ? String(entryToEdit.dosage) : "");
       const parsed = parseTimeString(entryToEdit.timeOfDay);
       if (parsed) {
         setTimeOfDay(formatTime(parsed));
