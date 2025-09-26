@@ -23,6 +23,7 @@ import CustomToast from "@/components/common/CustomToast";
 
 //import api service
 import { getSupplements, createSupplement, updateSupplement, deleteSupplement } from "../../services/supplementService";
+import { getSupplementLogs, createSupplementLog, updateSupplementLog, deleteSupplementLog } from "../../services/supplementLogService";
 
 // LogSupplements allows user create supplement plans and log them
 function LogSupplements({ navigation }) {

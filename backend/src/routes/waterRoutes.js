@@ -75,7 +75,7 @@ router.get('/', auth, async (req, res, next) => {
     endOfToday.setHours(23, 59, 59, 999);
 
     try {
-        //find todays water for current user,
+        //find todays water for current user
         const water = await Water.find({
             userId: req.user.id,
             time: {
