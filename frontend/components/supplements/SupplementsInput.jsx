@@ -75,12 +75,12 @@ export default function SupplementsInput({
   }, [visible, entryToEdit]);
 
   function handleDosageChange(text) {
-  // normalize comma to dot if someone types "5,4"
-  const v = text.replace(",", ".");
-  if (DECIMAL_RE.test(v)) {
-    setDosage(v);
+    // normalize comma to dot if someone types "5,4"
+    const v = text.replace(",", ".");
+    if (DECIMAL_RE.test(v)) {
+      setDosage(v);
+    }
   }
-}
 
   // resetForm is used to reset form to blank
   function resetForm() {
@@ -126,7 +126,7 @@ export default function SupplementsInput({
 
     const plan = new SupplementsPlan(
       entryToEdit,
-        //`supp_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      //`supp_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
       name.trim(),
       cleaned,
       timeOfDay.trim(),
@@ -492,8 +492,6 @@ function err(theme) {
   };
 }
 
-
-
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
@@ -537,7 +535,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderWidth: 1,
   },
-  
+
   reminderText: {
     fontSize: 12,
     textAlign: "center",
@@ -563,5 +561,4 @@ const styles = StyleSheet.create({
     marginRight: 8,
     marginTop: 2,
   },
-
 });
