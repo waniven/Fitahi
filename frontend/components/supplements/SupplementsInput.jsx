@@ -7,7 +7,6 @@ import {
   Text,
   TouchableOpacity,
   useColorScheme,
-  Alert,
   ScrollView,
   Platform,
 } from "react-native";
@@ -328,21 +327,26 @@ export default function SupplementsInput({
             {/* Native time picker */}
             {showTimePicker && (
               <>
-                <DateTimePicker
-                  value={timeValue}
-                  mode="time"
-                  is24Hour={false}
-                  display={Platform.OS === "ios" ? "spinner" : "default"}
-                  onChange={(event, selected) => {
-                    if (Platform.OS === "android") {
-                      setShowTimePicker(false);
-                    }
-                    if (selected) {
-                      setTimeValue(selected);
-                      setTimeOfDay(formatTime(selected));
-                    }
-                  }}
-                />
+                <View
+                  style={Platform.OS === "ios" ? styles.iosPickerWrapper : null}
+                >
+                  <DateTimePicker
+                    value={timeValue}
+                    mode="time"
+                    is24Hour={false}
+                    display={Platform.OS === "ios" ? "spinner" : "default"}
+                    onChange={(event, selected) => {
+                      if (Platform.OS === "android") {
+                        setShowTimePicker(false);
+                      }
+                      if (selected) {
+                        setTimeValue(selected);
+                        setTimeOfDay(formatTime(selected));
+                      }
+                    }}
+                    textColor={Platform.OS === "ios" ? "#000" : undefined}
+                  />
+                </View>
                 {Platform.OS === "ios" && (
                   <View style={styles.iosBar}>
                     <TouchableOpacity
@@ -436,32 +440,6 @@ export default function SupplementsInput({
             {daysErr ? (
               <Text style={err(theme)}>Please choose at least one day</Text>
             ) : null}
-
-            {/* Supplement reminder note */}
-            <View style={styles.reminderSection}>
-              <View
-                style={[
-                  styles.reminderContainer,
-                  { borderLeftColor: theme.tint, borderColor: theme.tint },
-                ]}
-              >
-                <Ionicons
-                  name="notifications"
-                  size={16}
-                  color={theme.tint}
-                  style={styles.reminderIcon}
-                />
-                <Text
-                  style={[
-                    styles.reminderText,
-                    { fontFamily: Font.regular, color: theme.tint },
-                  ]}
-                >
-                  By default, you will be reminded one hour before, and once
-                  more at the time you specified.
-                </Text>
-              </View>
-            </View>
           </ScrollView>
 
           {/* Floating Save */}
@@ -560,5 +538,12 @@ const styles = StyleSheet.create({
   reminderIcon: {
     marginRight: 8,
     marginTop: 2,
+  },
+
+  iosPickerWrapper: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    paddingVertical: 10,
+    marginVertical: 8,
   },
 });
