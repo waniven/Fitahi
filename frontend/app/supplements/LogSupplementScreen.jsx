@@ -16,6 +16,7 @@ import {
   Platform,
   TouchableOpacity,
 } from "react-native";
+import { useIsFocused } from "@react-navigation/native";
 import SupplementsInput from "@/components/supplements/SupplementsInput";
 import { Colors } from "@/constants/Colors";
 import { Font } from "@/constants/Font";
@@ -119,10 +120,21 @@ function LogSupplements({ navigation }) {
   const loadSupplements = useCallback(async () => {
     try {
       const data = await getSupplements();
-      setPlans(Array.isArray(data) ? data.map(normalizePlanFromServer) : []);
+      setPlans((prev) => {
+        const normalized = Array.isArray(data)
+          ? data.map(normalizePlanFromServer)
+          : [];
+
+        return normalized.map((newPlan) => {
+          const existing = prev.find(
+            (p) => String(p.id) === String(newPlan.id)
+          );
+          return existing ? { ...newPlan, logs: existing.logs ?? [] } : newPlan;
+        });
+      });
     } catch (err) {
       console.warn("Failed to load supplements:", err);
-      CustomToast.error("Failed to load supplements");
+      CustomToast.error("Failed to load supplements", "Please try again soon.");
     }
   }, []);
 
@@ -153,15 +165,22 @@ function LogSupplements({ navigation }) {
       );
     } catch (err) {
       console.warn("Failed to load supplement logs:", err);
-      CustomToast.error("Failed to load supplement logs");
+      CustomToast.error(
+        "Failed to load supplement logs",
+        "Please try again soon."
+      );
     }
   }, []);
 
   // Load plans and logs on mount
+  const isFocused = useIsFocused();
+
   useEffect(() => {
-    loadSupplements();
-    loadSupplementsLogs();
-  }, [loadSupplements, loadSupplementsLogs]);
+    if (isFocused) {
+      loadSupplements();
+      loadSupplementsLogs();
+    }
+  }, [isFocused, loadSupplements, loadSupplementsLogs]);
 
   // Save new or updated supplement plan
   async function saveSupplement(plan) {
@@ -172,22 +191,32 @@ function LogSupplements({ navigation }) {
       const prev = plans;
       try {
         await updateSupplement(planToEdit.id, plan);
-        CustomToast.success("Update successful");
+        CustomToast.info(
+          "Supplement updated successfully!",
+          "Your changes have been saved."
+        );
         loadSupplements();
       } catch (err) {
         console.warn("Update failed:", err?.message || err);
-        CustomToast.error("Update Failed");
+        CustomToast.error(
+          "Failed to update Supplement",
+          "Please try again soon."
+        );
         setPlans(prev);
       }
     } else {
       const prev = plans;
       try {
         const created = await createSupplement(plan);
-        setPlans((curr) => [...curr, normalizePlanFromServer(created)]);
-        console.log("from server: ", created);
+        const normalized = normalizePlanFromServer(created);
+        setPlans((curr) => [...curr, normalized]);
+        console.log("created plan:", normalized);
       } catch (err) {
         console.warn("Create failed:", err?.message || err);
-        CustomToast.error("Create Failed");
+        CustomToast.error(
+          "Failed to create Supplement Log",
+          "Please try again soon."
+        );
         setPlans(prev);
       }
     }
@@ -200,11 +229,17 @@ function LogSupplements({ navigation }) {
 
     try {
       await deleteSupplement(id);
-      CustomToast.success("Supplement deleted");
+      CustomToast.info(
+        "Supplement deleted successfully!",
+        "Your changes have been saved."
+      );
       loadSupplements();
     } catch (err) {
       console.warn("Delete failed:", err);
-      CustomToast.error("Delete Failed");
+      CustomToast.error(
+        "Failed to delete Supplement Log",
+        "Please try again soon."
+      );
       setPlans(prev);
     }
   }
@@ -266,7 +301,6 @@ function LogSupplements({ navigation }) {
     );
 
     try {
-      // Check if a real log exists
       let existingLog = null;
       setPlans((prev) => {
         const plan = prev.find((p) => String(p.id) === String(planId));
@@ -279,20 +313,18 @@ function LogSupplements({ navigation }) {
       });
 
       if (existingLog) {
-        // Update existing log
         await updateSupplementLog(existingLog.id, {
           status: newStatus,
           date: todayStr,
         });
       } else {
-        // Create new log
         const created = await createSupplementLog({
           supplement_id: planId,
           status: newStatus,
           date: todayStr,
         });
 
-        // Replace temporary log with real log
+        // Replace temporary log with real log id
         setPlans((prev) =>
           prev.map((p) =>
             String(p.id) === String(planId)
@@ -310,7 +342,10 @@ function LogSupplements({ navigation }) {
       }
     } catch (err) {
       console.warn("Failed to persist supplement log:", err);
-      CustomToast.error("Failed to save log");
+      CustomToast.error(
+        "Failed to save Supplement Log",
+        "Please try again soon."
+      );
 
       // Rollback on failure
       setPlans((prev) =>
@@ -646,6 +681,7 @@ function normalizePlanFromServer(p) {
     ...p,
     _id: serverId,
     id: serverId,
+    timeOfDay: p.timeOfDay ?? p.time ?? "",
     selectedDays: Array.isArray(p.selectedDays) ? p.selectedDays : [],
     logs: Array.isArray(p.logs) ? p.logs : [],
   };
