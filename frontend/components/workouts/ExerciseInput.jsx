@@ -15,20 +15,22 @@ import ModalCloseButton from "../ModalCloseButton";
 import PrimaryButton from "../PrimaryButton";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-// ExerciseInput let user set exercises in a workout
+// ExerciseInput - lets user set exercises for a workout
 function ExerciseInput(props) {
-  const scheme = useColorScheme();
+  const scheme = useColorScheme(); // Light or dark mode
   const theme = Colors[scheme ?? "light"];
 
+  // Form state
   const [exercises, setExercises] = useState([]);
   const [showErrors, setShowErrors] = useState(false);
 
-  // Set the size of the modal content and scrollview
+  // Modal sizing
   const insets = useSafeAreaInsets();
-  const BTN_HEIGHT = 56; //Height of the button
-  const EXTRA_BOTTOM = 43;
+  const BTN_HEIGHT = 56; // Height of the floating button
+  const EXTRA_BOTTOM = 43; // Extra spacing
   const bottomGutter = BTN_HEIGHT + EXTRA_BOTTOM + insets.bottom + 8;
 
+  // Create a new blank exercise
   const makeExercise = () => ({
     id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
     name: "",
@@ -39,6 +41,7 @@ function ExerciseInput(props) {
     duration: "",
   });
 
+  // Convert model (from workout) to form state
   const fromModelToForm = (ex) => ({
     id: ex?.id ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`,
     name: ex?.exerciseName ?? "",
@@ -51,7 +54,7 @@ function ExerciseInput(props) {
     imageUrl: ex?.imageUrl ?? "",
   });
 
-  // clears state whenever the modal closes, so leftover exercises never linger
+  // Clear state when modal closes
   useEffect(() => {
     if (!props.visible) {
       setExercises([]);
@@ -59,80 +62,78 @@ function ExerciseInput(props) {
     }
   }, [props.visible]);
 
-  //seeds the exercises whenever the modal opens,
-  // either with existing workout data (for editing) or a fresh empty exercise (for new workouts)
+  // Seed exercises when modal opens
   useEffect(() => {
     if (!props.visible) return;
 
     if (!props.workout || !props.workout._id) {
-      // brand new workout → always start with fresh empty exercise
+      // New workout --> start with empty
       setExercises([makeExercise()]);
     } else if (props.workout.exercises?.length > 0) {
-      // editing → load existing ones
+      // Editing --> load existing exercises
       setExercises(props.workout.exercises.map(fromModelToForm));
     } else {
-      // editing but no exercises yet → still start with one empty
+      // Editing but no exercises yet --> start with one empty
       setExercises([makeExercise()]);
     }
 
     setShowErrors(false);
   }, [props.visible, props.workout]);
 
-  // allows only digits, keeps empty string for optional fields
+  // Allow only numeric input
   function handleNumericInput(value, optional = false) {
     const filtered = value.replace(/[^0-9]/g, "");
     if (optional && filtered === "") return "";
     return filtered;
   }
 
-  // isInvalidNumber checks if a value is an invalid number (empty or <= 0)
+  // Validate number input (>0)
   function isInvalidNumber(value) {
     return !value.trim() || Number(value) <= 0;
   }
 
-  // resetForm allows to reset form to original state
+  // Reset form to empty
   function resetForm() {
     setExercises([makeExercise()]);
     setShowErrors(false);
   }
 
-  // updateExercise updates the current exercises with new values
+  // Update specific field of an exercise
   function updateExercise(id, field, value) {
     setExercises((curr) =>
       curr.map((ex) => (ex.id === id ? { ...ex, [field]: value } : ex))
     );
   }
 
-  // addExerciseCard adds each exercise input into an array
+  // Add new exercise card
   function addExerciseCard() {
     setExercises((curr) => [...curr, makeExercise()]);
   }
 
-  // removeExerciseCard removes a selected exercise card
+  // Remove exercise card
   function removeExerciseCard(id) {
     setExercises((curr) => curr.filter((ex) => ex.id !== id));
   }
 
-  // onCancel allows to click X to go back to Workout Input
+  // Cancel modal
   function onCancel() {
     resetForm();
     props.onCancel?.();
   }
 
-  // onSave checks each exercise form is valid and save them into an array and send back to the parent
+  // Validate and save exercises
   function onSave() {
     setShowErrors(true);
 
     for (let i = 0; i < exercises.length; i++) {
       const ex = exercises[i];
-
       if (
         !ex.name.trim() ||
         isInvalidNumber(ex.reps) ||
         isInvalidNumber(ex.sets) ||
         isInvalidNumber(ex.rest)
       ) {
-        return; // will show errors
+        return; // Validation failed
       }
     }
 
@@ -151,6 +152,7 @@ function ExerciseInput(props) {
     props.onCancel?.();
   }
 
+  // Dynamic input styles
   const fieldInputStyle = [
     styles.input,
     {
@@ -165,6 +167,7 @@ function ExerciseInput(props) {
     { color: theme.background, fontFamily: Font.semibold },
   ];
 
+  // Main render
   return (
     <Modal
       visible={props.visible}
@@ -179,8 +182,10 @@ function ExerciseInput(props) {
             { backgroundColor: theme.textPrimary, paddingBottom: bottomGutter },
           ]}
         >
+          {/* Close button */}
           <ModalCloseButton onPress={onCancel} />
 
+          {/* Header */}
           <Text
             style={[
               styles.header,
@@ -203,6 +208,7 @@ function ExerciseInput(props) {
             contentContainerStyle={{ paddingBottom: 40 }}
             showsVerticalScrollIndicator
           >
+            {/* Exercise cards */}
             {exercises.map((ex, idx) => {
               const nameError = showErrors && !ex.name.trim();
               const repsError = showErrors && isInvalidNumber(ex.reps);
@@ -258,7 +264,6 @@ function ExerciseInput(props) {
                   <View style={styles.row}>
                     <View style={styles.col}>
                       <Text style={labelStyle}>REPS *</Text>
-                      {/* Reps */}
                       <TextInput
                         placeholder="Reps"
                         placeholderTextColor="#4C5A6A"
@@ -284,7 +289,6 @@ function ExerciseInput(props) {
 
                     <View style={styles.col}>
                       <Text style={labelStyle}>SETS *</Text>
-                      {/* Sets */}
                       <TextInput
                         placeholder="Sets"
                         placeholderTextColor="#4C5A6A"
@@ -313,7 +317,6 @@ function ExerciseInput(props) {
                   <View style={styles.row}>
                     <View style={styles.col}>
                       <Text style={labelStyle}>WEIGHT</Text>
-                      {/* Weight (optional) */}
                       <TextInput
                         placeholder="Weight"
                         placeholderTextColor="#4C5A6A"
@@ -332,7 +335,6 @@ function ExerciseInput(props) {
 
                     <View style={styles.col}>
                       <Text style={labelStyle}>REST TIME *</Text>
-                      {/* Rest */}
                       <TextInput
                         placeholder="Seconds"
                         placeholderTextColor="#4C5A6A"
@@ -361,7 +363,6 @@ function ExerciseInput(props) {
                   <View style={[styles.row, { alignItems: "flex-end" }]}>
                     <View style={[styles.col, { flex: 1 }]}>
                       <Text style={labelStyle}>DURATION/SET</Text>
-                      {/* Duration (optional) */}
                       <TextInput
                         placeholder="Seconds"
                         placeholderTextColor="#4C5A6A"
@@ -407,7 +408,7 @@ function ExerciseInput(props) {
               );
             })}
 
-            {/* Add Exercise */}
+            {/* Add Exercise button */}
             <TouchableOpacity
               onPress={addExerciseCard}
               activeOpacity={0.8}
@@ -419,7 +420,7 @@ function ExerciseInput(props) {
             </TouchableOpacity>
           </ScrollView>
 
-          {/* Save Workout */}
+          {/* Save Workout button */}
           <PrimaryButton
             title="Save Workout"
             onPress={onSave}

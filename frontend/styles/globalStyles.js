@@ -1,5 +1,4 @@
-// styles/globalStyles.js
-// Styles we can import 
+// Styles team can import 
 import { StyleSheet } from 'react-native';
 
 const globalStyles = StyleSheet.create({

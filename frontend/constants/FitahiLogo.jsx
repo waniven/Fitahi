@@ -1,4 +1,3 @@
-// constants/FitahiLogo.jsx
 import React from 'react';
 import Svg, { Path, G } from 'react-native-svg';
 

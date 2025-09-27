@@ -1,18 +1,32 @@
-const { Schema, model } = require ('mongoose');
+const { Schema, model } = require('mongoose');
 
-//Nutrition schema for the databse
+// Nutrition schema for the databse
 const nutritionSchema = new Schema(
     {
-        userId: { type: Schema.Types.ObjectId, ref: 'Users', required: true }, //owner of nutrition log
+        // owner of nutrition log
+        userId: { type: Schema.Types.ObjectId, ref: 'Users', required: true },
+
+        // food name
         name: { type: String, required: true },
+
+        // food type (breakfast, lunch, dinner, snack)
         type: { type: String, required: true, lowercase: true },
+
+        // calories
         calories: { type: Number, required: true },
+
+        // protein (grams)
         protein: { type: Number, required: true },
+
+        // fat (grams)
         fat: { type: Number, required: true },
+
+        // carbs (grams)
         carbs: { type: Number, required: true },
     },
-    { timestamps: true } 
-)
+    // auto add createdAt and updatedAt
+    { timestamps: true }
+);
 
-//add document to nutrition collection
+// export nutrition model
 module.exports = model('Nutrition', nutritionSchema);

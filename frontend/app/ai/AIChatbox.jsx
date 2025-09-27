@@ -17,51 +17,36 @@ import * as messageService from "../../services/messageService";
 import CustomToast from "@/components/common/CustomToast";
 import Toast from "react-native-toast-message";
 
-// const { height: SCREEN_HEIGHT } = Dimensions.get("window"); unused for now
-
+// Layout constants for consistent spacing and positioning
 const CHAT_TOP = 80;
 const CHAT_SIDE = 20;
 const CHAT_BOTTOM = 40;
 const INPUT_ROW_HEIGHT = 56;
 
+// AI chatbox component
 export default function AIChatbox({ onClose, messages, setMessages }) {
+  // Theme configuration - uses dark scheme as default
   const scheme = "dark";
   const theme = Colors[scheme ?? "dark"];
 
+  // Chat state management
   const [chatMessages, setChatMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // History modal and conversation management
   const [historyVisible, setHistoryVisible] = useState(false);
   const [conversations, setConversations] = useState([]);
   const [activeConvo, setActiveConvo] = useState(null);
 
+  // Refs for list scrolling and message cancellation
   const flatListRef = useRef(null);
   const typingController = useRef({ cancelled: false });
 
+  // Animation value for modal transitions
   const translateY = useRef(new Animated.Value(0)).current;
-  // const panResponder = useRef(
-  //   PanResponder.create({
-  //     onMoveShouldSetPanResponder: (_, g) => g.dy > 0,
-  //     onPanResponderMove: (_, g) => {
-  //       if (g.dy > 0) translateY.setValue(g.dy);
-  //     },
-  //     onPanResponderRelease: (_, g) => {
-  //       if (g.dy > 150) {
-  //         Animated.timing(translateY, {
-  //           toValue: SCREEN_HEIGHT,
-  //           duration: 200,
-  //           useNativeDriver: true,
-  //         }).start(() => onClose?.());
-  //       } else {
-  //         Animated.spring(translateY, {
-  //           toValue: 0,
-  //           useNativeDriver: true,
-  //         }).start();
-  //       }
-  //     },
-  //   })
-  // ).current;
 
+  // Auto-scroll to bottom when new messages are added
   useEffect(() => {
     if (chatMessages.length > 0) {
       setTimeout(
@@ -71,22 +56,31 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
     }
   }, [chatMessages]);
 
+  /**
+   * Sends a message to the AI service and updates the chat
+   * Handles loading states, error cases, and message persistence
+   */
   const sendMessage = async (text) => {
     const clean = text?.trim();
     if (!clean) return;
 
+    // Reset input and set loading state
     setInput("");
     setLoading(true);
     typingController.current = { cancelled: false };
 
     try {
+      // Send message and get AI response
       const { userMessage, aiMessage, conversationId } =
         await messageService.sendMessage(clean, activeConvo?._id);
 
+      // Stop if typing was cancelled
       if (typingController.current.cancelled) return;
 
+      // Update active conversation id
       setActiveConvo({ ...activeConvo, _id: conversationId });
 
+      // Ensure messages have unique IDs for React keys
       const safeUserMsg = {
         ...userMessage,
         id: userMessage.id || Date.now().toString(),
@@ -96,9 +90,11 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
         id: aiMessage.id || (Date.now() + 1).toString(),
       };
 
+      // Update local chat state and parent state
       setChatMessages((prev) => [...prev, safeUserMsg, safeAiMsg]);
       setMessages((prev) => [...prev, safeUserMsg, safeAiMsg]);
     } catch (err) {
+      // Provide user-friendly error messages based on response status
       let description = "Please try again later.";
       if (err.response?.status === 500) {
         description = "Server overloaded, try again soon!";
@@ -108,17 +104,25 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
         description = "Check your network connection!";
       }
 
+      // Show toast for error
       CustomToast.error("Darwin Unavailable", description);
     } finally {
+      // Reset loading state
       setLoading(false);
     }
   };
 
+  /**
+   * Fetches all conversations from the server for the history modal
+   */
   const loadConversations = async () => {
     try {
       const convos = await messageService.getConversations();
+
+      // Update conversation state
       setConversations(convos);
     } catch (err) {
+      // Show error toast if fetching fails
       CustomToast.error(
         "Load Failed",
         "Unable to load conversations, try again."
@@ -126,30 +130,50 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
     }
   };
 
+  // Load conversations when history modal becomes visible
   useEffect(() => {
     if (historyVisible) loadConversations();
   }, [historyVisible]);
 
+  /**
+   * Loads a selected conversation and its messages into the current chat
+   */
   const selectConversation = async (convo) => {
     try {
+      // Set the active conversation
       setActiveConvo(convo);
+
+      // Fetch messages for the selected conversation
       const msgs = await messageService.getMessagesByConversation(convo._id);
+
+      // Update local chat and parent state
       setChatMessages(msgs);
       setMessages(msgs);
+
+      // Close history modal
       setHistoryVisible(false);
     } catch {
+      // Show toast if loading messages fails
       CustomToast.error("Load Failed", "Unable to load messages, try again.");
     }
   };
 
+  /**
+   * Creates a new conversation and clears the current chat
+   */
   const newConversation = async () => {
     try {
       const convo = await messageService.createConversation();
+
+      // Set as active and clear chat state
       setActiveConvo(convo);
       setChatMessages([]);
       setMessages([]);
+
+      // Close history modal
       setHistoryVisible(false);
     } catch {
+      // Show toast if creation fails
       CustomToast.error(
         "Conversation Not Created",
         "Unable to create conversation."
@@ -157,11 +181,18 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
     }
   };
 
+  /**
+   * Deletes a conversation and clears it from state if currently active
+   */
   const deleteConversation = async (convoId) => {
     try {
+      // Call API to delete conversation
       await messageService.deleteConversation(convoId);
+
+      // Remove conversation from list
       setConversations((prev) => prev.filter((c) => c._id !== convoId));
 
+      // Clear active conversation if it was deleted
       if (activeConvo?._id === convoId) {
         typingController.current.cancelled = true;
         setActiveConvo(null);
@@ -170,10 +201,14 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
         setLoading(false);
       }
     } catch (err) {
+      // Show toast if deletion fails
       CustomToast.error("Deletion Failed", "Unable to delete conversation.");
     }
   };
 
+  /**
+   * Renders individual message bubbles with appropriate styling for user vs AI messages
+   */
   const renderItem = ({ item }) => (
     <View
       style={[
@@ -205,8 +240,8 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
             styles.container,
             { backgroundColor: theme.background, transform: [{ translateY }] },
           ]}
-          // {...panResponder.panHandlers} commented out to disable drag to close since it makes the buttons difficult to use
         >
+          {/* Chat header with title and close button */}
           <View style={styles.header}>
             <Text
               style={{
@@ -232,6 +267,7 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
             </TouchableOpacity>
           </View>
 
+          {/* Messages list with auto-scroll functionality */}
           <FlatList
             ref={flatListRef}
             data={chatMessages}
@@ -247,6 +283,7 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
             }
           />
 
+          {/* Typing indicator shown during AI response generation */}
           {loading && (
             <Text
               style={{
@@ -261,6 +298,7 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
             </Text>
           )}
 
+          {/* Input area with keyboard avoidance for iOS */}
           <KeyboardAvoidingView
             behavior={Platform.OS === "ios" ? "padding" : undefined}
             keyboardVerticalOffset={CHAT_TOP}
@@ -285,6 +323,7 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
                 returnKeyType="send"
                 multiline
               />
+              {/* History button to open conversation list */}
               <TouchableOpacity
                 style={[styles.iconBtn, { backgroundColor: theme.tint }]}
                 onPress={() => setHistoryVisible(true)}
@@ -300,6 +339,7 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
                   ≡
                 </Text>
               </TouchableOpacity>
+              {/* Send message button */}
               <TouchableOpacity
                 style={[styles.sendButton, { backgroundColor: theme.tint }]}
                 onPress={() => sendMessage(input)}
@@ -320,6 +360,7 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
         </Animated.View>
       </View>
 
+      {/* History modal for conversation management */}
       <Modal visible={historyVisible} animationType="fade" transparent>
         <View style={styles.modalOverlay}>
           <View
@@ -340,6 +381,7 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
               History
             </Text>
 
+            {/* New conversation button */}
             <TouchableOpacity
               onPress={newConversation}
               style={{ paddingVertical: 8 }}
@@ -349,6 +391,7 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
               </Text>
             </TouchableOpacity>
 
+            {/* List of existing conversations with delete functionality */}
             {conversations.map((c, i) => (
               <View
                 key={c._id ?? `convo-${i}`}
@@ -379,6 +422,7 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
               </View>
             ))}
 
+            {/* Close history modal button */}
             <TouchableOpacity
               onPress={() => setHistoryVisible(false)}
               style={{ paddingVertical: 12 }}

@@ -20,12 +20,35 @@ import BottomNav from "@/components/navbar/BottomNav";
 import ReminderModal from "@/components/reminders/ReminderModal";
 import LogCards from "@/components/logcards/LogCards";
 import { useCalendarLogic } from "@/hooks/useCalendarLogic";
+import * as Notifications from "@/services/notificationService";
+import { scheduleWaterNotifications } from "@/services/waterNotifications";
+import { Font } from "@/constants/Font";
 
+/**
+ * Main dashboard screen displaying calendar, reminders, and quick navigation cards
+ * Serves as the central hub for fitness tracking and planning features
+ */
 export default function Home() {
   const theme = Colors["dark"];
   const router = useRouter();
 
-  // Disable Android back button on Home
+  // Request notification permissions on mount and reschedule reminders
+  useEffect(() => {
+    async function init() {
+      await Notifications.requestNotificationPermissions();
+
+      // Re-schedule all reminders once on app start
+      if (reminders.length > 0) {
+        await Notifications.rescheduleUpcomingNotifications(reminders);
+      }
+    }
+    init();
+  }, []);
+
+  // Schedule water intake notifications
+  scheduleWaterNotifications();
+
+  // Prevent users from navigating back from the home screen on Android
   useEffect(() => {
     const backAction = () => true;
     const subscription = BackHandler.addEventListener(
@@ -35,12 +58,10 @@ export default function Home() {
     return () => subscription.remove();
   }, []);
 
-  // Premium banner for premium button (unused for now)
-  // const [showPremium, setShowPremium] = useState(true);
-  // Modal control
+  // Modal visibility control for reminder creation/editing
   const [modalVisible, setModalVisible] = useState(false);
 
-  // Use the custom calendar & reminder hook
+  // Calendar and reminder functionality from custom hook
   const {
     reminders,
     viewingDate,
@@ -53,9 +74,15 @@ export default function Home() {
     handleEditReminder,
     handleSaveReminder,
     handleDeleteReminder,
+    setViewingDate,
   } = useCalendarLogic();
 
-  // Quick log cards data
+  // Sync viewing date to today when Home mounts
+  useEffect(() => {
+    setViewingDate(formattedToday);
+  }, [formattedToday]);
+
+  // Navigation cards for quick access to main app features
   const quickLogCards = [
     {
       title: "Your Analytics",
@@ -106,12 +133,12 @@ export default function Home() {
       style={[styles.container, { backgroundColor: theme.background }]}
     >
       <ScrollView contentContainerStyle={{ flexGrow: 1, paddingBottom: 140 }}>
-        {/* Logo */}
+        {/* Render app branding/logo section */}
         <View style={styles.logoContainer}>
           <FitahiLogo width={320} height={140} fill="#FFFFFF" />
         </View>
 
-        {/* Calendar + Reminders */}
+        {/* Render calendar widget with reminder functionality */}
         <View style={[styles.widgetCard, { backgroundColor: "#fff" }]}>
           <Calendar
             style={{ borderRadius: 16, backgroundColor: "#fff" }}
@@ -131,16 +158,16 @@ export default function Home() {
               selectedDayBackgroundColor: theme.tint,
               selectedDayTextColor: "#fff",
             }}
-            current={viewingDate} // Dynamic current month
+            current={viewingDate}
             hideExtraDays
             firstDay={1}
-            enableSwipeMonths={true} // Scrollable months
+            enableSwipeMonths={true}
             markedDates={getMarkedDates(theme)}
-            minDate={formattedToday} // Prevent selecting past dates
+            minDate={formattedToday}
             onDayPress={handleDayPress}
           />
 
-          {/* Date Info Header */}
+          {/* Render selected date display and add reminder button */}
           <View style={styles.dateHeader}>
             <Text
               style={[
@@ -167,7 +194,7 @@ export default function Home() {
             </TouchableOpacity>
           </View>
 
-          {/* Reminders Display */}
+          {/* Render list of reminders for the selected date */}
           <View style={styles.remindersContainer}>
             {(() => {
               const dayReminders = getRemindersForDate(viewingDate);
@@ -187,68 +214,73 @@ export default function Home() {
                   </View>
                 );
               }
-              return dayReminders.slice(0, 3).map((reminder) => (
-                <TouchableOpacity
-                  key={reminder._id}
-                  style={styles.reminderItem}
-                  onPress={() => {
-                    handleEditReminder(reminder);
-                    setModalVisible(true);
-                  }}
+
+              return (
+                <ScrollView
+                  style={styles.remindersScroll}
+                  contentContainerStyle={{ paddingVertical: 4 }}
+                  nestedScrollEnabled={true}
+                  showsVerticalScrollIndicator={true}
                 >
-                  <View style={styles.reminderContent}>
-                    <View style={styles.reminderHeader}>
-                      <Text
-                        style={[
-                          globalStyles.cardText,
-                          { color: "#000", flex: 1 },
-                        ]}
-                      >
-                        {reminder.title}
-                      </Text>
-                      <Text style={styles.reminderTime}>
-                        {reminder.time || "No time"}
-                      </Text>
-                    </View>
-                    {reminder.notes && (
-                      <Text style={styles.reminderNotes}>{reminder.notes}</Text>
-                    )}
-                    {reminder.repeat !== "None" && (
-                      <View style={styles.repeatBadge}>
-                        <Ionicons name="repeat" size={12} color={theme.tint} />
-                        <Text style={styles.repeatText}>{reminder.repeat}</Text>
+                  {dayReminders.map((reminder) => (
+                    <TouchableOpacity
+                      key={reminder._id}
+                      style={styles.reminderItem}
+                      onPress={() => {
+                        handleEditReminder(reminder);
+                        setModalVisible(true);
+                      }}
+                    >
+                      <View style={styles.reminderContent}>
+                        <View style={styles.reminderHeader}>
+                          <Text
+                            style={[
+                              globalStyles.cardText,
+                              { color: "#000", flex: 1 },
+                            ]}
+                          >
+                            {reminder.title}
+                          </Text>
+                          <Text style={styles.reminderTime}>
+                            {reminder.time || "No time"}
+                          </Text>
+                        </View>
+                        {reminder.notes && (
+                          <Text style={styles.reminderNotes}>
+                            {reminder.notes}
+                          </Text>
+                        )}
+                        {reminder.repeat !== "None" && (
+                          <View style={styles.repeatBadge}>
+                            <Ionicons
+                              name="repeat"
+                              size={12}
+                              color={theme.tint}
+                            />
+                            <Text style={styles.repeatText}>
+                              {reminder.repeat}
+                            </Text>
+                          </View>
+                        )}
                       </View>
-                    )}
-                  </View>
-                  <Ionicons name="chevron-forward" size={16} color="#ccc" />
-                </TouchableOpacity>
-              ));
+                      <Ionicons name="chevron-forward" size={16} color="#ccc" />
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              );
             })()}
           </View>
         </View>
 
-        {/*Commented out for the purposes of showcasing only finished features in Sprint 1*/}
-        {/* Premium card
-        {showPremium && (
-          <View style={[styles.premiumCard, { backgroundColor: "#fff" }]}>
-            <Ionicons name="diamond-outline" size={20} color={theme.tint} />
-            <Text style={[globalStyles.premiumText, { color: theme.tint }]}>Premium Membership</Text>
-            <TouchableOpacity style={styles.closeButton} onPress={() => setShowPremium(false)}>
-              <Text style={{ color: theme.tint, fontWeight: "700" }}>✕</Text>
-            </TouchableOpacity>
-          </View>
-        )} */}
-
-        {/* Quick log cards */}
+        {/* Render quick access navigation cards */}
         <LogCards cards={quickLogCards} />
       </ScrollView>
 
-      {/* Reminder Modal */}
+      {/* Render reminder modal for creating/editing reminders */}
       <ReminderModal
         visible={modalVisible}
         onClose={() => {
           setModalVisible(false);
-          // reset editing state when closing
           handleEditReminder(null);
         }}
         onSave={handleSaveReminder}
@@ -257,17 +289,16 @@ export default function Home() {
         selectedDate={viewingDate}
       />
 
-      {/* Bottom navigation + AI button */}
+      {/* Render bottom navigation bar and floating AI assistant button */}
       <BottomNav />
       <FloatingAIButton />
 
-      {/* Global toast notifications */}
+      {/* Render global toast notifications */}
       <Toast />
     </SafeAreaView>
   );
 }
 
-// Styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -298,6 +329,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
     borderBottomWidth: 1,
     borderBottomColor: "#f0f0f0",
+  },
+  remindersScroll: {
+    maxHeight: 180,
+    marginTop: 4,
   },
   reminderContent: {
     flex: 1,
@@ -357,8 +392,9 @@ const styles = StyleSheet.create({
   },
   addReminderText: {
     marginLeft: 4,
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "600",
+    fontFamily: Font.bold,
   },
   addReminderButton: {
     flexDirection: "row",

@@ -1,106 +1,169 @@
 import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet, useColorScheme } from "react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  useColorScheme,
+} from "react-native";
 import { Colors } from "@/constants/Colors";
 import { Font } from "@/constants/Font";
 import { MaterialIcons } from "@expo/vector-icons";
 
 const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+// Helper: converts array of day indices (0..6) to human-readable string
 function formatDays(indices = []) {
   if (!Array.isArray(indices)) return "—";
   const uniq = [...new Set(indices)].filter((i) => i >= 0 && i <= 6);
   if (uniq.length === 7) return "Every day";
-  return uniq.sort((a, b) => a - b).map((i) => DAY_LABELS[i]).join(", ");
+  return uniq
+    .sort((a, b) => a - b)
+    .map((i) => DAY_LABELS[i])
+    .join(", ");
 }
 
+// ListCardItemGeneral - generic card for displaying items (workouts, supplements, etc.)
+// Shows name, type, days, with Edit/Delete buttons and optional Start button
 export default function ListCardItemGeneral({
-  item,
-  onEdit,
-  onDelete,
-  onStart,
-  showStart = true,
-  labelName = "item name",
-  labelType = "item type",          // e.g. "Dosage & Time"
-  labelDays = "Days to be taken",
-  days,                              // int[] 0..6
+  item, // object to display
+  onEdit, // callback for Edit button
+  onDelete, // callback for Delete button
+  onStart, // callback for Start button
+  showStart = true, // whether to show start button
+  labelName = "item name", // customizable label for name
+  labelType = "item type", // customizable label for type
+  labelDays = "Days to be taken", // customizable label for days
+  days, // optional array of day indices 0..6
 }) {
   const scheme = useColorScheme();
-  const theme = Colors[scheme ?? "light"];
+  const theme = Colors[scheme ?? "light"]; // dynamic theme
 
-  // days can come in via prop or item
-  const dayIndices = Array.isArray(days) ? days : (item?.selectedDays ?? item?.days ?? []);
+  // Determine days to display (from prop or item)
+  const dayIndices = Array.isArray(days)
+    ? days
+    : item?.selectedDays ?? item?.days ?? [];
   const daysText = formatDays(dayIndices);
 
   return (
-    <View style={[styles.card, { backgroundColor: theme.textPrimary ?? theme.backgroundAlt }]}>
+    <View
+      style={[
+        styles.card,
+        { backgroundColor: theme.textPrimary ?? theme.backgroundAlt },
+      ]}
+    >
+      {/* Left column: item info + edit/delete buttons */}
       <View style={[styles.leftCol, { paddingRight: showStart ? 12 : 0 }]}>
-        {/* Row 1: Name + Type (Dosage & Time) + Edit */}
+        {/* Row 1: Name + Type + Edit */}
         <View style={styles.row}>
-          {/* Name group */}
+          {/* Name */}
           <View style={[styles.group, styles.shrink]}>
-            <Text style={[styles.label, { color: theme.overlayDark, fontFamily: Font.regular }]}>
+            <Text
+              style={[
+                styles.label,
+                { color: theme.overlayDark, fontFamily: Font.regular },
+              ]}
+            >
               {labelName}
             </Text>
             <Text
               numberOfLines={1}
-              style={[styles.value, { color: theme.background, fontFamily: Font.bold }]}
+              style={[
+                styles.value,
+                { color: theme.background, fontFamily: Font.bold },
+              ]}
             >
               {item?.name || "—"}
             </Text>
           </View>
 
-          {/* Type group (next to name) */}
+          {/* Type */}
           <View style={[styles.group, styles.shrink]}>
-            <Text style={[styles.label, { color: theme.overlayDark, fontFamily: Font.regular }]}>
+            <Text
+              style={[
+                styles.label,
+                { color: theme.overlayDark, fontFamily: Font.regular },
+              ]}
+            >
               {labelType}
             </Text>
             <Text
               numberOfLines={1}
-              style={[styles.value, { color: theme.background, fontFamily: Font.bold }]}
+              style={[
+                styles.value,
+                { color: theme.background, fontFamily: Font.bold },
+              ]}
             >
               {item?.type || "—"}
             </Text>
           </View>
 
-          {/* Edit */}
+          {/* Edit button */}
           <TouchableOpacity
             activeOpacity={0.8}
             onPress={() => onEdit?.(item)}
-            style={[styles.actionBtn, { borderColor: theme.tint, backgroundColor: theme.tint }]}
+            style={[
+              styles.actionBtn,
+              { borderColor: theme.tint, backgroundColor: theme.tint },
+            ]}
             accessibilityRole="button"
             accessibilityLabel={`Edit ${item?.name ?? "item"}`}
           >
-            <Text style={{ color: theme.textPrimary, fontFamily: Font.bold }}>Edit</Text>
+            <Text style={{ color: theme.textPrimary, fontFamily: Font.bold }}>
+              Edit
+            </Text>
           </TouchableOpacity>
         </View>
 
-        <View style={[styles.divider, { backgroundColor: theme.overlayLight ?? "#0000001a" }]} />
+        {/* Divider */}
+        <View
+          style={[
+            styles.divider,
+            { backgroundColor: theme.overlayLight ?? "#0000001a" },
+          ]}
+        />
 
         {/* Row 2: Days + Delete */}
         <View style={styles.row}>
           <View style={[styles.group, styles.shrink]}>
-            <Text style={[styles.label, { color: theme.overlayDark, fontFamily: Font.regular }]}>
+            <Text
+              style={[
+                styles.label,
+                { color: theme.overlayDark, fontFamily: Font.regular },
+              ]}
+            >
               {labelDays}
             </Text>
             <Text
               numberOfLines={1}
-              style={[styles.value, { color: theme.background, fontFamily: Font.bold }]}
+              style={[
+                styles.value,
+                { color: theme.background, fontFamily: Font.bold },
+              ]}
             >
               {daysText}
             </Text>
           </View>
 
+          {/* Delete button */}
           <TouchableOpacity
             activeOpacity={0.8}
             onPress={() => onDelete?.(item.id)}
-            style={[styles.actionBtn, { borderColor: theme.error, backgroundColor: theme.error }]}
+            style={[
+              styles.actionBtn,
+              { borderColor: theme.error, backgroundColor: theme.error },
+            ]}
             accessibilityRole="button"
             accessibilityLabel={`Delete ${item?.name ?? "item"}`}
           >
-            <Text style={{ color: theme.textPrimary, fontFamily: Font.bold }}>Delete</Text>
+            <Text style={{ color: theme.textPrimary, fontFamily: Font.bold }}>
+              Delete
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
 
+      {/* Right column: optional Start button */}
       {showStart && (
         <View style={styles.rightCol}>
           <TouchableOpacity
@@ -110,7 +173,11 @@ export default function ListCardItemGeneral({
             accessibilityRole="button"
             accessibilityLabel={`Start ${item?.name ?? "item"}`}
           >
-            <MaterialIcons name="play-arrow" size={30} color={theme.textPrimary} />
+            <MaterialIcons
+              name="play-arrow"
+              size={30}
+              color={theme.textPrimary}
+            />
           </TouchableOpacity>
         </View>
       )}
@@ -118,6 +185,7 @@ export default function ListCardItemGeneral({
   );
 }
 
+// constants for button sizing
 const BTN_HEIGHT = 40;
 const BTN_WIDTH = 80;
 
@@ -127,8 +195,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 12,
     marginVertical: 8,
-    // Make the card “wider” by bleeding a bit into the parent's side padding
-    // (adjust -8/-10 to match your screen padding)
     marginHorizontal: -8,
     shadowColor: "#000",
     shadowOpacity: 0.06,
@@ -146,7 +212,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   group: { flexGrow: 1 },
-  shrink: { minWidth: 0, flexBasis: 0 }, // allow text to ellipsize instead of pushing buttons off screen
+  shrink: { minWidth: 0, flexBasis: 0 },
 
   label: { fontSize: 13, marginBottom: 4 },
   value: { fontSize: 16 },

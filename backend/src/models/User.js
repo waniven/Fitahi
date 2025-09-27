@@ -81,5 +81,5 @@ userSchema.methods.comparePassword = function (plain) {
     return bcrypt.compare(plain, this.password);
 };
 
-//add documents to Users collection in DB
+// export user model
 module.exports = model('Users', userSchema);

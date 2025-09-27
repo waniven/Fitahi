@@ -5,12 +5,16 @@ import { Font } from "@/constants/Font";
 import PrimaryButton from "@/components/PrimaryButton";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-//WorkoutResultScreen displays the result after finishing a workout
+/**
+ * Workout completion results screen showing summary and achievements
+ * Displays total workout time, completed exercises, and navigation back to workout list
+ */
 export default function WorkoutResultScreen({ route, navigation }) {
   const scheme = useColorScheme();
   const theme = Colors[scheme ?? "light"];
   const insets = useSafeAreaInsets();
 
+  // Extracts workout results data from navigation parameters
   const result = route?.params?.result;
   const workout = route?.params?.workout;
 
@@ -20,6 +24,7 @@ export default function WorkoutResultScreen({ route, navigation }) {
     ? result.completedExercises
     : [];
 
+  // Calculates spacing for floating button to avoid safe area overlap
   const BUTTON_HEIGHT = 64;
   const EXTRA_BOTTOM = 40;
   const bottomReserve = insets.bottom + EXTRA_BOTTOM + BUTTON_HEIGHT;
@@ -31,7 +36,7 @@ export default function WorkoutResultScreen({ route, navigation }) {
         { backgroundColor: theme.background, paddingBottom: 110 },
       ]}
     >
-      {/* Top (non-scroll) */}
+      {/* Fixed header section with workout summary */}
       <View style={styles.topSection}>
         <Text
           style={[
@@ -83,7 +88,7 @@ export default function WorkoutResultScreen({ route, navigation }) {
         </Text>
       </View>
 
-      {/* Scrollable list area */}
+      {/* Scrollable list of completed exercises */}
       <View style={styles.listWrapper}>
         {completed.length === 0 ? (
           <View
@@ -121,7 +126,6 @@ export default function WorkoutResultScreen({ route, navigation }) {
                 {item}
               </Text>
             )}
-            // Allow scrolling and keep space for floating button
             contentContainerStyle={{
               paddingTop: 8,
               paddingBottom: bottomReserve,
@@ -132,7 +136,7 @@ export default function WorkoutResultScreen({ route, navigation }) {
         )}
       </View>
 
-      {/* Floating bottom button */}
+      {/* Fixed bottom navigation button */}
       <PrimaryButton
         title="Go back to Workout Logs"
         onPress={() => navigation.popToTop()}
@@ -147,12 +151,12 @@ export default function WorkoutResultScreen({ route, navigation }) {
   );
 }
 
-// pad2 left-pad a number to 2 digits with a leading zero
+// Pads number to 2 digits with leading zero
 function pad2(n) {
   return (Math.abs(n) < 10 ? "0" : "") + Math.abs(n);
 }
 
-// fmtHMS formats a number of seconds into "HH:MM:SS"
+// Formats seconds as HH:MM:SS with negative sign support
 function fmtHMS(seconds) {
   const sign = seconds < 0 ? "-" : "";
   const s = Math.abs(Math.trunc(seconds));
@@ -176,10 +180,9 @@ const styles = StyleSheet.create({
   star: { fontSize: 40, marginTop: 16, textAlign: "center" },
   keepItUp: { fontSize: 16, marginTop: 6, textAlign: "center" },
 
-  // This grows and becomes scrollable
   listWrapper: {
     flex: 1,
     alignSelf: "stretch",
-    marginTop: 8, // To move it up a bit under the section title
+    marginTop: 8,
   },
 });

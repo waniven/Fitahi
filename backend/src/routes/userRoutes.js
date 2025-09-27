@@ -67,7 +67,7 @@ router.patch('/me', auth, async (req, res, next) => {
         if (typeof req.body.quiz === 'object') updates.quiz = req.body.quiz;
         if (req.body.intakeGoals && typeof req.body.intakeGoals === 'object') {
             if ('dailyCalories' in req.body.intakeGoals) updates['intakeGoals.dailyCalories'] = req.body.intakeGoals.dailyCalories;
-            if ('dailyWater' in req.body.intakeGoals) updates['intakeGoals.dailyWater'] = req.body.intakeGoals.dailyWater; 
+            if ('dailyWater' in req.body.intakeGoals) updates['intakeGoals.dailyWater'] = req.body.intakeGoals.dailyWater;
         }
 
         //check if whitelist object is empty, if so dont update anything
@@ -181,27 +181,33 @@ router.get('/me/age', auth, async (req, res, next) => {
 **/
 router.patch('/me/quiz', auth, async (req, res, next) => {
     try {
+        // get current user's id from auth middleware
         const id = req.user.id;
 
         // answers sent from frontend (can be partial due to skippable fields)
         const { quiz } = req.body;
 
+        // validate quiz data is an object
         if (!quiz || typeof quiz !== 'object') {
             return res.status(400).json({ error: 'Invalid quiz data' });
         }
 
+        // update quiz field in user document
         const updated = await User.findByIdAndUpdate(
             id,
             { $set: { quiz } },
             { new: true, runValidators: true }
         );
 
+        // handle case where user not found
         if (!updated) {
             return res.status(404).json({ error: 'User not found' });
         }
 
+        // return updated user
         return res.json(updated);
     } catch (err) {
+        // forward error to error handler
         return next(err);
     }
 });
@@ -212,27 +218,33 @@ router.patch('/me/quiz', auth, async (req, res, next) => {
 **/
 router.patch('/me/intakeGoals', auth, async (req, res, next) => {
     try {
+        // get current user's id from auth middleware
         const id = req.user.id;
 
-        //values from frontend (can be partial due to skippable fields)
+        // values from frontend (can be partial due to skippable fields)
         const { intakeGoals } = req.body;
 
+        // validate intakeGoals data is an object
         if (!intakeGoals || typeof intakeGoals !== 'object') {
             return res.status(400).json({ error: 'Invalid intake goals object data' });
         }
 
+        // update intakeGoals field in user document
         const updated = await User.findByIdAndUpdate(
             id,
             { $set: { intakeGoals } },
             { new: true, runValidators: true }
         );
 
+        // handle case where user not found
         if (!updated) {
             return res.status(404).json({ error: 'User not found' });
         }
 
+        // return updated user
         return res.json(updated);
     } catch (err) {
+        // forward error to global error handler
         return next(err);
     }
 });

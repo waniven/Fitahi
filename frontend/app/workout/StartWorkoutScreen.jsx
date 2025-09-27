@@ -14,32 +14,38 @@ import PrimaryButton from "@/components/PrimaryButton";
 import { createWorkoutResult } from "@/services/workoutResultService";
 import CustomToast from "@/components/common/CustomToast";
 
-// StartWorkoutScreen lets user click Start on the Workout Log and go to WorkoutScreen
+/**
+ * Active workout execution screen with timer and exercise progression
+ * Manages workout phases, tracks time, and handles workout completion
+ */
 export default function StartWorkoutScreen({ route, navigation }) {
   const scheme = useColorScheme();
   const theme = Colors[scheme ?? "light"];
 
-  // Workout passed from the list
+  // Extracts workout data passed from the workout list
   const workout = route?.params?.workoutDetail ?? route?.params?.workout ?? {};
   const exercises = Array.isArray(workout?.exercises) ? workout.exercises : [];
 
-  // Set header title to workout name (backend uses workoutName)
+  // Sets navigation header title to the workout name
   useEffect(() => {
     navigation.setOptions({ title: workout?.workoutName || "Workout" });
   }, [navigation, workout?.workoutName]);
 
-  // Build ordered phases
+  // Builds ordered sequence of work and rest phases from exercises
   const phases = useMemo(() => buildPhases(exercises), [exercises]);
 
+  // Workout timing and progression state
   const [phaseIndex, setPhaseIndex] = useState(0);
-  const [phaseElapsed, setPhaseElapsed] = useState(0); // Seconds in current phase
-  const [totalElapsed, setTotalElapsed] = useState(0); // Entire workout
+  const [phaseElapsed, setPhaseElapsed] = useState(0);
+  const [totalElapsed, setTotalElapsed] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
-  const [completedExercises, setCompletedExercises] = useState([]); // Names
+  
+  // Tracks completed exercise names for final results
+  const [completedExercises, setCompletedExercises] = useState([]);
 
   const currentPhase = phases[phaseIndex] ?? null;
 
-  // Tick timer — increments phaseElapsed AND totalElapsed while running
+  // Timer increment logic - updates both phase and total elapsed time
   useEffect(() => {
     if (!isRunning) return;
     const id = setInterval(() => {
@@ -49,19 +55,18 @@ export default function StartWorkoutScreen({ route, navigation }) {
     return () => clearInterval(id);
   }, [isRunning]);
 
-  // Reset per-phase elapsed when phase changes
+  // Resets phase timer when moving to next phase
   useEffect(() => {
     setPhaseElapsed(0);
   }, [phaseIndex]);
 
-  // Display value (down phases show remaining, up phases count up)
+  // Calculates timer display value based on phase mode (countdown vs count-up)
   let timerValue = 0;
-  let isOver = false; // overtime indicator (used only for color)
+  let isOver = false;
   if (currentPhase) {
     if (currentPhase.mode === "down") {
       const remaining = (currentPhase.target ?? 0) - phaseElapsed;
       timerValue = remaining;
-      // show overtime (red) once it goes negative — but DO NOT auto-advance
       isOver = timerValue < 0;
     } else {
       timerValue = phaseElapsed;
@@ -70,7 +75,7 @@ export default function StartWorkoutScreen({ route, navigation }) {
 
   const onToggleRun = () => setIsRunning((r) => !r);
 
-  // Is the current phase the final WORK set of its exercise?
+  // Determines if current phase is the final work set of its exercise
   const isLastWorkOfExercise = (phase) => {
     if (!phase || phase.type !== "work") return false;
     const ex = exercises[phase.exerciseIndex];
@@ -78,37 +83,34 @@ export default function StartWorkoutScreen({ route, navigation }) {
     return phase.setIndex === sets;
   };
 
-  // Return a new completed list as if we credited this phase
+  // Updates completed exercises list when finishing an exercise's final set
   const getCompletedAfterPhase = (phase, currentCompleted) => {
     if (!phase || !isLastWorkOfExercise(phase)) return currentCompleted;
-    // backend uses exerciseName
     const name = exercises[phase.exerciseIndex]?.exerciseName?.trim();
     return name ? [...currentCompleted, name] : currentCompleted;
   };
 
+  // Advances to the next phase and updates completed exercises
   const onNext = () => {
     if (!currentPhase) return;
     setIsRunning(false);
 
-    // Compute + commit completed list before moving on
     setCompletedExercises((prev) => getCompletedAfterPhase(currentPhase, prev));
 
     if (phaseIndex < phases.length - 1) {
       setPhaseIndex((i) => i + 1);
     }
-    // Phase elapsed will reset via the useEffect watching phaseIndex
   };
 
+  // Completes workout and saves results to backend
   const onEnd = async () => {
     setIsRunning(false);
 
-    // Compute a local, up-to-date completed list (don’t trust async state)
     const completedNow = getCompletedAfterPhase(
       currentPhase,
       completedExercises
     );
 
-    // Backend expects: workout_id, totalTimeSpent, completedExercises
     const payload = {
       workout_id: workout?._id ?? workout?.id,
       totalTimeSpent: totalElapsed,
@@ -120,18 +122,18 @@ export default function StartWorkoutScreen({ route, navigation }) {
       const saved = await createWorkoutResult(payload);
       navigation.replace("WorkoutResult", { result: saved, workout });
     } catch (err) {
-      CustomToast.error("Save Failed", "Workout couldn’t be saved, try again.");
+      CustomToast.error("Save Failed", "Workout couldn't be saved, try again.");
     }
   };
 
-  // Current exercise label (work or rest shows the exercise we’re on)
+  // Gets the name of the currently active exercise
   const currentExerciseName = (() => {
     if (!currentPhase) return "All done";
     const ex = exercises[currentPhase.exerciseIndex];
     return ex?.exerciseName ?? "Exercise";
   })();
 
-  // Up Next: names of exercises after current exercise index
+  // Gets list of upcoming exercise names for preview
   const nextExerciseNames = (() => {
     if (!currentPhase) return [];
     const afterIdx = (currentPhase.exerciseIndex ?? -1) + 1;
@@ -145,7 +147,7 @@ export default function StartWorkoutScreen({ route, navigation }) {
 
   return (
     <View style={[styles.screen, { backgroundColor: theme.background }]}>
-      {/* Total time */}
+      {/* Total workout duration display */}
       <Text
         style={[
           styles.sectionTitle,
@@ -160,7 +162,7 @@ export default function StartWorkoutScreen({ route, navigation }) {
         {fmtHMS(totalElapsed)}
       </Text>
 
-      {/* Current exercise */}
+      {/* Currently active exercise name */}
       <Text
         style={[
           styles.sectionTitle,
@@ -178,7 +180,7 @@ export default function StartWorkoutScreen({ route, navigation }) {
         {currentExerciseName}
       </Text>
 
-      {/* Timer Card */}
+      {/* Main timer card with controls */}
       <View style={[styles.card, { backgroundColor: theme.backgroundAlt }]}>
         <Text
           style={[
@@ -201,8 +203,8 @@ export default function StartWorkoutScreen({ route, navigation }) {
           {fmtHMS(timerValue)}
         </Text>
 
+        {/* Timer control buttons */}
         <View style={styles.controlsRow}>
-          {/* Start/Pause */}
           <TouchableOpacity
             onPress={onToggleRun}
             activeOpacity={0.8}
@@ -213,7 +215,6 @@ export default function StartWorkoutScreen({ route, navigation }) {
             <MaterialIcons name={runIcon} size={28} color={theme.tint} />
           </TouchableOpacity>
 
-          {/* Next */}
           <TouchableOpacity
             onPress={onNext}
             activeOpacity={0.8}
@@ -239,7 +240,7 @@ export default function StartWorkoutScreen({ route, navigation }) {
         </View>
       </View>
 
-      {/* Up Next */}
+      {/* Preview of upcoming exercises */}
       <Text
         style={[
           styles.sectionTitle,
@@ -286,7 +287,7 @@ export default function StartWorkoutScreen({ route, navigation }) {
       )}
       <View style={{ height: 100 }} />
 
-      {/* End Workout */}
+      {/* Fixed bottom button to end workout */}
       <PrimaryButton
         title="End Workout"
         onPress={onEnd}
@@ -301,30 +302,27 @@ export default function StartWorkoutScreen({ route, navigation }) {
   );
 }
 
-/* ---------- helpers ---------- */
-
-// buildPhases builds and constructs different phases of timer
+// Constructs alternating work and rest phases from exercise definitions
 function buildPhases(exercises) {
   const phases = [];
   if (!Array.isArray(exercises)) return phases;
 
   exercises.forEach((ex, exIdx) => {
     const sets = toInt(ex?.numOfSets, 1);
-    // support both names (robustness): prefer exerciseDuration/restTime
-    const workDuration = toInt(ex?.exerciseDuration ?? ex?.duration, 0); // seconds; 0 => open-ended
-    const rest = toInt(ex?.restTime ?? ex?.rest, 0); // seconds
+    const workDuration = toInt(ex?.exerciseDuration ?? ex?.duration, 0);
+    const rest = toInt(ex?.restTime ?? ex?.rest, 0);
 
     for (let set = 1; set <= sets; set++) {
-      // Work phase
+      // Work phase with countdown or count-up timer
       phases.push({
         type: "work",
         exerciseIndex: exIdx,
         setIndex: set,
         target: workDuration > 0 ? workDuration : 0,
-        mode: workDuration > 0 ? "down" : "up", // duration -> down, none -> up
+        mode: workDuration > 0 ? "down" : "up",
       });
 
-      // Rest phase (skip after final set of final exercise)
+      // Rest phase between sets (skip after final set of final exercise)
       const isLastSetOfLastExercise =
         exIdx === exercises.length - 1 && set === sets;
       if (rest > 0 && !isLastSetOfLastExercise) {
@@ -333,7 +331,7 @@ function buildPhases(exercises) {
           exerciseIndex: exIdx,
           setIndex: set,
           target: rest,
-          mode: "down", // Rest always counts down
+          mode: "down",
         });
       }
     }
@@ -342,18 +340,18 @@ function buildPhases(exercises) {
   return phases;
 }
 
-// toInt coerces an arbitrary value to a non-negative integer
+// Converts value to non-negative integer with fallback
 function toInt(v, fallback = 0) {
   const n = Number(v);
   return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : fallback;
 }
 
-// pad2 left-pad a number to 2 digits with a leading zero
+// Pads number to 2 digits with leading zero
 function pad2(n) {
   return (Math.abs(n) < 10 ? "0" : "") + Math.abs(n);
 }
 
-// fmtHMS formats a number of seconds into "HH:MM:SS"
+// Formats seconds as HH:MM:SS with negative sign support
 function fmtHMS(seconds) {
   const sign = seconds < 0 ? "-" : "";
   const s = Math.abs(Math.trunc(seconds));
