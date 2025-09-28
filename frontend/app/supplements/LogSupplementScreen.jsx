@@ -177,8 +177,10 @@ function LogSupplements({ navigation }) {
 
   useEffect(() => {
     if (isFocused) {
-      loadSupplements();
-      loadSupplementsLogs();
+      (async () => {
+        await loadSupplements();
+        await loadSupplementsLogs(); // always refresh logs from DB
+      })();
     }
   }, [isFocused, loadSupplements, loadSupplementsLogs]);
 
@@ -340,6 +342,9 @@ function LogSupplements({ navigation }) {
           )
         );
       }
+
+      // Force refresh to always match DB
+      await refreshTodayLogs();
     } catch (err) {
       console.warn("Failed to persist supplement log:", err);
       CustomToast.error(
@@ -360,6 +365,15 @@ function LogSupplements({ navigation }) {
       );
     }
   };
+
+  // Refresh today's logs after saving to keep UI in sync with DB
+  async function refreshTodayLogs() {
+    try {
+      await loadSupplementsLogs();
+    } catch (err) {
+      console.warn("Failed to refresh supplement logs:", err);
+    }
+  }
 
   // Render a single card for today's supplement
   const renderTodayCard = ({ item }) => {
