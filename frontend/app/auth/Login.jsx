@@ -16,6 +16,7 @@ import { Colors } from "../../constants/Colors";
 import FitahiLogo from "../../constants/FitahiLogo";
 import CustomInput from "../../components/common/CustomInput";
 import CustomButton from "../../components/common/CustomButton";
+import CustomButtonThree from "../../components/common/CustomButtonThree";
 import CustomToast from "../../components/common/CustomToast";
 import globalStyles from "../../styles/globalStyles";
 import { login } from "../../services/authService";
@@ -117,6 +118,11 @@ export default function Login() {
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.background }]}
     >
+      {/* back button*/}
+      <CustomButtonThree
+        onPress ={() => router.back()}
+        style={{ position: "absolute", top: 50, left: 20, zIndex: 10}}
+        />
       {/* Keyboard avoidance with platform-specific behavior */}
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -159,7 +165,7 @@ export default function Login() {
           >
             Please log in with your email and password
           </Text>
-
+          
           {/* Login form inputs */}
           <View style={styles.formContainer}>
             <CustomInput
@@ -179,6 +185,13 @@ export default function Login() {
               secureTextEntry
               required
             />
+
+            <Text
+              style = {styles.forgotText}
+              onPress= {() => router.push ("/auth/ResetPasswordEmail")} //on Press go to reset password page to enter email
+              >
+                Forgot password?
+              </Text>
           </View>
 
           {/* Login submit button */}
@@ -188,13 +201,16 @@ export default function Login() {
               onPress={handleLogin}
               size="large"
               style={{ width: 370, paddingVertical: 18, borderRadius: 30 }}
+              textColor="#FFFFFF"
             />
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
+
   );
 }
+
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
@@ -209,4 +225,14 @@ const styles = StyleSheet.create({
   logoContainer: { marginBottom: 30 },
 
   formContainer: { width: "100%", alignItems: "center" },
+
+  forgotText: {
+  color: "#A9A9A9",
+  marginTop: 8,
+  alignSelf: "flex-start",
+  fontSize: 15,
+  fontWeight: "500",
+  textDecorationLine: "underline", 
+},
+
 });
