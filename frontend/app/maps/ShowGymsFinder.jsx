@@ -11,7 +11,6 @@ import {
   Platform,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
   Linking,
@@ -24,44 +23,155 @@ import CustomButtonThree from "../../components/common/CustomButtonThree";
 import { Colors } from "@/constants/Colors";
 import { Font } from "@/constants/Font";
 import { AIContext } from "../ai/AIContext";
+import RatingFilter from "@/components/RatingFilter";
+import NearestGymsButton from "@/components/NearestGymsButton";
+import GymSearchBar from "@/components/GymSearchBar";
+import GymListItem from "@/components/GymListItem";
+import HoursFilter from "@/components/HoursFilter";
+import ClearFiltersButton from "@/components/ClearFilter";
 
 const GOOGLE_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
 
-/**
- * Gym finder screen that helps users locate nearby gyms using their current location
- * Features map view with markers, search functionality, and integration with device maps app
- */
+// ---- module-scope cache & helpers ----
+const detailsCache = new Map();
+
+async function fetchPlaceDetails(placeId, key) {
+  if (detailsCache.has(placeId)) return detailsCache.get(placeId);
+  const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=opening_hours&key=${key}`;
+  const res = await fetch(url);
+  const json = await res.json();
+  const periods = json?.result?.opening_hours?.periods ?? null;
+  detailsCache.set(placeId, periods);
+  return periods;
+}
+
+async function pAllLimited(tasks, limit = 3) {
+  const out = [];
+  let i = 0;
+  async function worker() {
+    while (i < tasks.length) {
+      const idx = i++;
+      out[idx] = await tasks[idx]();
+    }
+  }
+  await Promise.all(
+    Array.from({ length: Math.min(limit, tasks.length) }, worker)
+  );
+  return out;
+}
+
+const toMinutes = (date) => date.getHours() * 60 + date.getMinutes();
+
+function hhmmToMinutes(hhmm) {
+  const h = parseInt(hhmm.slice(0, 2), 10);
+  const m = parseInt(hhmm.slice(2, 4), 10);
+  return h * 60 + m;
+}
+
+function minutesToLabel(m) {
+  // normalize 24:00 -> 00:00 next day for display
+  const total = m % (24 * 60);
+  let h = Math.floor(total / 60);
+  const min = total % 60;
+  const ampm = h >= 12 ? "PM" : "AM";
+  let h12 = h % 12;
+  if (h12 === 0) h12 = 12;
+  const pad = (n) => (n < 10 ? `0${n}` : `${n}`);
+  return `${h12}:${pad(min)} ${ampm}`;
+}
+
+function getTodayOpenCloseText(placeId) {
+  const periods = detailsCache.get(placeId);
+  if (!periods) return null; // not loaded yet
+
+  const todayIdx = new Date().getDay(); // 0..6
+  const intervals = buildDayIntervals(periods, todayIdx); // already merged
+  if (!intervals.length) return "Hours: —";
+
+  // Earliest open today and latest close today (merged)
+  const first = intervals[0];
+  const last = intervals[intervals.length - 1];
+
+  const openLabel = minutesToLabel(first[0]);
+  const closeLabel = minutesToLabel(last[1]); // handles 1440 etc
+
+  return `Open: ${openLabel}  ·  Close: ${closeLabel}`;
+}
+
+function buildDayIntervals(periods, dayIndex) {
+  if (!Array.isArray(periods)) return [];
+  const todays = [];
+  for (const p of periods) {
+    if (!p.open?.time) continue;
+    const openDay = p.open.day;
+    const closeDay = p.close?.day ?? openDay;
+    const openMin = hhmmToMinutes(p.open.time);
+    const closeMin = p.close?.time ? hhmmToMinutes(p.close.time) : 24 * 60;
+
+    if (openDay === closeDay) {
+      if (openDay === dayIndex) todays.push([openMin, closeMin]);
+    } else {
+      if (openDay === dayIndex) todays.push([openMin, 24 * 60]);
+      const nextDay = (openDay + 1) % 7;
+      if (nextDay === dayIndex) todays.push([0, closeMin]);
+    }
+  }
+  todays.sort((a, b) => a[0] - b[0]);
+  const merged = [];
+  for (const it of todays) {
+    if (!merged.length || it[0] > merged[merged.length - 1][1]) {
+      merged.push(it);
+    } else {
+      merged[merged.length - 1][1] = Math.max(
+        merged[merged.length - 1][1],
+        it[1]
+      );
+    }
+  }
+  return merged;
+}
+
+function isOpenDuringWindow(periods, selStart, selEnd, todayIndex) {
+  const intervals = buildDayIntervals(periods, todayIndex);
+  if (!intervals.length) return false;
+
+  if (selEnd < selStart) {
+    const part1 = intervals.some(([a, b]) => !(b <= selStart || a >= 24 * 60));
+    if (part1) return true;
+    const tomorrowIntervals = buildDayIntervals(periods, (todayIndex + 1) % 7);
+    return tomorrowIntervals.some(([a, b]) => !(b <= 0 || a >= selEnd));
+  }
+
+  return intervals.some(([a, b]) => !(b <= selStart || a >= selEnd));
+}
+
 export default function ShowGymsFinder({ navigation }) {
   const router = useRouter();
   const mapRef = useRef(null);
   const { toggleChat } = useContext(AIContext);
+  const [selectedRating, setSelectedRating] = useState(null); // null = Any rating
+  const [hours, setHours] = useState({ open: null, close: null });
+  const [detailsVersion, setDetailsVersion] = useState(0);
 
   const scheme = useColorScheme();
   const theme = Colors[scheme ?? "light"];
 
-  // Default map region centered on NYC
+  // Default map region centered on AUCK
   const DEFAULT_REGION = {
-    latitude: 40.7128,
-    longitude: -74.006,
+    latitude: -36.8485,
+    longitude: 174.7633,
     latitudeDelta: 0.06,
     longitudeDelta: 0.06,
   };
 
-  // Search and location state
   const [search, setSearch] = useState("");
   const [region, setRegion] = useState(DEFAULT_REGION);
   const [coords, setCoords] = useState(null);
-  
-  // Gym search results from Google Places API
+
   const [gyms, setGyms] = useState([]);
-  
-  // Loading state for API requests
   const [loading, setLoading] = useState(false);
-  
-  // Currently selected gym for map highlighting
   const [selectedPlaceId, setSelectedPlaceId] = useState(null);
 
-  // Sets up navigation header with back button and AI chat toggle
   useLayoutEffect(() => {
     const goBackOrHome = () => {
       if (navigation.canGoBack()) navigation.goBack();
@@ -97,17 +207,14 @@ export default function ShowGymsFinder({ navigation }) {
         </TouchableOpacity>
       ),
     });
-  }, [navigation, theme, toggleChat]);
+  }, [navigation, theme, toggleChat, router]);
 
-  // Requests location permissions and gets user's current position on mount
   useEffect(() => {
     (async () => {
       try {
         let { status } = await Location.requestForegroundPermissionsAsync();
-        console.log(status);
         if (status !== "granted") return;
-        
-        // Gets last known position for faster initial display
+
         const last = await Location.getLastKnownPositionAsync();
         const loc =
           last ||
@@ -126,7 +233,6 @@ export default function ShowGymsFinder({ navigation }) {
         };
         setRegion(next);
 
-        // Animates map to user's location immediately
         if (mapRef.current) {
           mapRef.current.animateToRegion(next, 350);
         }
@@ -136,7 +242,6 @@ export default function ShowGymsFinder({ navigation }) {
     })();
   }, []);
 
-  // Google Places API URL builders for nearby and text search
   const nearbyUrl = ({ lat, lng }) =>
     `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&rankby=distance&type=gym&key=${GOOGLE_KEY}`;
   const textSearchUrl = (query, { lat, lng }) =>
@@ -144,7 +249,6 @@ export default function ShowGymsFinder({ navigation }) {
       query
     )}+gym&location=${lat},${lng}&radius=5000&key=${GOOGLE_KEY}`;
 
-  // Fetches gym data from Google Places API and updates map markers
   async function fetchGyms(url) {
     if (!GOOGLE_KEY) {
       console.warn("Google Maps API key is missing!");
@@ -160,8 +264,15 @@ export default function ShowGymsFinder({ navigation }) {
       }
       const results = Array.isArray(json.results) ? json.results : [];
       setGyms(results);
-      
-      // Fits map view to show all gym markers and user location
+
+      // fetch opening hours in background, then bump detailsVersion
+      pAllLimited(
+        results.map((g) => () => fetchPlaceDetails(g.place_id, GOOGLE_KEY)),
+        3
+      )
+        .catch(() => {})
+        .finally(() => setDetailsVersion((v) => v + 1));
+
       if (results.length && mapRef.current) {
         const points = results
           .map((r) => r.geometry?.location)
@@ -182,24 +293,51 @@ export default function ShowGymsFinder({ navigation }) {
     }
   }
 
-  // Finds nearest gyms based on user's current location
+  const normRating = (r) => (typeof r === "number" ? r : parseFloat(r)) || 0;
+
+  const displayedGyms = React.useMemo(() => {
+    let arr = gyms.slice();
+
+    if (selectedRating != null) {
+      arr = arr.filter((g) => normRating(g.rating) >= selectedRating);
+    }
+
+    const hasWindow = hours.open && hours.close;
+    if (hasWindow) {
+      const selStart = toMinutes(hours.open);
+      const selEnd = toMinutes(hours.close);
+      const todayIdx = new Date().getDay();
+
+      arr = arr.filter((g) => {
+        const periods = detailsCache.get(g.place_id);
+        if (!periods) return false; // or `true` if you want to include until loaded
+        return isOpenDuringWindow(periods, selStart, selEnd, todayIdx);
+      });
+    }
+
+    arr.sort((a, b) => normRating(a.rating) - normRating(b.rating));
+    return arr;
+  }, [gyms, selectedRating, hours, detailsVersion]);
+
+  const onClearFilters = () => {
+    setSelectedRating(null);
+    setHours({ open: null, close: null });
+    setSearch("");
+    // optionally refetch nearest after clearing:
+    // if (coords) fetchGyms(nearbyUrl({ lat: coords.latitude, lng: coords.longitude }));
+  };
+
   const onNearestPress = () => {
     if (!coords || !GOOGLE_KEY) return;
     fetchGyms(nearbyUrl({ lat: coords.latitude, lng: coords.longitude }));
   };
 
-  // Searches for gyms using user's search query
-  const onSearchPress = () => {
-    if (!coords || !search.trim() || !GOOGLE_KEY) return;
-    fetchGyms(
-      textSearchUrl(search.trim(), {
-        lat: coords.latitude,
-        lng: coords.longitude,
-      })
-    );
+  const onSearchPress = (query) => {
+    const q = (query ?? search).trim();
+    if (!coords || !q || !GOOGLE_KEY) return;
+    fetchGyms(textSearchUrl(q, { lat: coords.latitude, lng: coords.longitude }));
   };
 
-  // Selects a gym and centers the map on its location
   const onSelectPlace = (place) => {
     setSelectedPlaceId(place.place_id);
     const ll = place.geometry?.location;
@@ -215,7 +353,6 @@ export default function ShowGymsFinder({ navigation }) {
     );
   };
 
-  // Opens the selected gym location in the device's default maps application
   const openInMaps = (place) => {
     const ll = place.geometry?.location;
     if (!ll) return;
@@ -229,74 +366,35 @@ export default function ShowGymsFinder({ navigation }) {
     Linking.openURL(url);
   };
 
-  // Renders individual gym list items with name, address, rating, and map button
-  const renderRow = ({ item }) => {
-    const ll = item.geometry?.location;
+  const renderRow = React.useCallback(
+  ({ item }) => {
     const isSelected = selectedPlaceId === item.place_id;
-    return (
-      <TouchableOpacity
-        activeOpacity={0.9}
-        onPress={() => onSelectPlace(item)}
-        style={[
-          styles.rowCard,
-          {
-            borderColor: isSelected ? theme.tint : "transparent",
-            backgroundColor: theme.card,
-          },
-        ]}
-      >
-        <View style={{ flex: 1 }}>
-          <Text
-            style={[
-              styles.rowTitle,
-              { color: theme.textPrimary, fontFamily: Font.bold },
-            ]}
-            numberOfLines={1}
-          >
-            {item.name || "Gym"}
-          </Text>
-          <Text
-            style={[
-              styles.rowSubtitle,
-              { color: theme.textSecondary, fontFamily: Font.regular },
-            ]}
-            numberOfLines={2}
-          >
-            {item.vicinity || item.formatted_address || "—"}
-          </Text>
-          <Text
-            style={[
-              styles.metaLine,
-              { color: theme.tint, fontFamily: Font.regular },
-            ]}
-          >
-            {item.rating ? `⭐ ${item.rating}  ·  ` : ""}
-            {item.opening_hours?.open_now != null
-              ? item.opening_hours.open_now
-                ? "Open now"
-                : "Closed"
-              : ""}
-          </Text>
-        </View>
-        <TouchableOpacity
-          onPress={() => openInMaps(item)}
-          style={[styles.rowBtn, { backgroundColor: theme.tint }]}
-        >
-          <Text
-            style={{
-              color: theme.textPrimary,
-              fontFamily: Font.semibold,
-              fontWeight: "700",
-            }}
-          >
-            Map
-          </Text>
-        </TouchableOpacity>
-      </TouchableOpacity>
-    );
-  };
+    const hoursText = getTodayOpenCloseText(item.place_id); // 👈 new
 
-  // Automatically searches for nearest gyms when user location is obtained
+    return (
+      <GymListItem
+        item={item}
+        selected={isSelected}
+        onPress={() => onSelectPlace(item)}
+        onOpenMaps={() => openInMaps(item)}
+        hoursText={hoursText} // 👈 new
+        colors={{
+          textPrimary: theme.textPrimary,
+          textSecondary: theme.textSecondary,
+          tint: theme.tint,
+          card: theme.card,
+        }}
+        font={{
+          regular: Font.regular,
+          semibold: Font.semibold,
+          bold: Font.bold,
+        }}
+      />
+    );
+  },
+  [selectedPlaceId, theme, detailsVersion] // include detailsVersion
+);
+
   useEffect(() => {
     if (coords) onNearestPress();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -304,61 +402,50 @@ export default function ShowGymsFinder({ navigation }) {
 
   return (
     <View style={[styles.screen, { backgroundColor: theme.background }]}>
-      {/* Search interface with text input and action buttons */}
-      <View
-        style={[
-          styles.searchBar,
-          { borderColor: theme.tint, fontFamily: Font.semibold },
-        ]}
-      >
-        <View
-          style={[
-            styles.inputWrap,
-            {
-              borderColor: theme.tint,
-              backgroundColor: theme.inputBg,
-              fontFamily: Font.regular,
-            },
-          ]}
-        >
-          <TextInput
-            placeholder="Search gyms…"
-            placeholderTextColor={theme.textSecondary}
-            value={search}
-            onChangeText={setSearch}
-            style={[
-              styles.input,
-              { color: theme.textPrimary, fontFamily: Font.regular },
-            ]}
-            returnKeyType="search"
-            onSubmitEditing={onSearchPress}
+      <View style={[styles.searchBar, { borderColor: theme.tint, backgroundColor: theme.background }]}>
+        <GymSearchBar
+          value={search}
+          onChangeText={setSearch}
+          onSearch={onSearchPress}
+        />
+
+        {/* Row 1: Rating + Nearest */}
+        <View style={styles.filtersRow}>
+          <View style={{ flex: 1 }}>
+            <RatingFilter
+              value={selectedRating}
+              onChange={setSelectedRating}
+              themeColors={{
+                tint: theme.tint,
+                textPrimary: theme.textPrimary,
+                card: theme.card,
+              }}
+              font={{
+                regular: Font.regular,
+                semibold: Font.semibold,
+                bold: Font.bold,
+              }}
+            />
+          </View>
+          <NearestGymsButton
+            onPress={onNearestPress}
+            tint={theme.tint}
+            textColor={theme.textPrimary}
+            font={{ semibold: Font.semibold }}
           />
-          <TouchableOpacity
-            onPress={onSearchPress}
-            style={[styles.actionBtn, { backgroundColor: theme.tint }]}
-          >
-            <Text
-              style={[
-                styles.input,
-                { fontFamily: Font.semibold, color: theme.textPrimary },
-              ]}
-            >
-              Search
-            </Text>
-          </TouchableOpacity>
         </View>
 
-        <TouchableOpacity
-          onPress={onNearestPress}
-          style={[styles.nearestBtn, { borderColor: theme.tint }]}
-        >
-          <Text style={{ color: theme.tint, fontFamily: Font.semibold }}>
-            Nearest gyms
-          </Text>
-        </TouchableOpacity>
+        {/* Row 2: Hours + Clear */}
+        <View style={styles.filtersRow}>
+          <View style={{ flex: 1, marginRight: 0 }}>
+            <HoursFilter value={hours} onChange={setHours} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <ClearFiltersButton onPress={onClearFilters} style={{height: 40}} />
+          </View>
+        </View>
       </View>
 
-      {/* Interactive map showing user location and gym markers */}
       <View style={styles.mapWrap}>
         <MapView
           ref={mapRef}
@@ -368,7 +455,7 @@ export default function ShowGymsFinder({ navigation }) {
           showsUserLocation
           loadingEnabled
         >
-          {gyms.map((g) => {
+          {displayedGyms.map((g) => {
             const ll = g.geometry?.location;
             if (!ll) return null;
             return (
@@ -383,7 +470,6 @@ export default function ShowGymsFinder({ navigation }) {
           })}
         </MapView>
 
-        {/* Loading overlay during API requests */}
         {loading && (
           <View style={styles.loadingOverlay}>
             <ActivityIndicator size="large" color={theme.tint} />
@@ -391,10 +477,9 @@ export default function ShowGymsFinder({ navigation }) {
         )}
       </View>
 
-      {/* Scrollable list of gym search results */}
       <View style={styles.listWrap}>
         <FlatList
-          data={gyms}
+          data={displayedGyms}
           keyExtractor={(item) => item.place_id}
           renderItem={renderRow}
           contentContainerStyle={{ padding: 12, paddingBottom: 24 }}
@@ -423,43 +508,32 @@ export default function ShowGymsFinder({ navigation }) {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
 
-  // Top search area
+  filtersRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignItems: "stretch",
+    gap: 8,
+  },
+
   searchBar: {
     paddingHorizontal: 12,
     paddingTop: 8,
     paddingBottom: 6,
     gap: 8,
-  },
-  inputWrap: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 6,
-    gap: 6,
-  },
-  input: { flex: 1, padding: 10, fontSize: 16 },
-  actionBtn: {
-    paddingHorizontal: 14,
-    height: 40,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  nearestBtn: {
-    alignSelf: "flex-start",
-    borderWidth: 1.5,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    position: "relative",
+    zIndex: 10,
+    overflow: "visible",
+    ...(Platform.OS === "android" ? { elevation: 2 } : {}),
+    marginBottom:10,
+    backgroundColor: "#0000", // will be overridden below
   },
 
-  // Map takes ~55% of screen height
   mapWrap: {
-    height: "55%",
+    height: "45%",
     borderRadius: 12,
     marginHorizontal: 12,
     overflow: "hidden",
+    zIndex: 1,
   },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -468,28 +542,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.2)",
   },
 
-  // List fills rest
   listWrap: {
     flex: 1,
-  },
-
-  // Row card
-  rowCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderRadius: 12,
-    padding: 12,
-    borderWidth: 1.5,
-    gap: 10,
-  },
-  rowTitle: { fontSize: 16 },
-  rowSubtitle: { fontSize: 13, marginTop: 2 },
-  metaLine: { fontSize: 12, marginTop: 6 },
-  rowBtn: {
-    height: 36,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
   },
 });
