@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import CustomButton from "../../components/common/CustomButton";
 import CustomButtonThree from "../../components/common/CustomButtonThree";
 import BottomNav from "../../components/navbar/BottomNav";
@@ -18,12 +19,10 @@ import { Font, TextVariants } from "@/constants/Font";
 import avatar1 from "../../assets/Avatar/Avatar1-02.png";
 import avatar2 from "../../assets/Avatar/Avatar1-03.png";
 import avatar3 from "../../assets/Avatar/Avatar1-04.png";
-import { updateMe } from "@/services/userService";
 
 /**
- * Avatar selection screen.
- * Allows users to choose an avatar and background color.
- * Saves selection to backend and returns to AccountSettings.
+ * Avatar selection screen for choosing profile avatar and background color
+ * Stores selections in AsyncStorage for local persistence
  */
 export default function AvatarPage() {
   const router = useRouter();
@@ -50,8 +49,8 @@ export default function AvatarPage() {
   ];
 
   /**
-   * Saves selected avatar and color to backend.
-   * Navigates back to AccountSettings on success.
+   * Saves selected avatar URI and background color to AsyncStorage
+   * Navigates back to AccountSettings after successful save
    */
   const handleSave = async () => {
     try {
@@ -59,14 +58,20 @@ export default function AvatarPage() {
       const assetUri = Image.resolveAssetSource(selected.source)?.uri;
 
       console.log("Avatar URI:", assetUri);
+      console.log("Selected Color:", selectedColor);
+      console.log("Saving to AsyncStorage:", { avatarUri: assetUri, avatarColor: selectedColor });
 
-      // Save avatar image URI and background color
-      await updateMe({ pfp: assetUri, avatarColor: selectedColor });
+      // Persist avatar selections to local storage
+      await AsyncStorage.setItem('avatarUri', assetUri);
+      await AsyncStorage.setItem('avatarColor', selectedColor);
+
+      console.log("Successfully saved to AsyncStorage");
 
       CustomToast.success("Saved!");
       router.push("/profile/AccountSettings");
     } catch (err) {
       console.error("Avatar save error:", err);
+      console.error("Error details:", JSON.stringify(err, null, 2));
       CustomToast.error("Failed to save avatar.");
     }
   };
@@ -266,4 +271,3 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 });
-
