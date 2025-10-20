@@ -24,6 +24,7 @@ import Toast from "react-native-toast-message";
 import { Font } from "@/constants/Font";
 import CustomButton from "../../components/common/CustomButton";
 import { getBiometrics } from "@/services/biometricService";
+import ProfileImagePopup from "../../components/common/ProfileImagePopup";
 
 /**
  * Account settings screen for managing user profile and preferences
@@ -35,6 +36,9 @@ export default function AccountSettings() {
 
   // Profile image state with URI and base64 data for upload
   const [profileImage, setProfileImage] = useState(null);
+  const [showEditOptions, setShowEditOptions] = useState(false);
+  const [avatarColor, setAvatarColor] = useState(null); 
+
 
   // Date picker state for date of birth selection
   const [selectedDob, setSelectedDob] = useState(null);
@@ -95,7 +99,14 @@ export default function AccountSettings() {
           caloriesGoal: me.intakeGoals?.dailyCalories.toString() ?? "",
         }));
         setSelectedDob(fromYmd(dobStr));
-        if (me.pfp) setProfileImage({ uri: me.pfp });
+        if (me.pfp) {
+          setProfileImage({ 
+            uri: me.pfp 
+          });
+        }
+        if (me.avatarColor){
+          setAvatarColor(me.avatarColor);
+        }
 
         // Fetches most recent biometric entry to populate height/weight
         const biometrics = await getBiometrics();
@@ -243,6 +254,7 @@ export default function AccountSettings() {
         dateofbirth,
         ...(form.password ? { password: form.password } : {}),
         ...(pfp ? { pfp } : {}),
+        ...(avatarColor ? {avatarColor} : {}),
         quiz,
         intakeGoals,
       });
@@ -295,20 +307,25 @@ export default function AccountSettings() {
         >
           {/* Profile picture section with edit functionality */}
           <View style={styles.profilePicWrapper}>
-            <View style={styles.profileCircle}>
-              {profileImage ? (
-                <Image
-                  source={{ uri: profileImage.uri }}
-                  style={styles.profileImage}
-                />
-              ) : (
-                <Ionicons name="person" size={60} color="white" />
-              )}
-            </View>
-            <TouchableOpacity style={styles.editIcon} onPress={pickImage}>
-              <Ionicons name="pencil" size={18} color="white" />
-            </TouchableOpacity>
+           <View style={[styles.profileCircle, { backgroundColor: avatarColor || "#1e1e1e" }]}>
+             {profileImage ? (
+              <Image
+                source={{ uri: profileImage.uri }}
+                style={styles.profileImage}
+              />
+            ) : (
+              <Ionicons name="person" size={60} color="white" />
+            )}
           </View>
+         <View style={styles.editIconWrapper}>
+           <TouchableOpacity
+             style={styles.editIcon}
+             onPress={() => setShowEditOptions((prev) => !prev)}
+           >
+            <Ionicons name="pencil" size={18} color="white" />
+          </TouchableOpacity>
+        </View>
+      </View>
 
           {/* Basic profile information inputs */}
           <View style={styles.formContainer}>
@@ -445,7 +462,7 @@ export default function AccountSettings() {
           </View>
 
           <View style={{ height: 100 }} />
-        </ScrollView>
+         </ScrollView>
 
         {/* Fixed-position save button at bottom of screen */}
         <View style={styles.saveButtonWrapper}>
@@ -458,6 +475,19 @@ export default function AccountSettings() {
             style={{ width: "100%" }}
           />
         </View>
+        {showEditOptions && (
+              <ProfileImagePopup
+              onClose={() => setShowEditOptions(false)}
+              onGallery={() => {
+               setShowEditOptions(false);
+               pickImage();
+              }}
+              onAvatar={() => {
+              setShowEditOptions(false);
+              navigation.navigate("profile/AvatarPage");
+              }}
+            />
+           )}
       </KeyboardAvoidingView>
 
       <Toast />
@@ -549,4 +579,10 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontFamily: "Montserrat",
   },
+  editIconWrapper: {
+  position: "absolute",
+  bottom: 0,
+  right: 0,
+  alignItems: "flex-end",
+},
 });

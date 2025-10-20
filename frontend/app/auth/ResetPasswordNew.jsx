@@ -111,8 +111,6 @@ export default function ResetPasswordNew() {
                 setIsPasswordVisible((prev) => !prev); // Toggle visibility on tap
                 animateIcon(); // Trigger animation
               }}
-              onLongPress={() => setIsPasswordVisible(true)} // Show password on long press
-              onPressOut={() => setIsPasswordVisible(false)} // Hide password when released
               style={{ position: "absolute", right: 10, top: 35 }}
             >
               <Animated.View style={{ transform: [{ scale: iconScale }] }}>
