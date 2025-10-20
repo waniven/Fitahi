@@ -1,78 +1,71 @@
-// otpResetStore.js
 import crypto from 'node:crypto';
 
-const OTP_TTL_MS = 15 * 60 * 1000; //15 minutes
-const MAX_ATTEMPTS = 5;
+const OTP_TTL_MS = 15 * 60 * 1000; //15 minutes time to live
 
-//key: email -> { hash, salt, expiresAt, attemptsLeft, timer }
+//email = { digest, salt, expiresAt, timer }
 const store = new Map();
 
-//generate random 9 diget code
+// Generate random 9 digit code
 function generateCode() {
-    const n = crypto.randomInt(0, 1_000_000_000); // 0 to 999,999,999
-    return String(n).padStart(9, '0'); //keeps leading zeros
+    const n = crypto.randomInt(0, 1_000_000_000); // 0..999,999,999
+    return String(n).padStart(9, '0');
 }
 
-//sha512 hash 
-function hash(code, salt) {
+//HMAC-SHA512
+function hmac512(code, salt) {
     return crypto.createHmac('sha512', salt).update(code).digest('hex');
 }
 
-//generate reset code that should be emailed
+//Constant-time equality for Buffers
+function ctEqualHex(aHex, bHex) {
+    const a = Buffer.from(aHex, 'hex');
+    const b = Buffer.from(bHex, 'hex');
+    return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+
+//generate password reset code
 export function issuePasswordResetOtp(email) {
     const code = generateCode();
 
-    //clear map of previous recovery keys
+    //delete any previous record for this email
     const prev = store.get(email);
     if (prev?.timer) clearTimeout(prev.timer);
 
-    //hash reset code and set expire time
+    //hash reset code and set ttl 
     const salt = crypto.randomBytes(16).toString('hex');
-    const hash = hash(code, salt);
+    const digest = hmac512(code, salt);
     const expiresAt = Date.now() + OTP_TTL_MS;
 
-    //timer removes entry when time is up 
+    //timer deletes entry when tll is up
     const timer = setTimeout(() => store.delete(email), OTP_TTL_MS);
-    store.set(email, { hash, salt, expiresAt, attemptsLeft: MAX_ATTEMPTS, timer });
+    store.set(email, { digest, salt, expiresAt, timer });
 
-    return code; //code to email
+    return code; //should be emailed
 }
 
-export function verifyPasswordResetOtp(email, code) {
-    const rec = store.get(email);
+/**
+ * Verify by OTP code only.
+ * Returns the associated email if found and valid; otherwise returns null.
+ */
+export function verifyPasswordResetOtp(code) {
+    const now = Date.now();
 
-    //missing token
-    if (!rec) {
-        return { ok: false, reason: 'expired_or_missing' };
+    //delete exsisting entries
+    for (const [email, rec] of store) {
+        if (now > rec.expiresAt) {
+            clearTimeout(rec.timer);
+            store.delete(email);
+        }
     }
 
-    //expired token
-    if (Date.now() > rec.expiresAt) {
-        clearTimeout(rec.timer);
-        store.delete(email);
-        return { ok: false, reason: 'expired_or_missing' };
+    //find match by rehashing and testing hash
+    for (const [email, rec] of store) {
+        if (ctEqualHex(rec.digest, hmac512(code, rec.salt))) {
+            clearTimeout(rec.timer);
+            store.delete(email);
+            return email; //return user email
+        }
     }
 
-    //no attempts left
-    if (rec.attemptsLeft <= 0) {
-        clearTimeout(rec.timer);
-        store.delete(email);
-        return { ok: false, reason: 'too_many_attempts' };
-    }
-
-    //validate provided code against stored code
-    const expected = Buffer.from(rec.hash, 'hex');
-    const actual = Buffer.from(hash(code, rec.salt), 'hex');
-    const match = expected.length === actual.length && crypto.timingSafeEqual(expected, actual);
-
-    //code missmatch
-    if (!match) {
-        rec.attemptsLeft -= 1;
-        return { ok: false, reason: 'invalid_code', attemptsLeft: rec.attemptsLeft };
-    }
-
-    //success, delete code
-    clearTimeout(rec.timer);
-    store.delete(email);
-    return { ok: true };
+    return null;
 }
