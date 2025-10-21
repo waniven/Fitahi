@@ -11,6 +11,7 @@ import CustomInput from "../../components/common/CustomInput";
 import CustomButton from "../../components/common/CustomButton";
 import CustomToast from "../../components/common/CustomToast";
 import { Colors } from "../../constants/Colors";
+import { Font, Type, TextVariants } from "../../constants/Font"; 
 import { useRouter } from "expo-router";
 import CheckEmailModal from "../../components/modals/CheckEmailModal";
 import CustomButtonThree from "../../components/common/CustomButtonThree";
@@ -43,7 +44,7 @@ export default function ResetPasswordEmail() {
     if (emailError) {
       CustomToast.error(emailError);
       return;
-     }
+    }
     // TODO: Backend API call to send recovery code
     //{email : string }
     setShowModal(true); //show modal confirmation
@@ -58,7 +59,7 @@ export default function ResetPasswordEmail() {
       />
 
       {/* Header near back button */}
-      <Text style={styles.header}>Reset Password</Text>
+      <Text style={[styles.header, TextVariants.h1]}>Reset Password</Text>
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -66,7 +67,7 @@ export default function ResetPasswordEmail() {
       >
         {/* Subheader + input */}
         <View style={styles.content}>
-          <Text style={styles.subText}>
+          <Text style={[styles.subText, Type.semibold]}>
             Please provide us with the registered email and we will send you a recovery code.
           </Text>
 
@@ -77,8 +78,8 @@ export default function ResetPasswordEmail() {
             onChangeText={setEmail}
             keyboardType="email-address"
             style={{ marginTop: 20 }}
-            textStyle={{ fontFamily: "Montserrat-Regular" }}
-            labelStyle={{ fontFamily: "Montserrat-Bold" }}
+            textStyle={Type.regular} 
+            labelStyle={Type.bold}   
           />
         </View>
 
@@ -90,7 +91,7 @@ export default function ResetPasswordEmail() {
             size="large"
             style={{ width: 370, paddingVertical: 18, borderRadius: 30 }}
             textColor="#FFFFFF"
-            textStyle={{ fontFamily: "Montserrat-Bold", fontSize: 16 }} 
+            textStyle={[Type.bold, { fontSize: 16 }]} 
           />
         </View>
 
@@ -118,7 +119,6 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 26, 
     textAlign: "center",
-    fontFamily: "Montserrat-Bold", 
   },
   content: {
     flex: 1,
@@ -132,14 +132,12 @@ const styles = StyleSheet.create({
     fontSize: 15,
     textAlign: "center",
     marginBottom: 20,
-    fontFamily: "Montserrat-Regular", 
   },
   bottomButton: {
-  position: "absolute",
-  bottom: 20,
-  left: 0,
-  right: 0,
-  alignItems: "center",
-},
-
+    position: "absolute",
+    bottom: 20,
+    left: 0,
+    right: 0,
+    alignItems: "center",
+  },
 });
