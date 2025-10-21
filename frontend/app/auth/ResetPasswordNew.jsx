@@ -36,6 +36,7 @@ export default function ResetPasswordNew() {
   const [code, setCode] = useState(""); // Expected: numeric string from email
   const [password, setPassword] = useState(""); // Expected: new password string
   const [isPasswordVisible, setIsPasswordVisible] = useState(false); // Toggle state for password visibility
+  const [passwordError, setPasswordError] = useState(null); // Tracks validation error for password
 
   // Animation state for eye icon
   const iconScale = useRef(new Animated.Value(1)).current;
@@ -58,21 +59,26 @@ export default function ResetPasswordNew() {
 
   // Triggered when user taps "Create New Password"
   const handleCreateNewPassword = async () => {
-    if (!code.trim()) {
-      CustomToast.error("Please enter the recovery code");
-      return;
-    }
-    const passwordError = passwordValidation(password);
-    if (passwordError) {
-      CustomToast.error(passwordError);
-      return;
-     }
+  if (!code.trim()) {
+    CustomToast.error("Please enter the recovery code");
+    return;
+  }
 
-    // TODO: Backend API call to verify code and reset password
-    // { code: string, password: string }
-    CustomToast.success("Password Reset!", "Your password has been updated"); 
-    router.replace("/"); // Navigate to welcome page
-  };
+  const error = passwordValidation(password);
+  if (error) {
+    setPasswordError(error); // Show inline error
+    CustomToast.validationError("Please fix the error below"); // Show toast
+    return;
+  }
+
+  setPasswordError(null); // Clear error if valid
+
+  // TODO: Backend API call to verify code and reset password
+  // { code: string, password: string }
+  CustomToast.success("Password Reset!", "Your password has been updated");
+  router.replace("/"); // Navigate to welcome page
+};
+
 
   // Triggered when user taps "Resend email"
   const handleResendEmail = () => {
@@ -118,14 +124,18 @@ export default function ResetPasswordNew() {
           {/* Password input field with animated eye icon and long-press support */}
           <View style={{ position: "relative" }}>
             <CustomInput
-              label="New Password"
-              placeholder="Enter new password"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry={!isPasswordVisible} // Toggle visibility
-              textStyle={{ fontFamily: "Montserrat-Regular" }}
-              labelStyle={{ fontFamily: "Montserrat-Bold" }} 
-            />
+             label="New Password"
+             placeholder="Enter new password"
+             value={password}
+             onChangeText={(text) => {
+              setPassword(text);
+              if (passwordError) setPasswordError(null); // Clear error on change
+            }}
+            secureTextEntry={!isPasswordVisible}
+            textStyle={{ fontFamily: "Montserrat-Regular" }}
+            labelStyle={{ fontFamily: "Montserrat-Bold" }}
+            errorMessage={passwordError} 
+          />
             <TouchableOpacity
               onPress={() => {
                 setIsPasswordVisible((prev) => !prev); // Toggle visibility on tap
@@ -155,7 +165,7 @@ export default function ResetPasswordNew() {
             title="Create New Password"
             onPress={handleCreateNewPassword}
             size="large"
-            style={{ width: "100%", borderRadius: 30 }}
+            style={{width: 370, paddingVertical: 18, borderRadius: 30}}
             textColor="#FFFFFF"
             textStyle={{ fontFamily: "Montserrat-Bold" }} 
           />
@@ -176,7 +186,6 @@ const styles = StyleSheet.create({
     right: 0,
     color: "#FFFFFF",
     fontSize: 26,
-    fontWeight: "bold",
     textAlign: "center", 
     fontFamily: "Montserrat-Bold", 
   },
@@ -203,9 +212,11 @@ const styles = StyleSheet.create({
     fontFamily: "Montserrat-Regular", 
   },
   bottomButton: {
-    position: "absolute",
-    bottom: 20, 
-    left: 20,
-    right: 20,
-  },
+  position: "absolute",
+  bottom: 20,
+  left: 0,
+  right: 0,
+  alignItems: "center",
+},
+
 });

@@ -143,22 +143,17 @@ export default function AvatarPage() {
           <Text style={styles.saveButtonText}>Save</Text>
         </TouchableOpacity>
       </View>
-
       {/* Bottom navigation bar */}
       <BottomNav />
     </SafeAreaView>
   );
 }
 
-// Stylesheet for AvatarPage
 const styles = StyleSheet.create({
-  // Main screen container
   container: {
     flex: 1,
     backgroundColor: "#151924",
   },
-
-  // Header row layout
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -166,30 +161,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 20,
   },
-
-  // Title text using Montserrat bold
   header: {
     ...TextVariants.h1,
     color: "#fff",
     textAlign: "center",
     flex: 1,
   },
-
-  // Subheader text using Montserrat regular
   subHeader: {
     ...TextVariants.body,
     color: "#aaa",
     marginLeft: 20,
     marginTop: 30,
   },
-
-  // Scroll container padding
   scrollContainer: {
     paddingHorizontal: 20,
     paddingBottom: 140,
   },
-
-  // Avatar selection row
   avatarRow: {
     flexDirection: "row",
     justifyContent: "space-around",
@@ -197,8 +184,6 @@ const styles = StyleSheet.create({
     marginTop: 30,
     marginBottom: 30,
   },
-
-  // Avatar wrapper with border and padding
   avatarWrapper: {
     borderRadius: 50,
     padding: 12,
@@ -206,19 +191,13 @@ const styles = StyleSheet.create({
     borderColor: "transparent",
     backgroundColor: "#1e1e1e", // Default background
   },
-
-  // Highlighted avatar border
   avatarSelected: {
     borderColor: Colors.primary || "#007AFF",
   },
-
-  // Avatar image sizing
   avatarImage: {
     width: 60,
     height: 60,
   },
-
-  // Grid of background color options
   colorGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -227,8 +206,6 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     marginTop: 30,
   },
-
-  // Individual color circle
   colorCircle: {
     width: 40,
     height: 40,
@@ -237,24 +214,18 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "transparent",
   },
-
-  // Highlighted color border
   colorSelected: {
     borderColor: "#fff",
     borderWidth: 2,
   },
-
-  // Save button wrapper positioning
   saveButtonWrapper: {
     position: "absolute",
     bottom: 120,
     width: "100%",
     alignItems: "center",
   },
-
-  // Save button styling
   saveButton: {
-    backgroundColor: "#4DA6FF", // lighter blue
+    backgroundColor: "#4DA6FF", 
     paddingVertical: 16,
     paddingHorizontal: 32,
     borderRadius: 30,
@@ -262,8 +233,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-
-  // Save button text using Montserrat semibold
   saveButtonText: {
     ...TextVariants.body,
     fontFamily: Font.semibold,

@@ -88,9 +88,9 @@ export default function ResetPasswordEmail() {
             title="Send Recovery Code"
             onPress={handleSendCode}
             size="large"
-            style={{ width: "100%", borderRadius: 30 }}
+            style={{ width: 370, paddingVertical: 18, borderRadius: 30 }}
             textColor="#FFFFFF"
-            textStyle={{ fontFamily: "Montserrat-Bold" }} 
+            textStyle={{ fontFamily: "Montserrat-Bold", fontSize: 16 }} 
           />
         </View>
 
@@ -117,7 +117,6 @@ const styles = StyleSheet.create({
     right: 0,
     color: "#FFFFFF",
     fontSize: 26, 
-    fontWeight: "bold",
     textAlign: "center",
     fontFamily: "Montserrat-Bold", 
   },
@@ -136,6 +135,11 @@ const styles = StyleSheet.create({
     fontFamily: "Montserrat-Regular", 
   },
   bottomButton: {
-    padding: 20,
-  },
+  position: "absolute",
+  bottom: 20,
+  left: 0,
+  right: 0,
+  alignItems: "center",
+},
+
 });
