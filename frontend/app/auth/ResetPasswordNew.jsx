@@ -17,6 +17,17 @@ import { useRouter } from "expo-router";
 import CustomButtonThree from "../../components/common/CustomButtonThree";
 import { Ionicons } from "@expo/vector-icons"; 
 
+
+const passwordValidation = (password) => {
+  if (!password || !password.trim()) return "Password is required";
+  if (password.length < 8) return "Password must be at least 8 characters";
+  if (!/(?=.*[a-z])/.test(password))
+    return "Password must contain a lowercase letter";
+  if (!/(?=.*[A-Z])/.test(password))
+    return "Password must contain an uppercase letter";
+  if (!/(?=.*\d)/.test(password)) return "Password must contain a number";
+  return null;
+};
 export default function ResetPasswordNew() {
   const router = useRouter();
   const theme = Colors["dark"];
@@ -47,15 +58,20 @@ export default function ResetPasswordNew() {
 
   // Triggered when user taps "Create New Password"
   const handleCreateNewPassword = async () => {
-    if (!code.trim() || !password.trim()) {
-      CustomToast.error("Please fill out all fields"); // Show error toast
+    if (!code.trim()) {
+      CustomToast.error("Please enter the recovery code");
       return;
     }
+    const passwordError = passwordValidation(password);
+    if (passwordError) {
+      CustomToast.error(passwordError);
+      return;
+     }
 
     // TODO: Backend API call to verify code and reset password
     // { code: string, password: string }
     CustomToast.success("Password Reset!", "Your password has been updated"); 
-    router.replace("/auth/Login"); // Navigate to login screen
+    router.replace("/"); // Navigate to welcome page
   };
 
   // Triggered when user taps "Resend email"
@@ -69,7 +85,7 @@ export default function ResetPasswordNew() {
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       {/* Back button in top-left corner */}
       <CustomButtonThree
-        onPress={() => router.back()}
+        onPress={() => router.replace("/")}
         style={{ position: "absolute", top: 50, left: 20, zIndex: 10 }}
       />
 
@@ -95,6 +111,8 @@ export default function ResetPasswordNew() {
             value={code}
             onChangeText={(text) => setCode(text.replace(/[^0-9]/g, ""))} // Only allow numeric input
             keyboardType="numeric"
+            textStyle={{ fontFamily: "Montserrat-Regular" }} 
+            labelStyle={{ fontFamily: "Montserrat-Bold" }} 
           />
 
           {/* Password input field with animated eye icon and long-press support */}
@@ -105,6 +123,8 @@ export default function ResetPasswordNew() {
               value={password}
               onChangeText={setPassword}
               secureTextEntry={!isPasswordVisible} // Toggle visibility
+              textStyle={{ fontFamily: "Montserrat-Regular" }}
+              labelStyle={{ fontFamily: "Montserrat-Bold" }} 
             />
             <TouchableOpacity
               onPress={() => {
@@ -137,6 +157,7 @@ export default function ResetPasswordNew() {
             size="large"
             style={{ width: "100%", borderRadius: 30 }}
             textColor="#FFFFFF"
+            textStyle={{ fontFamily: "Montserrat-Bold" }} 
           />
         </View>
       </KeyboardAvoidingView>
@@ -157,7 +178,7 @@ const styles = StyleSheet.create({
     fontSize: 26,
     fontWeight: "bold",
     textAlign: "center", 
-    fontFamily: "Montserrat-Bold",
+    fontFamily: "Montserrat-Bold", 
   },
   content: {
     flex: 1,
@@ -179,7 +200,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     textDecorationLine: "underline", 
     alignSelf: "flex-start", 
-    fontFamily: "Montserrat-Regular",
+    fontFamily: "Montserrat-Regular", 
   },
   bottomButton: {
     position: "absolute",

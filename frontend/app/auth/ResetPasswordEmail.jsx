@@ -15,6 +15,18 @@ import { useRouter } from "expo-router";
 import CheckEmailModal from "../../components/modals/CheckEmailModal";
 import CustomButtonThree from "../../components/common/CustomButtonThree";
 
+/**
+ * Validates email format and presence
+ * Uses regex pattern to ensure proper email structure
+ */
+const emailValidation = (email) => {
+  if (!email || !email.trim()) return "Email is required";
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email.trim()))
+    return "Please enter a valid email address";
+  return null;
+};
+
 export default function ResetPasswordEmail() {
   const router = useRouter();
   const theme = Colors["dark"];
@@ -27,10 +39,11 @@ export default function ResetPasswordEmail() {
   //triggered when user presses "send recovery code"
   const handleSendCode = async () => {
     //validation: ensure email is not empty
-    if (!email.trim()) {
-      CustomToast.error("Please enter your email");
+    const emailError = emailValidation(email);
+    if (emailError) {
+      CustomToast.error(emailError);
       return;
-    }
+     }
     // TODO: Backend API call to send recovery code
     //{email : string }
     setShowModal(true); //show modal confirmation
@@ -40,7 +53,7 @@ export default function ResetPasswordEmail() {
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       {/* Back button */}
       <CustomButtonThree 
-        onPress={() => router.back()} 
+        onPress={() => router.replace("/")} //navigate to welcome page 
         style={{ position: "absolute", top: 50, left: 20, zIndex: 10 }} 
       />
 
@@ -64,6 +77,8 @@ export default function ResetPasswordEmail() {
             onChangeText={setEmail}
             keyboardType="email-address"
             style={{ marginTop: 20 }}
+            textStyle={{ fontFamily: "Montserrat-Regular" }}
+            labelStyle={{ fontFamily: "Montserrat-Bold" }}
           />
         </View>
 
@@ -75,6 +90,7 @@ export default function ResetPasswordEmail() {
             size="large"
             style={{ width: "100%", borderRadius: 30 }}
             textColor="#FFFFFF"
+            textStyle={{ fontFamily: "Montserrat-Bold" }} 
           />
         </View>
 
@@ -94,7 +110,6 @@ export default function ResetPasswordEmail() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-
   header: {
     position: "absolute",
     top: 50, 
@@ -104,9 +119,8 @@ const styles = StyleSheet.create({
     fontSize: 26, 
     fontWeight: "bold",
     textAlign: "center",
-    fontFamily: "Montserrat-Bold",
+    fontFamily: "Montserrat-Bold", 
   },
-
   content: {
     flex: 1,
     justifyContent: "flex-start",
@@ -114,15 +128,13 @@ const styles = StyleSheet.create({
     paddingTop: 120,
     paddingHorizontal: 20,
   },
-
   subText: {
     color: "gray",
     fontSize: 15,
     textAlign: "center",
     marginBottom: 20,
-    fontFamily: "Montserrat-Regular",
+    fontFamily: "Montserrat-Regular", 
   },
-
   bottomButton: {
     padding: 20,
   },
