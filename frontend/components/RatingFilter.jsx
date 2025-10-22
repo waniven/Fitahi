@@ -14,6 +14,14 @@ import { Font } from "@/constants/Font";
 
 const OPTIONS = [null, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5];
 
+/**
+ * Stars
+ * Renders a 0–5 star row (supports halves).
+ * @param {number|null} value - Rating value (null treated as 0).
+ * @param {number} [size=16] - Icon size.
+ * @param {string} [color] - Filled star color (defaults to theme.warning).
+ * @param {string} [emptyColor] - Empty star color (defaults to theme.textSecondary).
+ */
 function Stars({
   value,
   size = 16,
@@ -25,11 +33,14 @@ function Stars({
   // value could be null; treat null as 0 for display in options except "Any rating"
   const _color = color ?? theme.warning;
   const _emptyColor = emptyColor ?? theme.textSecondary;
+
+  // Clamp & decompose rating
   const rating = Math.max(0, Math.min(5, Number(value) || 0));
   const full = Math.floor(rating);
   const hasHalf = rating - full >= 0.5;
   const total = 5;
 
+  // Build 5 icons: full / half / outline
   const stars = [];
   for (let i = 0; i < total; i++) {
     let name = "star-outline";
@@ -50,6 +61,15 @@ function Stars({
   );
 }
 
+/**
+ * RatingFilter
+ * Dropdown filter to choose minimum rating (Any, 2.0 … 4.5).
+ *
+ * Props:
+ * - value: number|null (current selection; null = Any rating)
+ * - onChange: (val) => void (called with chosen option)
+ * - themeColors, font: optional style overrides
+ */
 export default function RatingFilter({
   value, // null | 2.0 | 2.5 | 3.0 | ...
   onChange, // (v) => void
@@ -65,6 +85,7 @@ export default function RatingFilter({
   const card = theme.background;
   
 
+  // Label shown on trigger (e.g., “Any rating” or “3.5”)
   const label = value == null ? "Any rating" : `${value.toFixed(1)}`;
 
   return (

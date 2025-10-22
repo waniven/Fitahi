@@ -12,16 +12,28 @@ import { Font } from "@/constants/Font";
 import { Colors } from "@/constants/Colors";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
+/**
+ * HoursFilter
+ * Chip that opens a dropdown with "Open" and "Close" time rows.
+ * Uses native DateTimePicker for each row and returns times via onChange.
+ * Props:
+ *  - value: { open?: Date|null, close?: Date|null }
+ *  - onChange: (nextValue) => void
+ */
 export default function HoursFilter({ value = {}, onChange }) {
   const scheme = useColorScheme();
   const theme = Colors[scheme ?? "light"];
+
+  // UI state: dropdown + which picker is visible
   const [expanded, setExpanded] = useState(false);
   const [showOpenPicker, setShowOpenPicker] = useState(false);
   const [showClosePicker, setShowClosePicker] = useState(false);
 
+  // Current selected times
   const openTime = value.open ?? null;
   const closeTime = value.close ?? null;
 
+  // Format Date -> "h:mm AM/PM", fallback label when no date
   const formatT = (d) => {
     if (!d) return "Select time";
     const h24 = d.getHours();

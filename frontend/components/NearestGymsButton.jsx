@@ -10,12 +10,17 @@ import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/constants/Colors";
 import { Font } from "@/constants/Font";
 
+/**
+ * NearestGymsButton
+ * Compact, themed button to trigger a “find nearest gyms” action.
+ */
 export default function NearestGymsButton({
-  onPress,
-  tint,
-  font = {},
-  disabled = false,
-  style,
+  onPress, // tap handler
+  tint, // border color override (optional)
+  font = {}, // { semibold } font toggle
+  disabled = false, // disable button + lower opacity
+  style, // extra container styles
+
 }) {
   const scheme = useColorScheme();
   const theme = Colors[scheme ?? "light"];

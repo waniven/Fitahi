@@ -10,7 +10,14 @@ import {
   useColorScheme,
 } from "react-native";
 
-
+/**
+ * GymSearchBar
+ * Simple themed search input with a submit button.
+ * Props:
+ *  - value, onChangeText, onSearch
+ *  - tint, inputBg, textPrimary, textSecondary (optional style overrides)
+ *  - style (container override)
+ */
 export default function GymSearchBar({
   value,
   onChangeText,
