@@ -23,6 +23,8 @@ import { useCalendarLogic } from "@/hooks/useCalendarLogic";
 import * as Notifications from "@/services/notificationService";
 import { scheduleWaterNotifications } from "@/services/waterNotifications";
 import { Font } from "@/constants/Font";
+import mobileAds, { MaxAdContentRating } from "react-native-google-mobile-ads";
+import ReminderBannerAd from "@/components/BannerAd";
 
 /**
  * Main dashboard screen displaying calendar, reminders, and quick navigation cards
@@ -31,6 +33,20 @@ import { Font } from "@/constants/Font";
 export default function Home() {
   const theme = Colors["dark"];
   const router = useRouter();
+  const [adsReady, setAdsReady] = useState(false);
+
+  // Initialize AdMob ONCE here
+  useEffect(() => {
+    mobileAds()
+      .setRequestConfiguration({
+        maxAdContentRating: MaxAdContentRating.G,
+        tagForChildDirectedTreatment: false,
+        tagForUnderAgeOfConsent: false,
+      })
+      .then(() => mobileAds().initialize())
+      .then(() => setAdsReady(true))
+      .catch((e) => console.log("AdMob init error:", e));
+  }, []);
 
   // Request notification permissions on mount and reschedule reminders
   useEffect(() => {
@@ -271,6 +287,9 @@ export default function Home() {
             })()}
           </View>
         </View>
+
+        {/* Ad below reminders */}
+        {adsReady && <ReminderBannerAd />}
 
         {/* Render quick access navigation cards */}
         <LogCards cards={quickLogCards} />
