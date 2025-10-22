@@ -35,3 +35,15 @@ export async function deleteConversation(conversationId) {
     const res = await api.delete(`/conversations/${conversationId}`);
     return res.data;
 }
+
+// GET motivational notification content (title + body)
+export async function getInactivityNotification() {
+    const res = await api.get("/messages/inactivity-checkin");
+    return res.data.notification;
+}
+
+// POST or continue the inactivity conversation with AI
+export async function startInactivityConversation(title, body) {
+    const res = await api.post("/messages/inactivity-start", { title, body });
+    return res.data;
+}
