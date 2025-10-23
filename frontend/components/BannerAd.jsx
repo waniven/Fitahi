@@ -4,15 +4,25 @@ import { BannerAd, BannerAdSize, TestIds } from "react-native-google-mobile-ads"
 import ModalCloseButton from "@/components/ModalCloseButton";
 import { Colors } from "@/constants/Colors";
 
+/**
+ * ReminderBannerAd
+ * - Compact banner card shown under reminders
+ * - Uses Google TEST ad unit (safe for dev/university projects)
+ * - Dismissible via an X button
+ */
 export default function ReminderBannerAd() {
   const [hidden, setHidden] = useState(false);
   const scheme = useColorScheme();
   const theme = Colors[scheme ?? "light"];
 
+  // Don't render after user closes it
   if (hidden) return null;
 
+  // ✅ Use Google's test banner ID in development
+  // NOTE: Some versions only expose TestIds.BANNER (prefer that if ADAPTIVE_BANNER isn't available)
   const unitId = TestIds.ADAPTIVE_BANNER; // Always use Google test id in dev
 
+  // Taller than standard banner; adjust to taste
   const size = BannerAdSize.LARGE_BANNER;
 
   return (
