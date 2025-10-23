@@ -36,10 +36,10 @@ export async function deleteConversation(conversationId) {
     return res.data;
 }
 
-// GET motivational notification content (title + body)
-export async function getInactivityNotification() {
+// GET motivational notifications content (array of 10 notifications)
+export async function getInactivityNotifications() {
     const res = await api.get("/messages/inactivity-checkin");
-    return res.data.notification;
+    return res.data.notifications;
 }
 
 // POST or continue the inactivity conversation with AI

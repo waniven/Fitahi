@@ -199,8 +199,8 @@ router.post("/", auth, async (req, res) => {
 
 /*
  * GET /api/messages/inactivity-checkin
- * Generates one supportive motivational message + question
- * Used to trigger an inactivity notification
+ * Generates a batch of 10 supportive motivational messages + questions
+ * Used to trigger scheduled inactivity notifications
  */
 router.get("/inactivity-checkin", auth, async (req, res) => {
     try {
@@ -213,7 +213,7 @@ router.get("/inactivity-checkin", auth, async (req, res) => {
         // build user context string from helper
         const userContext = aiPrompts.buildUserContext(me);
 
-        // create AI check-in prompt
+        // create AI check-in prompt for 10 notifications
         const prompt = aiPrompts.buildInactivityCheckinPrompt(userContext);
 
         // generate AI notification content
@@ -223,24 +223,19 @@ router.get("/inactivity-checkin", auth, async (req, res) => {
 
         // parse response as JSON
         const raw = result.response.text();
-        let notification;
+        let notifications;
         try {
-            notification = JSON.parse(raw); // expecting { title, body }
+            notifications = JSON.parse(raw); // expecting an array of { title, body } objects
+            if (!Array.isArray(notifications)) throw new Error("Not an array");
         } catch (e) {
-            // fallback if parsing fails
-            const match = raw.match(/\{[\s\S]*\}/);
-
-            // default generic notification
-            notification = match ? JSON.parse(match[0]) : {
-                title: "💯⚡ How are you doin? Wanna make sure you're on track!",
-                body: "It's been a bit since your last update - want to log a quick workout or meal?",
-            };
+            // 10 generic fall-back notifications if parsing fails
+            notifications = aiPrompts.notifications;
         }
 
-        // return notification content
-        res.json({ notification });
+        // return batch of notifications
+        res.json({ notifications });
     } catch (err) {
-        console.error("Failed to send inactivity checkin notification: ", err);
+        console.error("Failed to send inactivity check-in notifications: ", err);
     }
 });
 
