@@ -216,18 +216,27 @@ router.get("/inactivity-checkin", auth, async (req, res) => {
         // create AI check-in prompt for 10 notifications
         const prompt = aiPrompts.buildInactivityCheckinPrompt(userContext);
 
+        // log prompt sending
+        console.log("Inactivity check-in prompt about to be sent to AI");
+
         // generate AI notification content
         const result = await model.generateContent({
             contents: [{ role: "user", parts: [{ text: prompt }] }],
         });
 
+        // log response received
+        console.log("Inactivity check-in response received from AI");
+
         // parse response as JSON
-        const raw = result.response.text();
+        const raw = result.response.text().replace(/^```json\s*/, '').replace(/```$/, '').trim();
+
         let notifications;
         try {
             notifications = JSON.parse(raw); // expecting an array of { title, body } objects
             if (!Array.isArray(notifications)) throw new Error("Not an array");
         } catch (e) {
+            // log parsing error
+            console.log(e);
             // 10 generic fall-back notifications if parsing fails
             notifications = aiPrompts.notifications;
         }
@@ -245,16 +254,19 @@ router.get("/inactivity-checkin", auth, async (req, res) => {
  */
 router.post("/inactivity-start", auth, async (req, res) => {
     try {
+        // extract title and body from request
         const { title, body } = req.body;
+        // get user id from auth middleware
         const userId = req.user.id;
 
-        // look for existing inactivity conversation
-        let convo = await Conversation.findOne({ userId, type: "inactivity" });
-        if (!convo) {
-            convo = await new Conversation({ userId, type: "inactivity" }).save();
-        }
+        // make sure we only have one inactivity convo per user
+        let convo = await Conversation.findOneAndUpdate(
+            { userId, type: "inactivity" },
+            { $setOnInsert: { userId, type: "inactivity" } },
+            { new: true, upsert: true }
+        );
 
-        // parse conversation id
+        // get conversation id
         const convoId = convo._id.toString();
 
         // fetch user profile with quiz + goals
@@ -274,7 +286,7 @@ router.post("/inactivity-start", auth, async (req, res) => {
         // clean AI response
         const aiText = result.response.text().replace(/\*/g, "");
 
-        // save AI message
+        // save AI message under the same inactivity convo
         const aiMessage = new Message({
             userId,
             text: aiText,

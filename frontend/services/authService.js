@@ -1,6 +1,7 @@
 import api, { setAuthToken } from "./api";
 import { saveToken, loadToken, clearToken } from "./tokenStorage";
 import { cancelAllNotifications } from "./notificationService";
+import { resetInactivityState } from "./inactivityNotifications";
 
 //loads token from tokenstorage and tries to load user data
 export async function loadTokenOnLaunch() {
@@ -47,4 +48,7 @@ export async function logout() {
     } catch (err) {
         console.warn('Failed to clear notifications on logout', err);
     }
+
+    // reset inactivity state (inactivityNotifications.js)
+    resetInactivityState();
 }

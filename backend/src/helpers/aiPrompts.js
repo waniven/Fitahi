@@ -248,8 +248,8 @@ The user hasn't logged anything in 5+ hours.
 You must reply only with a single JSON array, formatted like this:
 [
   {
-    "title": "Put an emoji or two first, then a short, motivational question.",
-    "body": "Encouraging, motivating, friendly message (1-2 sentences). Keep it warm and encouraging! Hint that the user can continue the conversation with you in the app."
+    "title": "Put an emoji or two at the front of the title, then a provide a short, motivational QUESTION.",
+    "body": "Encouraging, motivating, friendly message (1-2 sentences). Keep it warm and encouraging, emojis welcome! Hint that the user can continue the conversation with you in the app."
   },
   ...
   (10 objects total)
@@ -263,7 +263,7 @@ ${userContext}
 
 If there is no relevant info about the user, keep it related to their well-being or fitness, friendly and motivational.
 The title and body should sound natural and fit within a (fun and engaging!) mobile notification.
-Do NOT include any explanations or markdown — return pure JSON only.
+Do NOT include any explanations or markdown — return pure JSON only. Plaintext ONLY.
 `;
 }
 
