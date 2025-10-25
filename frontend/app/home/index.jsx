@@ -24,7 +24,7 @@ import * as Notifications from "@/services/notificationService";
 import { scheduleWaterNotifications } from "@/services/waterNotifications";
 import { Font } from "@/constants/Font";
 import mobileAds, { MaxAdContentRating } from "react-native-google-mobile-ads";
-import ReminderBannerAd from "@/components/BannerAd";
+import ReminderBannerAd from "@/components/googleAds/BannerAd";
 
 /**
  * Main dashboard screen displaying calendar, reminders, and quick navigation cards
