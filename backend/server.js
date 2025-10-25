@@ -16,6 +16,7 @@ const biometricRoutes = require("./src/routes/biometricRoutes")
 const reminderRoutes = require("./src/routes/reminderRoutes");
 const supplementRoutes = require("./src/routes/supplementRoutes");
 const supplementLogRoutes = require("./src/routes/supplementLogRoutes");
+const PasswordResetRoutes = require("./src/routes/passwordRestRoutes");
 
 // create express app
 const app = express();
@@ -36,6 +37,7 @@ app.use("/api/biometrics", biometricRoutes);
 app.use("/api/reminders", reminderRoutes);
 app.use("/api/supplements", supplementRoutes);
 app.use("/api/supplementlogs", supplementLogRoutes);
+app.use("/api/reset", PasswordResetRoutes);
 
 //global error handing
 app.use((err, _req, res, _next) => {
