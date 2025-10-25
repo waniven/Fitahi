@@ -1,15 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Animated,
-  Dimensions,
-} from "react-native";
+import { View, Text, StyleSheet, Animated, Dimensions } from "react-native";
 import LottieView from "lottie-react-native";
 import { getRandomQuote } from "@/constants/utils/quotes";
 import { updateStreak, getCompletedDays } from "@/constants/utils/streakLogic";
+import CustomButton from "@/components/common/CustomButton";
 
 const screenHeight = Dimensions.get("window").height; //get device window
 
@@ -38,14 +32,14 @@ export default function StreakScreen({ onContinue }) {
       //quote fade in
       Animated.timing(quoteFade, {
         toValue: 1,
-        duration: 600, //fade duration 
+        duration: 600, //fade duration
         useNativeDriver: true, //optimise animation
       }).start();
     }
     init();
   }, []);
 
-//handle "continue" button press
+  //handle "continue" button press
   const handleContinue = () => {
     Animated.timing(fadeAnim, {
       toValue: 0, //fade out of screen
@@ -53,7 +47,7 @@ export default function StreakScreen({ onContinue }) {
       useNativeDriver: true,
     }).start(() => onContinue?.()); //callback to parent when fade out is complete
   };
-//streak days to display
+  //streak days to display
   const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const todayIndex = new Date().getDay(); //current weekday index
 
@@ -64,16 +58,16 @@ export default function StreakScreen({ onContinue }) {
     const todayIndex = today.getDay();
 
     //calculate date for this weeks day
-    const dayDate = new Date ();
+    const dayDate = new Date();
     dayDate.setDate(today.getDate() - todayIndex + index); //go to target day
-    dayDate.setHours (0,0,0,0); //normalize to midnight
+    dayDate.setHours(0, 0, 0, 0); //normalize to midnight
 
     //check if dayDate is in completedDays
 
-    return completedDays.some (d => {
+    return completedDays.some((d) => {
       const dDate = new Date(d);
       dDate.setHours(0, 0, 0, 0); //normalize to midnight
-      return dDate.toDateString() === dayDate.toDateString(); 
+      return dDate.toDateString() === dayDate.toDateString();
     });
   };
 
@@ -97,7 +91,7 @@ export default function StreakScreen({ onContinue }) {
           />
         )}
       </View>
-       {/*display streak count*/}
+      {/*display streak count*/}
       <Text style={styles.streakText}>🔥 {streak}-Day Streak!</Text>
 
       {/* display motivational quote with fade animation*/}
@@ -110,9 +104,8 @@ export default function StreakScreen({ onContinue }) {
         {days.map((day, index) => {
           const completed = isDayCompleted(index); //check if day is completed
           const isToday = index === todayIndex; //check if today
-          const yesterday = (todayIndex - 1 + 7) % 7;  //yesterday index
+          const yesterday = (todayIndex - 1 + 7) % 7; //yesterday index
           const isYesterday = index === yesterday;
-
 
           return (
             <View key={index} style={styles.dayContainer}>
@@ -136,9 +129,14 @@ export default function StreakScreen({ onContinue }) {
 
       {/*continue button at the bottom*/}
       <View style={styles.bottomContainer}>
-        <TouchableOpacity onPress={handleContinue} style={styles.continueButton}>
-          <Text style={styles.continueText}>Continue</Text>
-        </TouchableOpacity>
+        <CustomButton
+          title="Continue"
+          onPress={handleContinue}
+          variant="primary"
+          size="large"
+          rounded
+          style={{ width: "100%" }}
+        />
       </View>
     </Animated.View>
   );
@@ -176,7 +174,7 @@ const styles = StyleSheet.create({
   },
   dayContainer: {
     alignItems: "center",
-    marginHorizontal: 5, 
+    marginHorizontal: 5,
   },
   dayLabel: {
     fontFamily: "Montserrat_500Medium",
@@ -195,7 +193,7 @@ const styles = StyleSheet.create({
   },
   yesterdayCircle: {
     borderColor: "#1E90FF80",
-    backgroundColor: "#1E90FF20"
+    backgroundColor: "#1E90FF20",
   },
   todayCircle: {
     borderColor: "#1E90FF",
@@ -211,7 +209,7 @@ const styles = StyleSheet.create({
   },
   bottomContainer: {
     position: "absolute",
-    bottom: 50, 
+    bottom: 100,
     width: "100%",
     alignItems: "center",
   },

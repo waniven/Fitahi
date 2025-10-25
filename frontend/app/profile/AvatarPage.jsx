@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import CustomButton from "../../components/common/CustomButton";
 import CustomButtonThree from "../../components/common/CustomButtonThree";
 import BottomNav from "../../components/navbar/BottomNav";
@@ -42,10 +42,24 @@ export default function AvatarPage() {
 
   // Available background colors
   const backgroundColors = [
-    "#EB4D4D", "#FC7B5E", "#E96812", "#EAC617", "#C2E81B",
-    "#1CEA34", "#31D8AB", "#65ECD4", "#16DDE7", "#144CE7",
-    "#FF73E3", "#D71B5A", "#FFFFFF", "#8035E2", "#E24EF6",
-    "#007C7C", "#F5D7B3", "#CBA0FF",
+    "#EB4D4D",
+    "#FC7B5E",
+    "#E96812",
+    "#EAC617",
+    "#C2E81B",
+    "#1CEA34",
+    "#31D8AB",
+    "#65ECD4",
+    "#16DDE7",
+    "#144CE7",
+    "#FF73E3",
+    "#D71B5A",
+    "#FFFFFF",
+    "#8035E2",
+    "#E24EF6",
+    "#007C7C",
+    "#F5D7B3",
+    "#CBA0FF",
   ];
 
   /**
@@ -54,24 +68,25 @@ export default function AvatarPage() {
    */
   const handleSave = async () => {
     try {
-      const selected = avatars.find(a => a.id === selectedAvatar);
+      const selected = avatars.find((a) => a.id === selectedAvatar);
       const assetUri = Image.resolveAssetSource(selected.source)?.uri;
 
       console.log("Avatar URI:", assetUri);
       console.log("Selected Color:", selectedColor);
-      console.log("Saving to AsyncStorage:", { avatarUri: assetUri, avatarColor: selectedColor });
+      console.log("Saving to AsyncStorage:", {
+        avatarUri: assetUri,
+        avatarColor: selectedColor,
+      });
 
       // Persist avatar selections to local storage
-      await AsyncStorage.setItem('avatarUri', assetUri);
-      await AsyncStorage.setItem('avatarColor', selectedColor);
+      await AsyncStorage.setItem("avatarUri", assetUri);
+      await AsyncStorage.setItem("avatarColor", selectedColor);
 
       console.log("Successfully saved to AsyncStorage");
 
       CustomToast.success("Saved!");
       router.push("/profile/AccountSettings");
     } catch (err) {
-      console.error("Avatar save error:", err);
-      console.error("Error details:", JSON.stringify(err, null, 2));
       CustomToast.error("Failed to save avatar.");
     }
   };
@@ -123,7 +138,7 @@ export default function AvatarPage() {
           Choose your favourite background color
         </Text>
         <View style={styles.colorGrid}>
-          {backgroundColors.map(color => (
+          {backgroundColors.map((color) => (
             <TouchableOpacity
               key={color}
               style={[
@@ -139,9 +154,14 @@ export default function AvatarPage() {
 
       {/* Save button */}
       <View style={styles.saveButtonWrapper}>
-        <TouchableOpacity onPress={handleSave} style={styles.saveButton}>
-          <Text style={styles.saveButtonText}>Save</Text>
-        </TouchableOpacity>
+        <CustomButton
+          title="Save Avatar"
+          onPress={handleSave}
+          variant="primary"
+          size="large"
+          rounded
+          style={{ width: "90%" }}
+        />
       </View>
       {/* Bottom navigation bar */}
       <BottomNav />
@@ -220,23 +240,8 @@ const styles = StyleSheet.create({
   },
   saveButtonWrapper: {
     position: "absolute",
-    bottom: 120,
+    bottom: 160,
     width: "100%",
     alignItems: "center",
-  },
-  saveButton: {
-    backgroundColor: "#4DA6FF", 
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    borderRadius: 30,
-    width: "90%",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  saveButtonText: {
-    ...TextVariants.body,
-    fontFamily: Font.semibold,
-    color: "black",
-    fontSize: 16,
   },
 });

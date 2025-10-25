@@ -43,17 +43,19 @@ export default function BottomNav() {
         </Text>
       </TouchableOpacity>
 
-      {/*Subscription tab*/}
+      {/* Supplements Tab */}
       <TouchableOpacity
-         style={styles.navItem}
-         onPress={() => router.push("/main/supplements")}
-         >
-          <Ionicons name = "medkit-outline" size={26} color = {theme.tint}/>
-          <Text style ={[globalStyles.navText, { color: theme.tint}]}>supplements</Text>
-         </TouchableOpacity>
+        style={styles.navItem}
+        onPress={() => router.push("/main/supplements")}
+      >
+        <Ionicons name="medkit-outline" size={26} color={theme.tint} />
+        <Text style={[globalStyles.navText, { color: theme.tint }]}>
+          Supplements
+        </Text>
+      </TouchableOpacity>
 
       {/* Settings Tab */}
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.navItem}
         onPress={() => router.push("/profile/AccountSettings")}
       >
