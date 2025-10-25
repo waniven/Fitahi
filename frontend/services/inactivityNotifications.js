@@ -9,17 +9,20 @@ import { getBiometrics } from "./biometricService";
 import { cancelNotifications } from "./notificationService";
 
 // toggle test mode for shorter intervals and detailed logs
-const TEST_MODE = true;
+// TODO: set to false in production
+const TEST_MODE = false;
 
 // global state vars used across sessions
-let inactivityTimer = null;
-let scheduledNotificationIds = [];
-let hasStartedThisSession = false;
-let inactivityBatch = null;
-let lastNotifIndex = 0;
-let lastFiredIndex = -1;
-let lastScheduledActivity = 0;
-let scheduledNotificationMap = []; // keeps notification id, time, and batch index
+let inactivityTimer = null;         // interval timer ref
+let scheduledNotificationIds = [];  // array of scheduled notification ids
+let hasStartedThisSession = false;  // flag to prevent multiple starts
+let inactivityBatch = null;         // cached batch of inactivity notifications
+let lastNotifIndex = 0;             // index for next notification to schedule
+let lastFiredIndex = -1;            // index of last notification that triggered conversation
+let lastScheduledActivity = 0;      // timestamp of last scheduled activity
+let scheduledNotificationMap = [];  // keeps notification id, time, and batch index
+let notificationListener = null;    // listener ref to prevent duplicates
+let appStateListenerRef = null;     // app state listener ref
 
 // reset all inactivity state (used on logout)
 export function resetInactivityState() {
@@ -33,6 +36,17 @@ export function resetInactivityState() {
     lastFiredIndex = -1;
     lastScheduledActivity = 0;
     scheduledNotificationMap = [];
+
+    // remove listeners to prevent duplicate conversations
+    if (notificationListener) {
+        notificationListener.remove();
+        notificationListener = null;
+    }
+    if (appStateListenerRef) {
+        appStateListenerRef.remove();
+        appStateListenerRef = null;
+    }
+
     if (TEST_MODE) console.log("🔄 inactivity state fully reset");
 }
 
@@ -82,9 +96,15 @@ const reschedulePendingNotifications = async (notifications) => {
 
     // reschedule each future notification
     for (let i = 0; i < futureNotifs.length; i++) {
-        let notif = notifications[futureNotifs[i].index % notifications.length];
+        const notif = notifications[futureNotifs[i].index % notifications.length];
+        const originalTime = futureNotifs[i].timeMs;
 
-        // apply nightly rules only in prod
+        // shift the original time by 2 minutes (testing) or 5 hours (prod)
+        const nextTime = TEST_MODE
+            ? new Date(originalTime + 2 * 60 * 1000)
+            : new Date(originalTime + 5 * 60 * 60 * 1000);
+
+        // apply nightly rule (for prod)
         if (!TEST_MODE) {
             const hour = nextTime.getHours();
             if (hour >= 22) {
@@ -103,9 +123,7 @@ const reschedulePendingNotifications = async (notifications) => {
         scheduledNotificationIds.push(id);
         scheduledNotificationMap.push({ id, timeMs: nextTime.getTime(), index: futureNotifs[i].index });
 
-        // increment next time for next notification (2 minutes for testing, 5 hours in prod)
-        nextTime = TEST_MODE ? new Date(nextTime.getTime() + 2 * 60 * 1000) : new Date(nextTime.getTime() + 5 * 60 * 60 * 1000);
-        if (TEST_MODE) console.log(`📅 rescheduled "${notif.title}" at ${nextTime.toLocaleString()}`);
+        if (TEST_MODE) console.log(`📅 rescheduled "${notif.title}" for ${nextTime.toLocaleString()}`);
     }
 
     if (TEST_MODE) console.log(`📋 Rescheduled ${futureNotifs.length} notifications (test mode)`);
@@ -272,7 +290,7 @@ export function useInactivityMonitor() {
             if (TEST_MODE) console.log("⏱️ inactivity timer started, interval:", checkInterval / 1000, "s");
 
             // handle foreground notifications
-            receivedSub = Notifications.addNotificationReceivedListener(async notification => {
+            notificationListener = Notifications.addNotificationReceivedListener(async notification => {
                 try {
                     const data = notification?.request?.content?.data;
                     const content = notification.request.content;
@@ -332,7 +350,7 @@ export function useInactivityMonitor() {
                 }
             };
 
-            appStateListener = AppState.addEventListener("change", handleAppStateChange);
+            appStateListenerRef = AppState.addEventListener("change", handleAppStateChange);
 
             // cleanup intentionally left persistent
             return () => {
