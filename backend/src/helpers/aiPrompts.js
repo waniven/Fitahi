@@ -234,7 +234,112 @@ Plain text only.
 `;
 }
 
+/*
+ * helper to build inactivity check-in prompt for 10 notifications
+*/
+function buildInactivityCheckinPrompt(userContext) {
+    return `
+You are Darwin, Fitahi's friendly AI fitness coach.
+Fitahi is a fitness app with features to log workouts, diet, supplements, water intake, and biometrics, plus account settings.
+
+Task: Generate a batch of 10 friendly mobile notifications to check in with the user about their fitness journey.
+The user hasn't logged anything in 5+ hours.
+
+You must reply only with a single JSON array, formatted like this:
+[
+  {
+    "title": "Put an emoji or two at the front of the title, then a provide a short, motivational QUESTION.",
+    "body": "Encouraging, motivating, friendly message (1-2 sentences). Keep it warm and encouraging, emojis welcome! Hint that the user can continue the conversation with you in the app."
+  },
+  ...
+  (10 objects total)
+]
+
+Each notification should be unique, casual, encouraging, motivational and supportive. Make the user feel cared for and check in on their well-being.  
+If possible, try to make each notification relevant to the user's fitness goals or other information based on their profile (if available).
+
+User information:
+${userContext}
+
+If there is no relevant info about the user, keep it related to their well-being or fitness, friendly and motivational.
+The title and body should sound natural and fit within a (fun and engaging!) mobile notification.
+Do NOT include any explanations or markdown — return pure JSON only. Plaintext ONLY.
+`;
+}
+
+/*
+ * helper to build inactivity message prompt
+*/
+function buildInactivityMessagePrompt(userContext, title, body) {
+    return `
+You are Darwin, Fitahi's friendly AI fitness coach.
+Fitahi is a fitness app with features to log workouts, diet, supplements, water intake, and biometrics, plus account settings.
+
+The user just received a check-in notification from you that said:
+"${title}: ${body}"
+
+Use this notification content and the available information about the user to start a conversation warmly. Make it seem like you're continuing from the notification naturally.
+Ask them a question similar or the same as the notification title; something like how they're feeling, remind them of a goal, or offer a small, actionable idea related to their fitness journey.
+If there is no relevant info about the user, keep it related to their well-being or fitness, friendly and motivational.
+
+User information:
+${userContext}
+
+Always return a response formatted like a casual text message. Emojis are always welcome! Be supportive, motivational and friendly.
+Plain text only.
+`;
+}
+
+/**
+ * predefined inactivity check-in notifications (in case AI generation fails)
+*/
+notifications = [
+    {
+        title: "💪✨ How's your energy today?",
+        body: "It's been a little while since your last log—want to check in with a quick workout or meal update?"
+    },
+    {
+        title: "🏋️‍♂️🔥 Ready to crush a goal?",
+        body: "You've been doing great! How about logging something small to keep the momentum going?"
+    },
+    {
+        title: "🌟💧 Quick check-in, staying hydrated?",
+        body: "Just wondering how your fitness journey is going today. Maybe log a workout or a healthy meal?"
+    },
+    {
+        title: "⚡💯 Stay on track, how's your progress been?",
+        body: "It's been a bit since your last activity—want to log a quick win to stay consistent?"
+    },
+    {
+        title: "😊🌿 How are you feeling?",
+        body: "Fitness is about small steps! Take a moment to log something healthy today."
+    },
+    {
+        title: "🏃‍♀️💨 How do you feel? Keep up the good work!",
+        body: "Even a little progress counts. How about logging a meal or workout now?"
+    },
+    {
+        title: "💡 Did you remember to log something today?",
+        body: "Your goals are important! A small log today keeps you on track for tomorrow."
+    },
+    {
+        title: "🔥🏋️ Feeling strong?",
+        body: "It's been a few hours since your last activity. Want to log something to celebrate your progress?"
+    },
+    {
+        title: "🌟💖 Wellness check - do you need a little boost?",
+        body: "Checking in! How's your fitness journey going? Have a chat with Darwin!"
+    },
+    {
+        title: "💪🏽✨ Keeping your streak alive?",
+        body: "Every little log matters. Let's add a quick workout or meal update today!"
+    }
+];
+
 module.exports = {
+    notifications,
+    buildInactivityCheckinPrompt,
+    buildInactivityMessagePrompt,
     buildCasualChatPrompt,
     buildFeatureFlowPrompt,
     buildFeatureClassificationPrompt,

@@ -9,6 +9,9 @@ const conversationSchema = new mongoose.Schema({
     // conversation title (defaults to "New Conversation")
     title: { type: String, default: "New Conversation" },
 
+    // conversation type (general or inactivity)
+    type: { type: String, default: "general" },
+
     // creation date (defaults to now)
     createdAt: { type: Date, default: Date.now },
 

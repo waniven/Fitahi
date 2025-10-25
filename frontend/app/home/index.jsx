@@ -22,6 +22,7 @@ import LogCards from "@/components/logcards/LogCards";
 import { useCalendarLogic } from "@/hooks/useCalendarLogic";
 import * as Notifications from "@/services/notificationService";
 import { scheduleWaterNotifications } from "@/services/waterNotifications";
+import { useInactivityMonitor } from "@/services/inactivityNotifications";
 import { Font } from "@/constants/Font";
 
 /**
@@ -31,6 +32,9 @@ import { Font } from "@/constants/Font";
 export default function Home() {
   const theme = Colors["dark"];
   const router = useRouter();
+
+  // Start inactivity monitor for AI check-in notifications + conversations
+  useInactivityMonitor();
 
   // Request notification permissions on mount and reschedule reminders
   useEffect(() => {

@@ -65,6 +65,7 @@ router.post("/", auth, async (req, res) => {
 
         if (wantsWorkout) {
             try {
+                // generate workout data from AI with helper for prompt
                 const workoutData = await aiPrompts.generateWorkout(userContext, chatHistory, text);
 
                 // create workout for user
@@ -76,10 +77,12 @@ router.post("/", auth, async (req, res) => {
                 // let AI write its own friendly confirmation by prompting it upon successful creation of workout
                 const confirmationPrompt = aiPrompts.buildWorkoutConfirmationPrompt(createdWorkout);
 
+                // generate confirmation message
                 const confirmationResult = await model.generateContent({
                     contents: [{ role: "user", parts: [{ text: confirmationPrompt }] }],
                 });
 
+                // clean AI response
                 const aiText = confirmationResult.response.text().replace(/\*/g, "");
 
                 // save AI message
@@ -91,6 +94,7 @@ router.post("/", auth, async (req, res) => {
                 });
                 await aiMessage.save();
 
+                // update conversation timestamp
                 await Conversation.findByIdAndUpdate(convoId, { updatedAt: Date.now() });
 
                 // return user + AI messages along with created workout, to be handled by frontend
@@ -103,8 +107,10 @@ router.post("/", auth, async (req, res) => {
                     contents: [{ role: "user", parts: [{ text: aiPrompts.workoutCreationFallbackPrompt }] }],
                 });
 
+                // clean fallback response
                 const fallbackText = fallbackResult.response.text().replace(/\*/g, "");
 
+                // save fallback AI message
                 const fallbackMessage = new Message({
                     userId,
                     text: fallbackText,
@@ -188,6 +194,114 @@ router.post("/", auth, async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: "Failed to send message" });
+    }
+});
+
+/*
+ * GET /api/messages/inactivity-checkin
+ * Generates a batch of 10 supportive motivational messages + questions
+ * Used to trigger scheduled inactivity notifications
+ */
+router.get("/inactivity-checkin", auth, async (req, res) => {
+    try {
+        // get user id from auth middleware
+        const userId = req.user.id;
+
+        // fetch user profile with quiz + goals
+        const me = await User.findById(userId).lean();
+
+        // build user context string from helper
+        const userContext = aiPrompts.buildUserContext(me);
+
+        // create AI check-in prompt for 10 notifications
+        const prompt = aiPrompts.buildInactivityCheckinPrompt(userContext);
+
+        // log prompt sending
+        console.log("Inactivity check-in prompt about to be sent to AI");
+
+        // generate AI notification content
+        const result = await model.generateContent({
+            contents: [{ role: "user", parts: [{ text: prompt }] }],
+        });
+
+        // log response received
+        console.log("Inactivity check-in response received from AI");
+
+        // parse response as JSON
+        const raw = result.response.text().replace(/^```json\s*/, '').replace(/```$/, '').trim();
+
+        let notifications;
+        try {
+            notifications = JSON.parse(raw); // expecting an array of { title, body } objects
+            if (!Array.isArray(notifications)) throw new Error("Not an array");
+        } catch (e) {
+            // log parsing error
+            console.log(e);
+            // 10 generic fall-back notifications if parsing fails
+            notifications = aiPrompts.notifications;
+        }
+
+        // return batch of notifications
+        res.json({ notifications });
+    } catch (err) {
+        console.error("Failed to send inactivity check-in notifications: ", err);
+    }
+});
+
+/*
+ * POST /api/messages/inactivity-start
+ * Starts or continues the dedicated inactivity conversation with the AI
+ */
+router.post("/inactivity-start", auth, async (req, res) => {
+    try {
+        // extract title and body from request
+        const { title, body } = req.body;
+        // get user id from auth middleware
+        const userId = req.user.id;
+
+        // make sure we only have one inactivity convo per user
+        let convo = await Conversation.findOneAndUpdate(
+            { userId, type: "inactivity" },
+            { $setOnInsert: { userId, type: "inactivity" } },
+            { new: true, upsert: true }
+        );
+
+        // get conversation id
+        const convoId = convo._id.toString();
+
+        // fetch user profile with quiz + goals
+        const me = await User.findById(userId).lean();
+
+        // build user context string from helper
+        const userContext = aiPrompts.buildUserContext(me);
+
+        // create AI check-in message text
+        const starterPrompt = aiPrompts.buildInactivityMessagePrompt(userContext, title, body);
+
+        // generate AI response message
+        const result = await model.generateContent({
+            contents: [{ role: "user", parts: [{ text: starterPrompt }] }],
+        });
+
+        // clean AI response
+        const aiText = result.response.text().replace(/\*/g, "");
+
+        // save AI message under the same inactivity convo
+        const aiMessage = new Message({
+            userId,
+            text: aiText,
+            fromAI: true,
+            conversationId: convoId,
+        });
+        await aiMessage.save();
+
+        // update conversation timestamp
+        await Conversation.findByIdAndUpdate(convoId, { updatedAt: Date.now() });
+
+        // return AI message + conversation id
+        res.json({ aiMessage, conversationId: convoId });
+    } catch (err) {
+        console.error("Failed to start inactivity conversation: ", err);
     }
 });
 
