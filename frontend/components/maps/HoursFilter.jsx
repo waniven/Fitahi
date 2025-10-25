@@ -14,11 +14,21 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 /**
  * HoursFilter
- * Chip that opens a dropdown with "Open" and "Close" time rows.
- * Uses native DateTimePicker for each row and returns times via onChange.
+ * ------------------------------------------------------------------
+ * Dropdown selector for gym opening/closing hours.
+ *
+ * - Renders a "Hours" chip.
+ * - When tapped, shows a dropdown with two rows: "Open" and "Close".
+ * - Tapping a row opens a native time picker (DateTimePicker).
+ * - After picking a time, calls onChange with the updated { open, close }.
+ *
  * Props:
  *  - value: { open?: Date|null, close?: Date|null }
- *  - onChange: (nextValue) => void
+ *  - onChange(nextValue: { open?: Date|null, close?: Date|null }): void
+ *
+ * Notes:
+ *  - The dropdown is absolutely positioned and uses zIndex/elevation so it
+ *    floats above the MapView and doesn't get clipped.
  */
 export default function HoursFilter({ value = {}, onChange }) {
   const scheme = useColorScheme();
@@ -29,7 +39,7 @@ export default function HoursFilter({ value = {}, onChange }) {
   const [showOpenPicker, setShowOpenPicker] = useState(false);
   const [showClosePicker, setShowClosePicker] = useState(false);
 
-  // Current selected times
+  // Read current selected times from parent-controlled value
   const openTime = value.open ?? null;
   const closeTime = value.close ?? null;
 
@@ -44,10 +54,10 @@ export default function HoursFilter({ value = {}, onChange }) {
     return `${h12}:${pad(m)} ${ampm}`;
   };
 
+  // IMPORTANT: position + zIndex so the absolute dropdown can float above the map
   return (
-    // IMPORTANT: position + zIndex so the absolute dropdown can float above the map
     <View style={{ flex: 1, position: "relative", zIndex: 50 }}>
-      {/* Trigger chip */}
+      {/* Trigger chip (taps to expand/collapse dropdown) */}
       <TouchableOpacity
         onPress={() => setExpanded((e) => !e)}
         activeOpacity={0.85}
@@ -71,7 +81,7 @@ export default function HoursFilter({ value = {}, onChange }) {
         </View>
       </TouchableOpacity>
 
-      {/* Absolute dropdown so it’s not clipped & stays above MapView */}
+      {/* Dropdown body (only rendered when expanded === true) */}
       {expanded && (
         <View
           style={[
@@ -79,14 +89,16 @@ export default function HoursFilter({ value = {}, onChange }) {
             {
               backgroundColor: theme.card,
               borderColor: theme.tint,
-              // absolute overlay under the chip
+              // Position right under the chip
               position: "absolute",
               left: 0,
               right: 0,
-              top: 44, // chip height (40) + small gap
+              top: 44, // Chip height (40) + small gap
               zIndex: 999,
+
+              // Elevation/shadow so it floats above map and other content
               ...(Platform.OS === "android" ? { elevation: 12 } : {}),
-              // optional soft shadow on iOS
+              // Optional soft shadow on iOS
               ...Platform.select({
                 ios: {
                   shadowColor: "#000",
@@ -98,6 +110,7 @@ export default function HoursFilter({ value = {}, onChange }) {
             },
           ]}
         >
+          {/* "Open" row -> shows picker for opening time */}
           <TouchableOpacity
             activeOpacity={0.85}
             style={styles.row}
@@ -121,6 +134,7 @@ export default function HoursFilter({ value = {}, onChange }) {
             </Text>
           </TouchableOpacity>
 
+          {/* "Close" row -> shows picker for closing time */}
           <TouchableOpacity
             activeOpacity={0.85}
             style={styles.row}
@@ -146,7 +160,7 @@ export default function HoursFilter({ value = {}, onChange }) {
         </View>
       )}
 
-      {/* Native pickers */}
+      {/* Native time picker for "Open" */}
       {showOpenPicker && (
         <DateTimePicker
           value={openTime || new Date()}
@@ -163,6 +177,7 @@ export default function HoursFilter({ value = {}, onChange }) {
         />
       )}
 
+      {/* Native time picker for "Close" */}
       {showClosePicker && (
         <DateTimePicker
           value={closeTime || new Date()}
@@ -183,6 +198,7 @@ export default function HoursFilter({ value = {}, onChange }) {
 }
 
 const styles = StyleSheet.create({
+  // The "Hours" chip button
   btn: {
     alignSelf: "stretch",
     height: 40,
@@ -193,23 +209,33 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+
+  // Layout for icon + label inside the chip
   rowCenter: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
   },
   btnText: { fontSize: 14 },
+
+  // Floating dropdown container
   dropdown: {
     borderWidth: 1,
     borderRadius: 12,
     paddingVertical: 4,
   },
+
+  // A row inside dropdown ("Open" / "Close")
   row: {
     flexDirection: "row",
     justifyContent: "space-between",
     paddingHorizontal: 12,
     paddingVertical: 12,
   },
+
+  // Label text (e.g. "Open")
   rowLabel: { fontSize: 14 },
+
+  // Value text (e.g. "9:00 AM")
   rowValue: { fontSize: 14 },
 });

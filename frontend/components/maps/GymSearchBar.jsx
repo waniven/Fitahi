@@ -12,11 +12,24 @@ import {
 
 /**
  * GymSearchBar
- * Simple themed search input with a submit button.
+ * ----------------------------------------------------------------------------
+ * Compact search row with a text input and "Search" button.
+ *
  * Props:
- *  - value, onChangeText, onSearch
- *  - tint, inputBg, textPrimary, textSecondary (optional style overrides)
- *  - style (container override)
+ * - value            current search text (string)
+ * - onChangeText     called when user types (text => void)
+ * - onSearch         called when user submits (query => void)
+ *
+ * Optional style overrides:
+ * - tint             accent color for border/button
+ * - inputBg          background color of the input wrapper
+ * - textPrimary      main text color
+ * - textSecondary    placeholder color
+ * - style            extra container styles
+ *
+ * Notes:
+ * - Calls onSearch only if there's a non-empty trimmed query.
+ * - Uses theme colors by default, can be overridden per-screen.
  */
 export default function GymSearchBar({
   value,
@@ -32,10 +45,13 @@ export default function GymSearchBar({
   const scheme = useColorScheme();
   const theme = Colors[scheme ?? "light"];
 
+  // Resolved colors, preferring explicit prop overrides
   const _tint = tint ?? theme.tint;
   const _inputBg = inputBg ?? theme.background; // keeps your white-on-dark contrast
   const _textPrimary = textPrimary ?? theme.textPrimary;
   const _textSecondary = textSecondary ?? theme.textPrimary;
+
+  // Handle both return key press and button press
   const handleSubmit = () => {
     const q = (value || "").trim();
     if (q.length) onSearch?.(q);
@@ -49,6 +65,7 @@ export default function GymSearchBar({
         style,
       ]}
     >
+      {/* Text input for gym name / query */}
       <TextInput
         placeholder="Search gyms…"
         placeholderTextColor={_textSecondary}
@@ -64,6 +81,7 @@ export default function GymSearchBar({
         autoCapitalize="none"
       />
 
+      {/* Submit button ("Search") */}
       <TouchableOpacity
         onPress={handleSubmit}
         activeOpacity={0.85}
@@ -85,6 +103,7 @@ export default function GymSearchBar({
 }
 
 const styles = StyleSheet.create({
+  // Row container around input + button
   wrap: {
     flexDirection: "row",
     alignItems: "center",
@@ -93,11 +112,15 @@ const styles = StyleSheet.create({
     padding: 6,
     gap: 6,
   },
+
+  // Text field
   input: {
     flex: 1,
     padding: 10,
     fontSize: 16,
   },
+
+  // "Search" button on the right
   btn: {
     paddingHorizontal: 14,
     height: 40,
@@ -105,5 +128,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+
+  // Button label
   btnText: { fontSize: 16 },
 });

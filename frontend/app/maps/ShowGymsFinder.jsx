@@ -23,12 +23,12 @@ import CustomButtonThree from "../../components/common/CustomButtonThree";
 import { Colors } from "@/constants/Colors";
 import { Font } from "@/constants/Font";
 import { AIContext } from "../ai/AIContext";
-import RatingFilter from "@/components/RatingFilter";
-import NearestGymsButton from "@/components/NearestGymsButton";
-import GymSearchBar from "@/components/GymSearchBar";
-import GymListItem from "@/components/GymListItem";
-import HoursFilter from "@/components/HoursFilter";
-import ClearFiltersButton from "@/components/ClearFilter";
+import RatingFilter from "@/components/maps/RatingFilter";
+import NearestGymsButton from "@/components/maps/NearestGymsButton";
+import GymSearchBar from "@/components/maps/GymSearchBar";
+import GymListItem from "@/components/maps/GymListItem";
+import HoursFilter from "@/components/maps/HoursFilter";
+import ClearFiltersButton from "@/components/maps/ClearFilter";
 
 // Google Maps Places API key (injected via Expo env)
 const GOOGLE_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
@@ -511,7 +511,7 @@ export default function ShowGymsFinder({ navigation }) {
           onSearch={onSearchPress}
         />
 
-        {/* Row 1: Rating + Nearest */}
+        {/* Row 1: Rating dropdown + Nearest gyms button */}
         <View style={styles.filtersRow}>
           <View style={{ flex: 1 }}>
             <RatingFilter
@@ -537,7 +537,7 @@ export default function ShowGymsFinder({ navigation }) {
           />
         </View>
 
-        {/* Row 2: Hours + Clear */}
+        {/* Row 2: Hours filter dropdown + Clear filters button */}
         <View style={styles.filtersRow}>
           <View style={{ flex: 1, marginRight: 0 }}>
             <HoursFilter value={hours} onChange={setHours} />
@@ -551,6 +551,11 @@ export default function ShowGymsFinder({ navigation }) {
         </View>
       </View>
 
+      {/* ===========================
+          MAP AREA
+          - MapView w/ user location + gym markers
+          - Loading overlay spinner
+         =========================== */}
       <View style={styles.mapWrap}>
         <MapView
           ref={mapRef}
@@ -575,6 +580,7 @@ export default function ShowGymsFinder({ navigation }) {
           })}
         </MapView>
 
+        {/* Overlay spinner while fetching from Google Places */}
         {loading && (
           <View style={styles.loadingOverlay}>
             <ActivityIndicator size="large" color={theme.tint} />
@@ -582,6 +588,10 @@ export default function ShowGymsFinder({ navigation }) {
         )}
       </View>
 
+      {/* ===========================
+          RESULTS LIST
+          - Scrollable list of gyms under the map
+         =========================== */}
       <View style={styles.listWrap}>
         <FlatList
           data={displayedGyms}
@@ -611,8 +621,10 @@ export default function ShowGymsFinder({ navigation }) {
 }
 
 const styles = StyleSheet.create({
+  // Full-screen container for this page
   screen: { flex: 1 },
 
+  // Row wrapper for filter chips ("Rating", "Nearest", "Hours", "Clear")
   filtersRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -620,6 +632,8 @@ const styles = StyleSheet.create({
     gap: 8,
   },
 
+  // Top section containing search + filters.
+  // We give it elevation/zIndex so dropdowns (Rating, Hours) can float over the map.
   searchBar: {
     paddingHorizontal: 12,
     paddingTop: 8,
@@ -633,6 +647,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#0000", // will be overridden below
   },
 
+  // Map container (top half-ish of the screen).
+  // overflow:"hidden" gives rounded corners on the map.
   mapWrap: {
     height: "45%",
     borderRadius: 12,
@@ -640,6 +656,8 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     zIndex: 1,
   },
+
+  // Semi-transparent overlay with spinner shown while loading Places API.
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
     alignItems: "center",
@@ -647,6 +665,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.2)",
   },
 
+  // Wrapper under the map for the FlatList of gyms.
   listWrap: {
     flex: 1,
   },

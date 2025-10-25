@@ -10,18 +10,23 @@ import { Colors } from "@/constants/Colors";
 
 /**
  * ClearFiltersButton
- * ------------------------------------------------------------------
- * Small, themed outline button that triggers a "clear filters" action.
+ * ----------------------------------------------------------------------------
+ * A small outline-style button that resets all active filters in the gym finder.
+ *
+ * Typical usage:
+ *   <ClearFiltersButton onPress={onClearFilters} />
  *
  * Props:
- * - onPress   (function, required): Handler invoked when the button is pressed.
- * - tint      (string, optional):   Unused here (kept for API parity with other buttons).
- * - textColor (string, optional):   Unused here (theme decides); can be wired if needed.
- * - style     (object, optional):   Extra style(s) merged into the outer TouchableOpacity.
+ * - onPress     (function, required): called when the user taps the button.
+ * - tint        (string, optional):   not currently used (theme.tint is used instead),
+ *                                     kept for API symmetry with other buttons.
+ * - textColor   (string, optional):   not currently used, could override text color.
+ * - style       (object|array, opt):  extra container styles merged into TouchableOpacity.
  *
- * Notes:
- * - Uses the app theme via useColorScheme -> Colors to pick border/text color.
- * - Keeps visuals consistent with your other filter chips (height, radius, border).
+ * Visual notes:
+ * - Uses theme.tint for both border and text so it stays consistent with
+ *   other filter UI (Hours, Rating, Nearest gyms).
+ * - Fixed height (40) + 10 radius so it lines up nicely in a row.
  */
 export default function ClearFiltersButton({ onPress, tint, textColor, style }) {
   const scheme = useColorScheme();
@@ -32,6 +37,7 @@ export default function ClearFiltersButton({ onPress, tint, textColor, style }) 
       activeOpacity={0.85}
       style={[styles.btn, { borderColor: theme.tint }, style]}
     >
+      {/* Button label */}
       <Text style={[styles.txt, { color: theme.tint, fontFamily: Font.semibold }]}>
         Clear filters
       </Text>
