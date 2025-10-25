@@ -1,4 +1,4 @@
-import crypto from 'node:crypto';
+const crypto = require('crypto');
 
 const OTP_TTL_MS = 15 * 60 * 1000; //15 minutes time to live
 
@@ -24,7 +24,7 @@ function ctEqualHex(aHex, bHex) {
 }
 
 //generate password reset code
-export function issuePasswordResetOtp(email) {
+function issuePasswordResetOtp(email) {
     const code = generateCode();
 
     //delete any previous record for this email
@@ -47,7 +47,8 @@ export function issuePasswordResetOtp(email) {
  * Verify by OTP code only.
  * Returns the associated email if found and valid; otherwise returns null.
  */
-export function verifyPasswordResetOtp(code) {
+function verifyPasswordResetOtp(code) {
+    console.log("target code "+ code);
     const now = Date.now();
 
     //delete exsisting entries
@@ -69,3 +70,8 @@ export function verifyPasswordResetOtp(code) {
 
     return null;
 }
+
+module.exports = {
+    issuePasswordResetOtp,
+    verifyPasswordResetOtp,
+};

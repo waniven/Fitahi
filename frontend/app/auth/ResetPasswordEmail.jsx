@@ -15,6 +15,7 @@ import { Font, Type, TextVariants } from "../../constants/Font";
 import { useRouter } from "expo-router";
 import CheckEmailModal from "../../components/modals/CheckEmailModal";
 import CustomButtonThree from "../../components/common/CustomButtonThree";
+import * as passwordResetService from "../../services/passwordResetService";
 
 /**
  * Validates email format and presence
@@ -39,15 +40,18 @@ export default function ResetPasswordEmail() {
 
   //triggered when user presses "send recovery code"
   const handleSendCode = async () => {
-    //validation: ensure email is not empty
     const emailError = emailValidation(email);
-    if (emailError) {
-      CustomToast.error(emailError);
-      return;
+    if (emailError) return CustomToast.error(emailError);
+
+    try {
+      await passwordResetService.sendResetEmail(email); 
+      console.log("reset email sent");
+      CustomToast.success("Reset email sent, check your inbox");
+      setShowModal(true); // or navigate immediately here
+    } catch (err) {
+      console.log("sendResetEmail failed:", err.response?.data || err.message);
+      CustomToast.error("Could not send reset email");
     }
-    // TODO: Backend API call to send recovery code
-    //{email : string }
-    setShowModal(true); //show modal confirmation
   };
 
   return (

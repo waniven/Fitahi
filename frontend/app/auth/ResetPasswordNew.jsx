@@ -17,6 +17,7 @@ import { Font, Type, TextVariants } from "../../constants/Font";
 import { useRouter } from "expo-router";
 import CustomButtonThree from "../../components/common/CustomButtonThree";
 import { Ionicons } from "@expo/vector-icons";
+import * as passwordResetService from "../../services/passwordResetService";
 
 // Password validation logic
 const passwordValidation = (password) => {
@@ -74,13 +75,15 @@ export default function ResetPasswordNew() {
     }
 
     setPasswordError(null);
-    CustomToast.success("Password Reset!", "Your password has been updated");
-    router.replace("/");
-  };
 
-  // Triggered when user taps "Resend email"
-  const handleResendEmail = () => {
-    CustomToast.success("Email resent!", "Recovery code has been sent");
+    try {
+      await passwordResetService.resetPassword(code, password);
+      CustomToast.success("Password Reset!", "Your password has been updated");
+      router.replace("/");
+    } catch (err) {
+      console.log("resetPassword failed:", err.response?.data || err.message);
+      CustomToast.error("Error resetting password");
+    }
   };
 
   return (
@@ -151,11 +154,6 @@ export default function ResetPasswordNew() {
               </Animated.View>
             </TouchableOpacity>
           </View>
-
-          {/* Resend email link — triggers backend resend logic */}
-          <TouchableOpacity onPress={handleResendEmail}>
-            <Text style={[styles.resend, Type.regular]}>Resend email</Text>
-          </TouchableOpacity>
         </View>
 
         {/* Submit button fixed at bottom of screen */}

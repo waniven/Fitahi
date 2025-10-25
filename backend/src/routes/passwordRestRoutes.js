@@ -1,42 +1,51 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const otp = require("../helpers/otpStore");
-const resetEmail = require('..//helpers/sendEmail');
+const sendEmail = require('../helpers/sendEmail');
 const User = require('../models/User');
 
 const router = express.Router();
 
 /*
- * POST /api/rest/
+ * POST /api/reset/
  * send recovery email
  * body: { email }
 */
 router.post('/', async (req, res, next) => {
     try {
         //get email from request
-        const email = req.body;
+        const { email } = req.body || {};
+
+        //email is null
+        if (!email) {
+            return res.status(400).json({ error: 'email_required' });
+        }
 
         //validate email exsists
-        const user = await User.find(email);
+        const user = await User.findOne({ email });
 
         //send email
-        if (email) {
-            resetEmail.sendEmail(email);
+        if (user) {
+            try {
+                await sendEmail(user.email);
+            } catch (mailErr) {
+                console.error('sendEmail failed:', mailErr);
+            }
         }
         
-        //empty sucess response no matter if user is found
-        return res.status(201);
+        //sends no content back 
+        return res.sendStatus(204);
     } catch (err) {
         return next(err);
     }
 });
 
 /*
- * POST /api/rest/
+ * POST /api/reset/password/
  * reset email
  * body: { otp, password }
 */
-router.post('/', async (req, res, next) => {
+router.post('/password', async (req, res, next) => {
     try {
         //get opt and new password from request
         const { code, password } = req.body || {};
@@ -66,7 +75,7 @@ router.post('/', async (req, res, next) => {
             return res.status(404).json({ error: 'user_not_found' });
         }
         
-        return res.status(201);
+        return res.sendStatus(204); 
     } catch (err) {
         return next(err);
     }
