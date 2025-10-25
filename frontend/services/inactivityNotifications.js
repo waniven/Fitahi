@@ -282,7 +282,7 @@ export function useInactivityMonitor() {
                         }
                     }
                 } catch (err) {
-                    console.error("⚠️ inactivity check failed:", err);
+                    console.log("⚠️ inactivity check failed:", err);
                 }
             }
 
@@ -309,7 +309,7 @@ export function useInactivityMonitor() {
                     await startInactivityConversation(content.title, content.body);
                     lastFiredIndex = idx;
                 } catch (err) {
-                    console.error("⚠️ failed handling foreground notification:", err);
+                    console.log("⚠️ failed handling foreground notification:", err);
                 }
             });
 
@@ -345,7 +345,7 @@ export function useInactivityMonitor() {
                         lastFiredIndex = latestMissed.index;
                     }
                 } catch (err) {
-                    console.error("⚠️ failed processing missed notifications on resume:", err);
+                    console.log("⚠️ failed processing missed notifications on resume:", err);
                 }
             };
 
