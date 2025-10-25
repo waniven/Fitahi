@@ -2,15 +2,16 @@ import { useEffect, useRef } from "react";
 import { AppState } from "react-native";
 import * as Notifications from "expo-notifications";
 import { getInactivityNotifications, startInactivityConversation } from "./messageService";
-import { getWorkouts } from "./workoutService";
+import { getWorkoutResults } from "./workoutResultService";
 import { getAllWater } from "./waterServices";
 import { getAllNutrition } from "./nutritionService";
 import { getBiometrics } from "./biometricService";
 import { cancelNotifications } from "./notificationService";
 
-// toggle test mode for shorter intervals and detailed logs
-// TODO: set to false in production
+// toggle for test mode for detailed logs (for development purposes)
 const TEST_MODE = false;
+// toggle for simplified prod mode for less detailed logs
+const PROD_LOGS = true;
 
 // global state vars used across sessions
 let inactivityTimer = null;         // interval timer ref
@@ -23,6 +24,10 @@ let lastScheduledActivity = 0;      // timestamp of last scheduled activity
 let scheduledNotificationMap = [];  // keeps notification id, time, and batch index
 let notificationListener = null;    // listener ref to prevent duplicates
 let appStateListenerRef = null;     // app state listener ref
+
+function debugLog(...args) {
+    if (TEST_MODE || PROD_LOGS) console.log(...args);
+}
 
 // reset all inactivity state (used on logout)
 export function resetInactivityState() {
@@ -47,17 +52,17 @@ export function resetInactivityState() {
         appStateListenerRef = null;
     }
 
-    if (TEST_MODE) console.log("🔄 inactivity state fully reset");
+    debugLog("🔄 inactivity state fully reset");
 }
 
 // fetch the cached batch of ai-generated notifications or request new ones
 async function getCachedInactivityBatch() {
     if (!inactivityBatch) {
-        if (TEST_MODE) console.log("📦 fetching new inactivity batch from api");
+        debugLog("📦 fetching new inactivity batch from api");
         inactivityBatch = await getInactivityNotifications();
         lastNotifIndex = 0;
-    } else if (TEST_MODE) {
-        console.log("📦 using cached inactivity batch");
+    } else {
+        debugLog("📦 using cached inactivity batch");
     }
     return inactivityBatch;
 }
@@ -107,8 +112,8 @@ const reschedulePendingNotifications = async (notifications) => {
         // apply nightly rule (for prod)
         if (!TEST_MODE) {
             const hour = nextTime.getHours();
-            if (hour >= 22) {
-                nextTime.setDate(nextTime.getDate() + 1);
+            if (hour >= 22 || hour < 8) {
+                nextTime.setDate(nextTime.getDate() + (hour >= 22 ? 1 : 0));
                 nextTime.setHours(8, 0, 0, 0);
             }
         }
@@ -123,11 +128,10 @@ const reschedulePendingNotifications = async (notifications) => {
         scheduledNotificationIds.push(id);
         scheduledNotificationMap.push({ id, timeMs: nextTime.getTime(), index: futureNotifs[i].index });
 
-        if (TEST_MODE) console.log(`📅 rescheduled "${notif.title}" for ${nextTime.toLocaleString()}`);
+        debugLog(`📅 rescheduled "${notif.title}" for ${nextTime.toLocaleString()}`);
     }
 
-    if (TEST_MODE) console.log(`📋 Rescheduled ${futureNotifs.length} notifications (test mode)`);
-    else console.log(`📋 Rescheduled ${futureNotifs.length} notifications (prod)`);
+    debugLog(`📋 Rescheduled ${futureNotifs.length} notifications (prod)`);
 };
 
 // schedules inactivity notifications at fixed intervals
@@ -139,7 +143,7 @@ async function scheduleNotifications(notifications, startTime, force = false) {
     // only cancel and reset if forced or no existing notifications
     if (force || scheduledNotificationIds.length === 0) {
         if (scheduledNotificationIds.length > 0) {
-            if (TEST_MODE) console.log("🔍 checking scheduled notifications before rescheduling...");
+            debugLog("🔍 checking scheduled notifications before rescheduling...");
             const futureNotifs = scheduledNotificationMap.filter(n => n.timeMs > nowMs + graceMs);
             const toCancel = futureNotifs.map(n => n.id);
 
@@ -147,13 +151,13 @@ async function scheduleNotifications(notifications, startTime, force = false) {
             const kept = scheduledNotificationMap.filter(n => n.timeMs <= nowMs + graceMs);
             kept.forEach(n => {
                 const notif = notifications[n.index % notifications.length];
-                if (TEST_MODE) console.log(`⏭️ skipping already-fired: "${notif?.title}"`);
+                debugLog(`⏭️ skipping already-fired: "${notif?.title}"`);
             });
 
             // cancel future ones
             if (toCancel.length > 0) {
                 await cancelNotifications(toCancel);
-                if (TEST_MODE) console.log(`🧹 cancelled ${toCancel.length} future notifications`);
+                debugLog(`🧹 cancelled ${toCancel.length} future notifications`);
             }
 
             scheduledNotificationMap = kept;
@@ -178,8 +182,8 @@ async function scheduleNotifications(notifications, startTime, force = false) {
         // avoid scheduling between 10pm and 8am
         if (!TEST_MODE) {
             const hour = nextTime.getHours();
-            if (hour >= 22) {
-                nextTime.setDate(nextTime.getDate() + 1);
+            if (hour >= 22 || hour < 8) {
+                nextTime.setDate(nextTime.getDate() + (hour >= 22 ? 1 : 0));
                 nextTime.setHours(8, 0, 0, 0);
             }
         }
@@ -193,9 +197,7 @@ async function scheduleNotifications(notifications, startTime, force = false) {
         scheduledNotificationIds.push(id);
         scheduledNotificationMap.push({ id, timeMs: nextTime.getTime(), index });
 
-        // only print key schedule logs in prod 
-        if (TEST_MODE || index === 0)
-            console.log(`📅 scheduled "${notif.title}" at ${nextTime.toLocaleString()} (index=${index})`);
+        if (TEST_MODE || index === 0) debugLog(`📅 scheduled "${notif.title}" at ${nextTime.toLocaleString()} (index=${index})`);
 
         // increment time for next notif
         nextTime = TEST_MODE
@@ -207,7 +209,7 @@ async function scheduleNotifications(notifications, startTime, force = false) {
 
     // mark last scheduled activity
     lastScheduledActivity = nowMs;
-    if (!TEST_MODE) console.log("✅ inactivity notifications scheduled");
+    debugLog("✅ inactivity notifications scheduled");
 }
 
 // main hook to start and manage inactivity logic
@@ -218,20 +220,20 @@ export function useInactivityMonitor() {
     useEffect(() => {
         // prevent multiple monitors running in one session
         if (hasStartedRef.current) {
-            if (TEST_MODE) console.log("⏩ inactivity monitor already started");
+            debugLog("⏩ inactivity monitor already started");
             return;
         }
         hasStartedRef.current = true;
 
         // global guard
         if (hasStartedThisSession) {
-            if (TEST_MODE) console.log("⏩ inactivity monitor already active globally");
+            debugLog("⏩ inactivity monitor already active globally");
             return;
         }
 
         // mark global start 
         hasStartedThisSession = true;
-        if (TEST_MODE) console.log("✅ inactivity monitor initialized");
+        debugLog("✅ inactivity monitor initialized");
 
         let receivedSub = null;
         let appStateListener = null;
@@ -244,8 +246,8 @@ export function useInactivityMonitor() {
             async function checkInactivity() {
                 try {
                     if (TEST_MODE) console.log("⏱️ running inactivity check...");
-                    const [workouts, water, nutrition, biometrics] = await Promise.all([
-                        getWorkouts(),
+                    const [workoutResults, water, nutrition, biometrics] = await Promise.all([
+                        getWorkoutResults(),
                         getAllWater(),
                         getAllNutrition(),
                         getBiometrics(),
@@ -253,7 +255,7 @@ export function useInactivityMonitor() {
 
                     // merge all logs with timestamps
                     const allLogs = [
-                        ...workouts.map(x => ({ ...x, time: x.createdAt })),
+                        ...workoutResults.map(x => ({ ...x, time: x.dateCompleted || x.createdAt })),
                         ...water.map(x => ({ ...x, time: x.createdAt || x.time })),
                         ...nutrition.map(x => ({ ...x, time: x.createdAt })),
                         ...biometrics.map(x => ({ ...x, time: x.timestamp })),
@@ -269,13 +271,13 @@ export function useInactivityMonitor() {
                     // schedule if inactive
                     if (hoursSince >= (TEST_MODE ? 0.01 : 5)) {
                         if (scheduledNotificationIds.length === 0) {
-                            if (TEST_MODE) console.log("🔔 user inactive — scheduling notifications");
+                            debugLog("🔔 user inactive — scheduling notifications");
                             await scheduleNotifications(notifications, new Date());
                         }
                     } else {
                         // if user was recently active, refresh future ones
                         if (lastActivityMs > lastScheduledActivity + 1000) {
-                            if (TEST_MODE) console.log("🏃 user active — rescheduling future only");
+                            debugLog("🏃 user active — rescheduling future only");
                             await reschedulePendingNotifications(notifications);
                         }
                     }
@@ -300,13 +302,10 @@ export function useInactivityMonitor() {
 
                     // prevent duplicate conversations
                     const idx = data.index ?? lastNotifIndex - 1;
-                    if (idx <= lastFiredIndex) {
-                        if (TEST_MODE) console.log("⏭️ skipping duplicate foreground notification");
-                        return;
-                    }
+                    if (idx <= lastFiredIndex) return;
 
                     // start ai chat for that notification
-                    if (TEST_MODE) console.log(`💬 foreground notification: ${content.title}`);
+                    debugLog(`💬 foreground notification: ${content.title}`);
                     await startInactivityConversation(content.title, content.body);
                     lastFiredIndex = idx;
                 } catch (err) {
@@ -341,7 +340,7 @@ export function useInactivityMonitor() {
                     const notif = batch?.[latestMissed.index];
 
                     if (notif) {
-                        if (TEST_MODE) console.log("🔔 starting conversation for missed notification:", notif.title);
+                        debugLog("🔔 starting conversation for missed notification:", notif.title);
                         await startInactivityConversation(notif.title, notif.body);
                         lastFiredIndex = latestMissed.index;
                     }
@@ -354,7 +353,7 @@ export function useInactivityMonitor() {
 
             // cleanup intentionally left persistent
             return () => {
-                if (TEST_MODE) console.log("ℹ️ inactivity monitor cleanup ignored");
+                debugLog("ℹ️ inactivity monitor cleanup ignored");
             };
         }
 
@@ -364,7 +363,7 @@ export function useInactivityMonitor() {
         })();
 
         return () => {
-            if (TEST_MODE) console.log("ℹ️ component unmounted — monitor continues running");
+            debugLog("ℹ️ component unmounted — monitor continues running");
         };
     }, []);
 }
