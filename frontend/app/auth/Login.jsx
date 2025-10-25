@@ -20,6 +20,7 @@ import CustomButtonThree from "../../components/common/CustomButtonThree";
 import CustomToast from "../../components/common/CustomToast";
 import globalStyles from "../../styles/globalStyles";
 import { login } from "../../services/authService";
+import { Type } from "@/constants/Font";
 
 /**
  * Login screen component with form validation and authentication
@@ -120,9 +121,9 @@ export default function Login() {
     >
       {/* back button*/}
       <CustomButtonThree
-        onPress ={() => router.back()}
-        style={{ position: "absolute", top: 50, left: 20, zIndex: 10}}
-        />
+        onPress={() => router.back()}
+        style={{ position: "absolute", top: 50, left: 20, zIndex: 10 }}
+      />
       {/* Keyboard avoidance with platform-specific behavior */}
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -165,7 +166,7 @@ export default function Login() {
           >
             Please log in with your email and password
           </Text>
-          
+
           {/* Login form inputs */}
           <View style={styles.formContainer}>
             <CustomInput
@@ -187,11 +188,11 @@ export default function Login() {
             />
 
             <Text
-              style = {styles.forgotText}
-              onPress= {() => router.push ("/auth/ResetPasswordEmail")} //on Press go to reset password page to enter email
-              >
-                Forgot password?
-              </Text>
+              style={styles.forgotText}
+              onPress={() => router.push("/auth/ResetPasswordEmail")} //on Press go to reset password page to enter email
+            >
+              Forgot password?
+            </Text>
           </View>
 
           {/* Login submit button */}
@@ -207,10 +208,8 @@ export default function Login() {
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
-
   );
 }
-
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
@@ -227,12 +226,12 @@ const styles = StyleSheet.create({
   formContainer: { width: "100%", alignItems: "center" },
 
   forgotText: {
-  color: "#A9A9A9",
-  marginTop: 8,
-  alignSelf: "flex-start",
-  fontSize: 15,
-  fontWeight: "500",
-  textDecorationLine: "underline", 
-},
-
+    fontFamily: Type.semibold.fontFamily,
+    color: "#A9A9A9",
+    marginTop: 8,
+    alignSelf: "flex-start",
+    fontSize: 15,
+    fontWeight: "500",
+    textDecorationLine: "underline",
+  },
 });

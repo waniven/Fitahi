@@ -16,7 +16,7 @@ import { Colors } from "../../constants/Colors";
 import { Font, Type, TextVariants } from "../../constants/Font";
 import { useRouter } from "expo-router";
 import CustomButtonThree from "../../components/common/CustomButtonThree";
-import { Ionicons } from "@expo/vector-icons"; 
+import { Ionicons } from "@expo/vector-icons";
 
 // Password validation logic
 const passwordValidation = (password) => {
@@ -84,7 +84,9 @@ export default function ResetPasswordNew() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: theme.background }]}
+    >
       {/* Back button in top-left corner */}
       <CustomButtonThree
         onPress={() => router.replace("/")}
@@ -103,7 +105,8 @@ export default function ResetPasswordNew() {
         <View style={styles.content}>
           {/* Instructional subtext for user */}
           <Text style={[styles.subText, Type.semibold]}>
-            Please fill out the recovery code and a new password for your Fitahi account.
+            Please fill out the recovery code and a new password for your Fitahi
+            account.
           </Text>
 
           {/* Recovery code input field */}
@@ -113,8 +116,8 @@ export default function ResetPasswordNew() {
             value={code}
             onChangeText={(text) => setCode(text.replace(/[^0-9]/g, ""))}
             keyboardType="numeric"
-            textStyle={Type.regular} 
-            labelStyle={Type.bold} 
+            textStyle={Type.regular}
+            labelStyle={Type.bold}
           />
 
           {/* Password input field with animated eye icon and long-press support */}
@@ -128,8 +131,8 @@ export default function ResetPasswordNew() {
                 if (passwordError) setPasswordError(null);
               }}
               secureTextEntry={!isPasswordVisible}
-              textStyle={Type.regular} 
-              labelStyle={Type.bold} 
+              textStyle={Type.regular}
+              labelStyle={Type.bold}
               errorMessage={passwordError}
             />
             <TouchableOpacity
@@ -160,10 +163,10 @@ export default function ResetPasswordNew() {
           <CustomButton
             title="Create New Password"
             onPress={handleCreateNewPassword}
+            variant="primary"
             size="large"
-            style={{ width: 370, paddingVertical: 18, borderRadius: 30 }}
-            textColor="#FFFFFF"
-            textStyle={Type.bold} 
+            rounded
+            style={{ width: "100%" }}
           />
         </View>
       </KeyboardAvoidingView>

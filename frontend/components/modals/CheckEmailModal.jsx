@@ -1,14 +1,15 @@
 import React from "react";
 import { Modal, View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { Type } from "@/constants/Font";
 
 export default function CheckEmailModal({ onClose }) {
   return (
     //modal component creates a floating layer above the current screen
-    <Modal 
+    <Modal
       transparent //makes background seethrough so overlay can show
-      animationType="fade">
-
-        {/* Full-screen overlay with semi-transparent dark background */}
+      animationType="fade"
+    >
+      {/* Full-screen overlay with semi-transparent dark background */}
       <View style={styles.overlay}>
         {/* Centered box containing modal content */}
         <View style={styles.box}>
@@ -47,12 +48,13 @@ const styles = StyleSheet.create({
     right: 10,
   },
   title: {
+    fontFamily: Type.bold.fontFamily,
     color: "#00A2FF",
     fontSize: 22,
-    fontWeight: "bold",
     marginBottom: 10,
   },
   message: {
+    fontFamily: Type.regular.fontFamily,
     color: "white",
     fontSize: 15,
     textAlign: "center",

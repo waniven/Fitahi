@@ -11,7 +11,7 @@ import CustomInput from "../../components/common/CustomInput";
 import CustomButton from "../../components/common/CustomButton";
 import CustomToast from "../../components/common/CustomToast";
 import { Colors } from "../../constants/Colors";
-import { Font, Type, TextVariants } from "../../constants/Font"; 
+import { Font, Type, TextVariants } from "../../constants/Font";
 import { useRouter } from "expo-router";
 import CheckEmailModal from "../../components/modals/CheckEmailModal";
 import CustomButtonThree from "../../components/common/CustomButtonThree";
@@ -51,11 +51,13 @@ export default function ResetPasswordEmail() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: theme.background }]}
+    >
       {/* Back button */}
-      <CustomButtonThree 
-        onPress={() => router.replace("/")} //navigate to welcome page 
-        style={{ position: "absolute", top: 50, left: 20, zIndex: 10 }} 
+      <CustomButtonThree
+        onPress={() => router.replace("/")} //navigate to welcome page
+        style={{ position: "absolute", top: 50, left: 20, zIndex: 10 }}
       />
 
       {/* Header near back button */}
@@ -68,7 +70,8 @@ export default function ResetPasswordEmail() {
         {/* Subheader + input */}
         <View style={styles.content}>
           <Text style={[styles.subText, Type.semibold]}>
-            Please provide us with the registered email and we will send you a recovery code.
+            Please provide us with the registered email and we will send you a
+            recovery code.
           </Text>
 
           <CustomInput
@@ -78,8 +81,8 @@ export default function ResetPasswordEmail() {
             onChangeText={setEmail}
             keyboardType="email-address"
             style={{ marginTop: 20 }}
-            textStyle={Type.regular} 
-            labelStyle={Type.bold}   
+            textStyle={Type.regular}
+            labelStyle={Type.bold}
           />
         </View>
 
@@ -88,10 +91,10 @@ export default function ResetPasswordEmail() {
           <CustomButton
             title="Send Recovery Code"
             onPress={handleSendCode}
+            variant="primary"
             size="large"
-            style={{ width: 370, paddingVertical: 18, borderRadius: 30 }}
-            textColor="#FFFFFF"
-            textStyle={[Type.bold, { fontSize: 16 }]} 
+            rounded
+            style={{ width: "100%" }}
           />
         </View>
 
@@ -113,11 +116,11 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   header: {
     position: "absolute",
-    top: 50, 
-    left: 0, 
+    top: 50,
+    left: 0,
     right: 0,
     color: "#FFFFFF",
-    fontSize: 26, 
+    fontSize: 26,
     textAlign: "center",
   },
   content: {
