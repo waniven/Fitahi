@@ -48,7 +48,6 @@ function issuePasswordResetOtp(email) {
  * Returns the associated email if found and valid; otherwise returns null.
  */
 function verifyPasswordResetOtp(code) {
-    console.log("target code "+ code);
     const now = Date.now();
 
     //delete exsisting entries

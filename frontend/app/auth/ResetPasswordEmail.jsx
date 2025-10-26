@@ -50,7 +50,7 @@ export default function ResetPasswordEmail() {
       setShowModal(true); // or navigate immediately here
     } catch (err) {
       console.log("sendResetEmail failed:", err.response?.data || err.message);
-      CustomToast.error("Could not send reset email");
+      CustomToast.error("Error connecting to server");
     }
   };
 

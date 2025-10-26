@@ -15,7 +15,6 @@ const transporter = nodemailer.createTransport({
 module.exports = async function sendPasswordResetEmail(email) {
   //generate reset code
   const resetCode = issuePasswordResetOtp(email);
-  console.log("resetcode: "+ resetCode);
 
   const info = await transporter.sendMail({
     from: `"Fitahi" <${process.env.GMAIL_USER}>`,

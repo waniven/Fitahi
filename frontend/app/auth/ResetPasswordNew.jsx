@@ -78,11 +78,11 @@ export default function ResetPasswordNew() {
 
     try {
       await passwordResetService.resetPassword(code, password);
-      CustomToast.success("Password Reset!", "Your password has been updated");
+      CustomToast.success("Password Reset!");
       router.replace("/");
     } catch (err) {
       console.log("resetPassword failed:", err.response?.data || err.message);
-      CustomToast.error("Error resetting password");
+      CustomToast.error("Invalid or expired code");
     }
   };
 
