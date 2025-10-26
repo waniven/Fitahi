@@ -13,10 +13,10 @@ import { Font } from "@/constants/Font";
 import { Colors } from "@/constants/Colors";
 
 /**
- * WorkoutSortFilter
- * Dropdown filter button for sorting workout logs by various criteria.
+ * WaterSortFilter
+ * Dropdown filter button for sorting water logs by various criteria.
  */
-export default function WorkoutSortFilter({ value = "date-desc", onChange, isOpen = false, onToggle }) {
+export default function WaterSortFilter({ value = "date-desc", onChange, isOpen = false, onToggle }) {
   const scheme = useColorScheme();
   const theme = Colors[scheme ?? "light"];
 
@@ -24,10 +24,8 @@ export default function WorkoutSortFilter({ value = "date-desc", onChange, isOpe
   const options = [
     { value: "date-desc", label: "Date: Newest first" },
     { value: "date-asc", label: "Date: Oldest first" },
-    { value: "duration-desc", label: "Duration: Longest first" },
-    { value: "duration-asc", label: "Duration: Shortest first" },
-    { value: "exercises-desc", label: "Exercises: Most first" },
-    { value: "exercises-asc", label: "Exercises: Least first" },
+    { value: "amount-desc", label: "Amount: High to Low" },
+    { value: "amount-asc", label: "Amount: Low to High" },
   ];
 
   // Get display label for current sort
