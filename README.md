@@ -1,72 +1,92 @@
 # 💪 Fitahi
 
-Fitahi is a MERN (MongoDB, Express, React Native, Node.js) fitness app that helps users track and manage multiple aspects of their health in one place. The goal is to make daily fitness logging practical instead of overwhelming. Users can log workouts, record supplements and nutrition, track their water intake and biometrics, review progress over time, set reminders, look for gym locations and get AI support - all inside a single mobile app.
+Fitahi is a MERN (MongoDB, Express, React Native, Node.js) fitness app with features to help users track and manage multiple aspects of their fitness journey and health, all in one place. It enables them to log their workouts, nutrition, supplements, water intake, biometrics, and more. It is an all-in-one fitness buddy primarily tailored for Android phones, but works on iOS phones as well (using Expo Go).
 
-In the app, users can:
-- Account signup and log in
-- Streak 
-- Log structured workouts (sets, reps, weights)
-- Track supplements, nutrition, water, and biometrics
-- View simple progress analytics
-- Get habit reminders
-- Discover local gyms
-- Get basic AI guidance
+This README file provides an overview into the app's features and provides instructions on how to run it depending on which features you want to see. It provides the following:
 
-Fitahi is primarily built for Android devices using React Native, but it also runs on iOS. The backend is powered by Node.js with MongoDB for persistent storage.
+1. Features Overview
 
-This README covers:
-1.	Features overview
-2.	Development setup
-3. Running the App in Development (EXPO workflow)
-4.	Building a dev client for Android (required for testing Google Ads / AdMob)
+2. Installation Prerequisites
 
-## ✅ 1. Features overview
+3. Running Fitahi with Expo Go
 
-#### 🏋 Workout Tracking
-- Log exercises (including sets/reps/weight), with timing and saving workout sessions, and review past workouts.
+4. Running Fitahi as a Compiled App (necessary for the Google Ads Feature)
 
-#### 💊 Supplement Tracking
-- Record supplements you’re taking, with name and dosage, so you can build consistent habits.
+## 📜 1. Features Overview
 
-#### 💧 Water Intake Tracking
-- Quickly log how much water you’ve had throughout the day.
+#### 🏋 Workout Logging
 
-#### 📊 Biometrics Tracking
-- Track health stats like weight and other body metrics over time.
+- Create, edit, and log personalised workouts including exercise names, sets, reps, rest times, and optional weights or durations per exercise. Workouts can be scheduled on selected days with automated, editable reminders to help users stay consistent.
 
 #### 🍽 Nutrition / Food Logging
-- Capture food-related data to support your goals.
+
+- Log meals across breakfast, lunch, dinner, and snacks - tracking calories, protein, carbs, and fats. Automatically triggers an editable water reminder 30 minutes after logging food to promote balanced hydration.
+
+#### 💧 Water Intake Logging
+
+- Record water intake by amount and time. The app will also send you smart reminders if you haven't logged water for a few hours, helping you stay on track with your hydration goals.
+
+#### 📊 Biometrics Logging
+
+- Track physical stats like height and weight over time. Entries update your analytics graphs and help monitor progress.
+
+#### 💊 Supplement Logging
+
+- Track supplements with name, dosage, and intake schedule. Log when they’ve been taken or skipped, and easily modify or delete supplement entries at anytime.
 
 #### ⏰ Reminders
-- Set custom reminders for habits like workouts, or supplements so you don’t forget.
+
+- Receive automated notifications for workouts, nutrition, water, supplements, or anything of your choice! All reminders are fully customisable through the in-app Fitahi calendar, allowing you to adjust or delete them anytime.
 
 #### 🔥 Streaks
-- See how consistently you’re hitting habits to keep motivation up.
 
-#### 📈 Analytics Dashboard
-- View simple charts and summaries of your activity and health data to see trends over time.
+- Stay motivated with daily login streaks. The app tracks consecutive active days and resets the streak if a day is missed, displaying motivational messages to encourage consistency.
 
-#### 🤖 AI Assistant (“Darwin”)
-- Get basic AI support for things like workout suggestions and guidance inside the app.
+#### 📈 Analytics Graphs, Logs + Filtering Options
 
-#### 📍 Gym Finder + Filters
-- Find nearby gyms using map search, then filter by rating and opening hours.
+- View interactive weekly graphs for workouts, nutrition, water, and biometrics. Filter, sort, and review detailed logs to easily find the logs you're looking for and track your overall progress efficiently.
 
-#### 👤 Account & Profile
-- Create and use an account so your data persists between sessions.
-- Personalize your profile by choosing from pre-set avatars and backgrounds or upload from your device.
+#### 🤖 Darwin, Fitahi's AI Assistant Chatbox
 
-#### ⭐ Premium Upsell Banner (AdMob) (Only run on a compiled dev build on a physical Android device)
-- In-app banner (AdMob) encouraging upgrade to premium features.
+- Chat with Darwin, our friendly, fitness AI assistant that can help you with a wide range of things such as: understanding your progress, answering any fitness questions, offering technical guidance on how to use the app's features, making tailored workouts for you and offering general support based on your saved information.
 
+#### 📍 Gym Finder + Filtering Options
 
+- Discover gyms using an interactive map and search bar. Filter by star ratings or open/close hours, view gym details, and open directions directly in your native maps app.
 
-> ⚠️ NOTE: The AdMob banner cannot be tested inside Expo Go. You need to run a compiled dev build on a physical Android device. Instructions in part 4.
+#### 👤 Profile Creation, Personalisation Quiz & Account Settings
 
+- Sign up, login and personalise your experience with a setup quiz that tailors your fitness information, nutrition and water intake goals. Edit personal info, your profile picture (from your gallery or make a fun avatar); manage fitness goals, dietary preferences, and daily intake targets.
 
-## ✅ 2. Development setup
+- Should you forget your password, recover your account and reset your password with ease. If you'd prefer a straightforward approach, authenticate with our Google OAuth option instead!
 
-After downloading our repository, also ensure that you have downloaded the necessary .env files from our Trello board (Resources column). Afterwards, please follow through the outlined instructions:
+#### ⭐ Google Ads
+
+- A single ad appears on the Home Screen - it can be closed but reappears when revisiting the screen. Tapping the ad will take you to the advertiser's website in your device's native browser.
+
+#
+
+> ⚠️ _**READ BEFORE PROCEEDING:** The Google Ads feature cannot be run with Expo Go. You need to run a compiled dev build on a physical Android device in order to experience it. The rest of the features can be experienced through **either** methods specified in the sections below, however some of them may behave a little off in the Compiled version of the app. Our recommendation is to only run the Compiled version if you wish to check out the Google Ads feature, otherwise stick to Expo Go._
+
+## ✅ 2. Prerequisites
+
+Firstly, please choose whether you want to run Fitahi with **Expo Go** or as a **compiled app**. Afterwards, navigate to a directory where you wish to keep the repository folder, then open a terminal within that directory and execute **either** of the following commands:
+
+- For running with **Expo Go**, execute:
+
+```bash
+git clone -b release-expo-go https://github.com/waniven/Fitahi.git
+```
+
+- For running the **compiled app**, execute:
+
+```bash
+git clone -b Release https://github.com/waniven/Fitahi.git
+```
+
+#
+
+Next, ensure that you have downloaded the necessary .env files from our **Trello board's Resources column ("Environment Variables (frontend + backend)")**. Afterwards, please follow through the outlined instructions below:
 
 - Put the files in their corresponding folders (on Trello the files are named '**frontend**' and '**backend**')
 
@@ -76,7 +96,7 @@ After downloading our repository, also ensure that you have downloaded the neces
 
 #### Done! Proceed to the instructions below to run our project.
 
-## ✅ 3. Running the App in Development (EXPO workflow)
+## 🤳 3. Running Fitahi with Expo Go
 
 Before you start, make sure you have installed **Expo Go** on your phone:
 
@@ -128,117 +148,118 @@ Before you start, make sure you have installed **Expo Go** on your phone:
    - Scan the QR code in the terminal using **Expo Go** on your phone.
    - Make sure your phone and computer are on the same network when using **Expo Go**.
 
-## ✅ 4. Building a dev client for Android (required for testing Google Ads / AdMob)
+## 📲 4. Running Fitahi as a Compiled App
 
-This workflow gives you an installable Android app (debug/dev build) running on a real device.
-Use this when:
-- You need to test react-native-google-mobile-ads
-- You want to confirm native behavior, like the AdMob banner
-- You want to test production-like performance on real hardware
+> ⚠️ _**READ BEFORE PROCEEDING:** The Google Ads feature cannot be run with Expo Go. You need to run a compiled dev build on a physical Android device in order to experience it. The rest of the features can be experienced through **either** methods specified in this file, however some of them may behave a little off in the Compiled version of the app. Our recommendation is to only run the Compiled version if you wish to check out the Google Ads feature, otherwise stick to Expo Go._
 
+1. Open a terminal and, in the **Fitahi** folder, navigate to the **backend** directory:
 
-> ⚠️ NOTE: You cannot test the AdMob banner inside Expo Go. You must build and install the native dev client on a physical Android phone.
+   ```bash
+   cd backend
+   ```
 
-#### Step 1. Install dependencies
+2. Install dependencies:
 
    ```bash
    npm install
    ```
 
-#### Step 2. Prepare an Android device
-1. Connect your Android phone to your computer via USB.
-
-2. On the phone:
-- Go to Settings → About phone → Build number
-- Tap the build number 7 times to enable Developer Options.
-- Go to Settings → Developer options → USB debugging
-- Turn on USB debugging.
-
-3. (Windows only) Install your device’s USB driver if needed.
-- On macOS/Linux, drivers are not usually required.
-
-#### Step 3. Install Android platform tools (ADB)
-- macOS (with Homebrew)
+3. Open another terminal and, in the **Fitahi** folder, navigate to the **frontend** directory:
 
    ```bash
-   brew install android-platform-tools
+   cd frontend
    ```
 
-- Windows \
-  Download the official “Android SDK Platform Tools” zip from Google.\
-  Extract it and add the platform-tools folder to your PATH.
-
-- Verify ADB is available:
+4. Install dependencies:
 
    ```bash
-   adb version
+   npm install
    ```
 
-#### Step 4. Authorize the device
+#
 
-1. Plug in the phone via USB
-2. Run:
+5. Prepare an **Android** device (NOT a simulator). Connect your **Android phone** to your computer via **USB cable**.
 
-   ```bash
-   adb devices
-   ```
-3. On the phone, accept the “Allow USB debugging?” prompt
-4. Run **adb devices** again.\
-   You should see your device listed as **device** (not unauthorized or offline).
+6. On the phone, do the following:
 
-If it still shows unauthorized:
-- Toggle USB debugging off and on.
-- Replug the cable.
-- Run:
+- Go to **Settings** → **About phone** → **Build number**
 
-   ```bash
-   adb kill-server
-   adb start-server
-   adb devices
-   ```
+- Tap the Build Number **7 times** to enable **Developer Options**
 
-#### Step 5. Prebuild the native Android project
+- Go back to **Settings** → **Developer options** → **USB debugging**
 
-Because we’re using **react-native-google-mobile-ads**, we need native Android code. expo prebuild generates the android/ directory and injects config.
+- Turn on **USB debugging**
 
-From the project root:
+#### (Windows only) Install your device’s USB driver if needed. On macOS/Linux, drivers are not usually required.
+
+#
+
+7. Install **Android Platform Tools (Android Debug Bridge)**
+
+- **macOS (with Homebrew):**
+
+  ```bash
+  brew install android-platform-tools
+  ```
+
+- **Windows:**
+
+  - Download the official [**Android SDK Platform Tools**](https://developer.android.com/tools/releases/platform-tools)
+
+  - Extract it in your chosen directory and add the **platform-tools** folder to your Environemnt System Variable "**Path**"
+
+  - To provide further assistance if needed, a reference document of correctly set-up Environment Variables on Windows has been provided under the **Resources column on Trello ("Environment System Variable Path Configuration")**, containing a brief set of instructions and screenshots
+
+#### Following this, verify that **ADB** is available by opening a terminal and running the command below - you should see an output displaying the **Android Debug Bridge version**:
+
+```bash
+adb version
+```
+
+#
+
+8. **Authorise** your Android device:
+
+- Ensure your phone is plugged into your computer via **USB cable**, then run the following command:
+
+  ```bash
+  adb devices
+  ```
+
+- On the phone, **accept the "Allow USB debugging?"** prompt, then run the command again. You should see your device listed as **device** (not unauthorised or offline).
+
+- If it still shows **unauthorised**:
+
+  - Toggle USB debugging off and on
+  - Replug the cable
+  - Run:
+
+  ```bash
+  adb kill-server
+  adb start-server
+  adb devices
+  ```
+
+#
+
+9. Prebuild the **native Android project**, from the project root, run the command outlined below. This will create or update the **android folder**, apply any config from **app.json**, and link **native modules** (ads).
 
    ```bash
    npx expo prebuild --platform android
    ```
 
-This will:
-- Create/update the android/ folder
-- Apply any config from app.json / app.config.js
-- Link native modules like ads
+#
 
-#### Step 6. Build and install the dev client on the device
+10. Build and install the **dev client on the Android device**, open up a terminal within the project root, then run the command below. In doing so, you will build a compiled variant of the app and install it directly onto the connected device.
 
-Still from the project root, run:
+    ```bash
+    npx expo run:android
+    ```
 
-   ```bash
-   npx expo run:android
-   ```
+#
 
-What this does:
-- Builds a debug/dev variant of the app
-- Installs it directly onto the connected Android device
-- Boots the app on the device
+11. Check out the Google Ads feature on the Home Screen!
 
-At this point you are not using Expo Go anymore. You’re running the actual native app, with the Google Mobile Ads SDK included.
-
-#### Step 7. Test Google Ads (AdMob banner / premium upsell)
-
-Open the installed app on the device.
-- Navigate to the screen that shows the banner ad / premium upsell surface.
-- In dev, this should show the Google test ad unit (for example, TestIds.ADAPTIVE_BANNER from react-native-google-mobile-ads) instead of a live ad.
-- You should see a test banner render successfully.
-
-If you don’t see the test banner:
-- Confirm the device is online.
-- Confirm that you’re not running inside Expo Go.
-- Check that you’re using the Google test ad unit ID in dev (never a production ad unit during development).
+#
 
 ### ✨ Enjoy using Fitahi!
-
----
