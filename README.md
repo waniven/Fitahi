@@ -242,7 +242,7 @@ adb version
 
 #
 
-9. Prebuild the **native Android project**, from the project root, run the command outlined below. This will create or update the **android folder**, apply any config from **app.json**, and link **native modules** (ads).
+9. Prebuild the **native Android project**; in the **frontend** directory open a terminal and run the command outlined below. This will create or update the **android directory**, apply any config from **app.json**, and link **native modules** (ads).
 
    ```bash
    npx expo prebuild --platform android
@@ -250,7 +250,7 @@ adb version
 
 #
 
-10. Build and install the **dev client on the Android device**, open up a terminal within the project root, then run the command below. In doing so, you will build a compiled variant of the app and install it directly onto the connected device.
+10. Build and install the **dev client on the Android device**; in that same **frontend** directory terminal, run the command below. In doing so, you will build a compiled variant of the app and install it directly onto the connected device.
 
     ```bash
     npx expo run:android
