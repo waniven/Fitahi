@@ -60,9 +60,9 @@ This README covers:
 - In-app banner (AdMob) encouraging upgrade to premium features.
 
 
-```bash
-⚠️ NOTE: The AdMob banner cannot be tested inside Expo Go. You need to run a compiled dev build on a physical Android device. Instructions in part 4.
-```
+
+> ⚠️ NOTE: The AdMob banner cannot be tested inside Expo Go. You need to run a compiled dev build on a physical Android device. Instructions in part 4.
+
 
 ## ✅ 2. Development setup
 
@@ -136,9 +136,9 @@ Use this when:
 - You want to confirm native behavior, like the AdMob banner
 - You want to test production-like performance on real hardware
 
-```bash
-⚠️ NOTE: You cannot test the AdMob banner inside Expo Go. You must build and install the native dev client on a physical Android phone.
-```
+
+> ⚠️ NOTE: You cannot test the AdMob banner inside Expo Go. You must build and install the native dev client on a physical Android phone.
+
 #### Step 1. Install dependencies
 
    ```bash
