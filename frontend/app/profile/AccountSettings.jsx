@@ -14,7 +14,8 @@ import { Colors } from "../../constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import * as ImageManipulator from "expo-image-manipulator";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getMe, updateMe } from "@/services/userService";
 import { logout } from "@/services/authService";
 import { router } from "expo-router";
@@ -24,10 +25,12 @@ import Toast from "react-native-toast-message";
 import { Font } from "@/constants/Font";
 import CustomButton from "../../components/common/CustomButton";
 import { getBiometrics } from "@/services/biometricService";
+import ProfileImagePopup from "../../components/common/ProfileImagePopup";
 
 /**
  * Account settings screen for managing user profile and preferences
  * Handles profile updates, image uploads, form validation, and user logout
+ * Loads avatar selections from AsyncStorage on screen focus
  */
 export default function AccountSettings() {
   const theme = Colors["dark"];
@@ -35,6 +38,9 @@ export default function AccountSettings() {
 
   // Profile image state with URI and base64 data for upload
   const [profileImage, setProfileImage] = useState(null);
+  const [showEditOptions, setShowEditOptions] = useState(false);
+  const [avatarColor, setAvatarColor] = useState(null); 
+
 
   // Date picker state for date of birth selection
   const [selectedDob, setSelectedDob] = useState(null);
@@ -68,68 +74,94 @@ export default function AccountSettings() {
     caloriesGoal: "",
   });
 
-  // Fetches user profile and latest biometric data on component mount
-  useEffect(() => {
-    let alive = true;
+  /**
+   * Fetches user profile, biometric data, and avatar selections on screen focus
+   * Runs every time the screen becomes active (e.g., when returning from AvatarPage)
+   */
+  useFocusEffect(
+    React.useCallback(() => {
+      let alive = true;
 
-    const fetchProfileAndBiometrics = async () => {
-      try {
-        setLoading(true);
-        const me = await getMe();
-        if (!alive) return;
+      const fetchProfileAndBiometrics = async () => {
+        try {
+          setLoading(true);
+          const me = await getMe();
+          
+          console.log("Received from backend - avatarColor:", me.avatarColor);
+          console.log("Full user object:", JSON.stringify(me, null, 2));
+          
+          if (!alive) return;
 
-        const dobStr = toYmd(me.dateofbirth);
+          const dobStr = toYmd(me.dateofbirth);
 
-        setForm((prev) => ({
-          ...prev,
-          firstName: me.firstname ?? "",
-          lastName: me.lastname ?? "",
-          email: me.email ?? "",
-          dob: dobStr,
-          fitnessGoal: me.quiz?.FitnessGoal ?? "",
-          fitnessLevel: me.quiz?.FitnessLevel ?? "",
-          trainingDays: me.quiz?.TrainingDays ?? "",
-          trainingTime: me.quiz?.TrainingTime ?? "",
-          diet: me.quiz?.Diet ?? "",
-          waterGoal: me.intakeGoals?.dailyWater.toString() ?? "",
-          caloriesGoal: me.intakeGoals?.dailyCalories.toString() ?? "",
-        }));
-        setSelectedDob(fromYmd(dobStr));
-        if (me.pfp) setProfileImage({ uri: me.pfp });
-
-        // Fetches most recent biometric entry to populate height/weight
-        const biometrics = await getBiometrics();
-        if (biometrics.length > 0) {
-          const latest = biometrics[0];
           setForm((prev) => ({
             ...prev,
-            height: latest.height?.toString() ?? prev.height,
-            weight: latest.weight?.toString() ?? prev.weight,
+            firstName: me.firstname ?? "",
+            lastName: me.lastname ?? "",
+            email: me.email ?? "",
+            dob: dobStr,
+            fitnessGoal: me.quiz?.FitnessGoal ?? "",
+            fitnessLevel: me.quiz?.FitnessLevel ?? "",
+            trainingDays: me.quiz?.TrainingDays ?? "",
+            trainingTime: me.quiz?.TrainingTime ?? "",
+            diet: me.quiz?.Diet ?? "",
+            waterGoal: me.intakeGoals?.dailyWater.toString() ?? "",
+            caloriesGoal: me.intakeGoals?.dailyCalories.toString() ?? "",
           }));
-        } else {
-          // fallback to quiz data
-          setForm((prev) => ({
-            ...prev,
-            height: me.quiz?.Height?.toString() ?? prev.height,
-            weight: me.quiz?.Weight?.toString() ?? prev.weight,
-          }));
+          setSelectedDob(fromYmd(dobStr));
+
+          // Loads avatar URI and background color from AsyncStorage
+          const savedAvatarColor = await AsyncStorage.getItem('avatarColor');
+          const savedAvatarUri = await AsyncStorage.getItem('avatarUri');
+
+          console.log("Loaded from AsyncStorage - avatarColor:", savedAvatarColor);
+          console.log("Loaded from AsyncStorage - avatarUri:", savedAvatarUri);
+
+          // Prioritizes locally stored avatar over backend profile picture
+          if (savedAvatarUri) {
+            setProfileImage({ uri: savedAvatarUri });
+          } else if (me.pfp) {
+            setProfileImage({ uri: me.pfp });
+          }
+
+          if (savedAvatarColor) {
+            setAvatarColor(savedAvatarColor);
+          }
+
+          // Fetches most recent biometric entry to populate height/weight
+          const biometrics = await getBiometrics();
+          if (biometrics.length > 0) {
+            const latest = biometrics[0];
+            setForm((prev) => ({
+              ...prev,
+              height: latest.height?.toString() ?? prev.height,
+              weight: latest.weight?.toString() ?? prev.weight,
+            }));
+          } else {
+            // fallback to quiz data
+            setForm((prev) => ({
+              ...prev,
+              height: me.quiz?.Height?.toString() ?? prev.height,
+              weight: me.quiz?.Weight?.toString() ?? prev.weight,
+            }));
+          }
+        } catch (err) {
+          if (!alive) return;
+          CustomToast.error(
+            "Fetching information failed",
+            "Please try again later."
+          );
+        } finally {
+          if (alive) setLoading(false);
         }
-      } catch (err) {
-        if (!alive) return;
-        CustomToast.error(
-          "Fetching information failed",
-          "Please try again later."
-        );
-      } finally {
-        if (alive) setLoading(false);
-      }
-    };
+      };
 
-    fetchProfileAndBiometrics();
-    return () => {
-      alive = false;
-    };
-  }, []);
+      fetchProfileAndBiometrics();
+      return () => {
+        alive = false;
+      };
+    }, [])
+  );
 
   // Validates all form inputs with specific rules for each field
   const validateForm = () => {
@@ -169,7 +201,10 @@ export default function AccountSettings() {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Opens image picker and processes selected image for profile picture
+  /**
+   * Opens image picker and processes selected image for profile picture
+   * Clears locally stored avatar data when using gallery image
+   */
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: "images",
@@ -196,6 +231,11 @@ export default function AccountSettings() {
         base64: manip.base64,
         mime: "image/jpeg",
       });
+      
+      // Removes avatar selections when switching to gallery image
+      await AsyncStorage.removeItem('avatarUri');
+      await AsyncStorage.removeItem('avatarColor');
+      setAvatarColor(null);
     }
   };
 
@@ -235,7 +275,7 @@ export default function AccountSettings() {
         dailyWater: form.waterGoal,
       };
 
-      // Send to backend
+      // Sends profile updates to backend (avatar color stored locally only)
       await updateMe({
         firstname,
         lastname,
@@ -295,20 +335,25 @@ export default function AccountSettings() {
         >
           {/* Profile picture section with edit functionality */}
           <View style={styles.profilePicWrapper}>
-            <View style={styles.profileCircle}>
-              {profileImage ? (
-                <Image
-                  source={{ uri: profileImage.uri }}
-                  style={styles.profileImage}
-                />
-              ) : (
-                <Ionicons name="person" size={60} color="white" />
-              )}
-            </View>
-            <TouchableOpacity style={styles.editIcon} onPress={pickImage}>
-              <Ionicons name="pencil" size={18} color="white" />
-            </TouchableOpacity>
+           <View style={[styles.profileCircle, { backgroundColor: avatarColor || "#1e1e1e" }]}>
+             {profileImage ? (
+              <Image
+                source={{ uri: profileImage.uri }}
+                style={styles.profileImage}
+              />
+            ) : (
+              <Ionicons name="person" size={60} color="white" />
+            )}
           </View>
+         <View style={styles.editIconWrapper}>
+           <TouchableOpacity
+             style={styles.editIcon}
+             onPress={() => setShowEditOptions((prev) => !prev)}
+           >
+            <Ionicons name="pencil" size={18} color="white" />
+          </TouchableOpacity>
+        </View>
+      </View>
 
           {/* Basic profile information inputs */}
           <View style={styles.formContainer}>
@@ -445,7 +490,7 @@ export default function AccountSettings() {
           </View>
 
           <View style={{ height: 100 }} />
-        </ScrollView>
+         </ScrollView>
 
         {/* Fixed-position save button at bottom of screen */}
         <View style={styles.saveButtonWrapper}>
@@ -458,6 +503,19 @@ export default function AccountSettings() {
             style={{ width: "100%" }}
           />
         </View>
+        {showEditOptions && (
+              <ProfileImagePopup
+              onClose={() => setShowEditOptions(false)}
+              onGallery={() => {
+               setShowEditOptions(false);
+               pickImage();
+              }}
+              onAvatar={() => {
+              setShowEditOptions(false);
+              navigation.navigate("profile/AvatarPage");
+              }}
+            />
+           )}
       </KeyboardAvoidingView>
 
       <Toast />
@@ -549,4 +607,10 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontFamily: "Montserrat",
   },
+  editIconWrapper: {
+  position: "absolute",
+  bottom: 0,
+  right: 0,
+  alignItems: "flex-end",
+},
 });
