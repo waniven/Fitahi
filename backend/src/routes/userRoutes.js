@@ -18,15 +18,36 @@ const dobToAge = require('../helpers/dobToAge');
 router.post('/', async (req, res, next) => {
     try {
         //get variables from document
-        const { firstname, lastname, email, dateofbirth, password } = req.body;
+        const { firstname, lastname, email, dateofbirth, password, provider = 'local' } = req.body;
 
-        //cehck of manditory fields exsist
-        if (!firstname || !lastname || !email || !dateofbirth || !password) {
+        //check of manditory fields exsist
+        if (!firstname || !lastname || !email) {
             return res.status(400).json({ error: 'Missing required fields' });
         }
 
+        //enforce for local users only
+        if (provider === 'local') {
+            if (!dateofbirth) {
+                return res.status(400).json({ error: 'Missing date of birth field' });
+            }
+
+            if (!password) {
+                return res.status(400).json({ error: 'Missing password field' });
+            }
+        }
+
+        //
+        const doc = {
+            firstname, lastname, email: email.toLowerCase(),
+            provider
+        };
+
+        //add dob and password if provided (local users)
+        if (dateofbirth) doc.dateofbirth = new Date(dateofbirth);
+        if (password) doc.password = password;
+
         //create a new user 
-        const user = await User.create({ firstname, lastname, email, dateofbirth, password });
+        const user = await User.create(doc);
 
         //return new user
         return res.status(201).json(user);

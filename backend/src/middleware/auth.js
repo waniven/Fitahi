@@ -24,7 +24,7 @@ function auth(req, res, next) {
 
         return next(); //continue 
     } catch (err) {
-        return res.status(401).json({ error: 'Ivalid or expired token' });
+        return res.status(401).json({ error: 'Invalid or expired token' });
     }
 }
 

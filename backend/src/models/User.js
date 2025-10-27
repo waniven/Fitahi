@@ -7,8 +7,26 @@ const userSchema = new Schema(
         firstname: { type: String, required: true, trim: true },
         lastname: { type: String, required: true, trim: true },
         email: { type: String, required: true, unique: true, trim: true, lowercase: true },
-        dateofbirth: { type: Date, required: true },
-        password: { type: String, required: true, select: false }, //select: false dose not return the password by defualt quaries
+        
+        //Only required for local users, since google users will have to enter this
+        dateofbirth: {
+            type: Date,
+            default: null,
+            required: function () { return this.provider === 'local'; }
+        },
+
+        //select: false dose not return the password by defualt quaries
+        password: { 
+            type: String, 
+            required: true, 
+            select: false, 
+            required: function() { return this.provider === 'local'; } //make password only manditory for non OAUTH users
+        }, 
+        
+        //Oauth fields
+        googleId: { type: String, unique: true, sparse: true },
+        provider: { type: String, enum: ['local', 'google'], default: 'local' },
+        
         pfp: { type: String, required: false, default: null }, //profile picture in base64
         quiz: { // quiz questions from sign-up
             FitnessGoal: { type: String, default: null },
@@ -78,6 +96,8 @@ userSchema.pre('findOneAndUpdate', async function (next) { //runs when a documen
 
 //helper to compaire password for login 
 userSchema.methods.comparePassword = function (plain) {
+    //google users have no password
+    if (!this.password) return false;
     return bcrypt.compare(plain, this.password);
 };
 
