@@ -180,7 +180,7 @@ const features = [
   },
   {
     name: "Forgot Password/Reset Password",
-    description: "Lets the user reset their password if they have forgotten it by sending a one time code their registered email. Their email must be registered in order to use this feature, otherwise the app won't proceed to do the password reset. It is not recommended that the user clicks the back button throughout the process, as it may cause issues.",
+    description: "Lets the user reset their password if they have forgotten it by sending a one time code their registered email. Their email must be registered in order to use this feature, otherwise the app won't proceed to do the password reset.",
     steps: [
       "From the Login Screen, click on the \"Forgot Password?\" link above the Login button",
       "Enter your registered email address and click \"Send Recovery Code\", following this you will receive a pop-up notifying you that a code has been sent to your email if is registered",
