@@ -22,6 +22,7 @@ const AnalyticsLogScreen = ({
   showBackButton = true,
   onBackPress = () => console.log("Back pressed"),
   children,
+  filterComponent = null,
   containerStyle,
   titleStyle,
   subtitleStyle,
@@ -64,6 +65,14 @@ const AnalyticsLogScreen = ({
               {subtitle}
             </Text>
           )}
+
+          {/* Filter component renders here between subtitle and content */}
+          {filterComponent && (
+            <View style={styles.filterContainer}>
+              {filterComponent}
+            </View>
+          )}
+
           {children}
         </View>
       </View>
@@ -115,9 +124,15 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 20,
     textAlign: "center",
-    marginBottom: 30,
+    marginBottom: 20,
     lineHeight: 30,
     fontFamily: Font.regular,
+  },
+
+  // Container for filter component with spacing
+  filterContainer: {
+    marginBottom: 20,
+    paddingHorizontal: 4,
   },
 });
 
