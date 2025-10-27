@@ -2,6 +2,16 @@ import api, { setAuthToken } from "./api";
 import { saveToken, loadToken, clearToken } from "./tokenStorage";
 import { cancelAllNotifications } from "./notificationService";
 
+// Custom error to signal 409 "complete your profile"
+export class IncompleteProfileError extends Error {
+    constructor(payload) {
+        super(payload?.error || "Profile incomplete");
+        this.name = "IncompleteProfileError";
+        this.payload = payload; // { missing: [...], prefills: {...} }
+    }
+}
+
+
 //loads token from tokenstorage and tries to load user data
 export async function loadTokenOnLaunch() {
     const token = await loadToken();
@@ -32,6 +42,26 @@ export async function login(email, password) {
     await saveToken(token);
     setAuthToken(token);
 
+    return user;
+}
+
+//Google id_token for to backend JWT
+export async function loginWithGoogleIdToken(id_token) {
+    const res = await api.post("auth/google", { id_token }).catch(async (err) => {
+        const status = err?.response?.status;
+        const data = err?.response?.data;
+
+        if (status === 409) {
+            // Backend says required fields are missing (only if you chose that flow)
+            throw new IncompleteProfileError(data);
+        }
+        
+        throw err;
+    });
+
+    const { token, user } = res.data;
+    await saveToken(token);
+    setAuthToken(token);
     return user;
 }
 
