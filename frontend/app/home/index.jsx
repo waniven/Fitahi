@@ -22,9 +22,13 @@ import LogCards from "@/components/logcards/LogCards";
 import { useCalendarLogic } from "@/hooks/useCalendarLogic";
 import * as Notifications from "@/services/notificationService";
 import { scheduleWaterNotifications } from "@/services/waterNotifications";
+import { useInactivityMonitor } from "@/services/inactivityNotifications";
 import { Font } from "@/constants/Font";
 import mobileAds, { MaxAdContentRating } from "react-native-google-mobile-ads";
 import ReminderBannerAd from "@/components/googleAds/BannerAd";
+import { shouldShowStreakScreen } from "@/constants/utils/streakLogic";
+import StreakScreen from "../streak/StreakScreen";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 /**
  * Main dashboard screen displaying calendar, reminders, and quick navigation cards
@@ -34,8 +38,9 @@ export default function Home() {
   const theme = Colors["dark"];
   const router = useRouter();
   const [adsReady, setAdsReady] = useState(false);
-
-  // Initialize AdMob ONCE here
+  const [showStreak, setShowStreak] = useState(false);
+  
+  // Initialise AdMob once 
   useEffect(() => {
     mobileAds()
       .setRequestConfiguration({
@@ -48,6 +53,9 @@ export default function Home() {
       .catch((e) => console.log("AdMob init error:", e));
   }, []);
 
+  // Start inactivity monitor for AI check-in notifications + conversations
+  useInactivityMonitor();
+
   // Request notification permissions on mount and reschedule reminders
   useEffect(() => {
     async function init() {
@@ -59,6 +67,40 @@ export default function Home() {
       }
     }
     init();
+  }, []);
+
+  useEffect(() => {
+    async function init() {
+      await Notifications.requestNotificationPermissions();
+
+      // Check if streak screen should show
+      const show = await shouldShowStreakScreen();
+      setShowStreak(show);
+
+      // Reschedule reminders if any exist
+      if (reminders.length > 0) {
+        await Notifications.rescheduleUpcomingNotifications(reminders);
+      }
+    }
+    init();
+  }, []);
+
+  //useEffect runs once home component mounts
+  useEffect(() =>{
+    //Async to check if streak screen should pop out if it hasnt already
+    const checkStreakPopup = async () => {
+      //get date when they streak pop was last shown from AsyncStorage
+      const lastShown = await AsyncStorage.getItem("lastStreakPopup");
+      const today = new Date().toDateString(); //get todays date as a string
+
+      if (lastShown !== today){
+        //show streak popup once a day
+        setShowStreak(true);
+        //save todays date in AsyncStorage
+        await AsyncStorage.setItem("lastStreakPopup", today);
+      }
+    };
+    checkStreakPopup(); //call async function immediately
   }, []);
 
   // Schedule water intake notifications
@@ -145,6 +187,8 @@ export default function Home() {
   ];
 
   return (
+  <>
+
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.background }]}
     >
@@ -314,8 +358,20 @@ export default function Home() {
 
       {/* Render global toast notifications */}
       <Toast />
+       {/* -----------------------
+        StreakScreen overlay
+        -----------------------
+        Only shows if showStreak is true
+        Fades out when user taps Continue
+    ----------------------- */}
+    {showStreak &&(
+      <View style = {styles.Overlay}>
+        <StreakScreen onContinue = {() => setShowStreak(false)}/>
+      </View>
+    )}
     </SafeAreaView>
-  );
+  </>
+);
 }
 
 const styles = StyleSheet.create({
@@ -423,4 +479,20 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: "#f0f8ff",
   },
+  Overlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.9)", // darker backdrop
+    zIndex: 9999,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  yesterdayCircle: {
+  borderColor: "#1E90FF80", // light blue border
+  backgroundColor: "#1E90FF20", // soft glow
+},
+
 });

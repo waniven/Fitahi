@@ -19,6 +19,7 @@ import CustomButton from "../../components/common/CustomButton";
 import { signup } from "@/services/userService";
 import { login } from "@/services/authService";
 import CustomToast from "../../components/common/CustomToast";
+import CustomButtonThree from "../../components/common/CustomButtonThree";
 
 /**
  * Validates name fields (firstName, lastName)
@@ -216,6 +217,12 @@ export default function SignUp() {
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.background }]}
     >
+      {/*back button*/}
+      <CustomButtonThree 
+       onPress={() => router.back()} 
+       style={{ position: "absolute", top: 50, left: 20, zIndex: 10 }} 
+     />
+
       {/* Keyboard avoidance with platform-specific behavior */}
       <KeyboardAvoidingView
         style={{ flex: 1 }}

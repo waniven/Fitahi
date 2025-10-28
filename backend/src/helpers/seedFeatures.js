@@ -163,15 +163,61 @@ const features = [
     steps: [
       "From the bottom Navigation Bar, click on the \"Settings\" icon",
       "Tap on the Pencil icon on the Profile Picture circle at the top of the screen",
-      "Choose a picture from your device and crop it",
+      "Select \"Gallery\" as your choice, choose a picture from your device and crop it",
+      "(\"Avatar\" is also another choice, to create an avatar from our pre-made icons and background colours)",
       "Once you're happy with your chosen photo, click \"Save Information\"",
+    ],
+  },
+  {
+    name: "Create/View/Edit/Modify Avatar",
+    description: "Lets the user create/edit/modify their avatar and upload it as their profile photo/picture in the settings page. There are 3 human avatars to choose from and 18 colours the user can select as a background.",
+    steps: [
+      "From the bottom Navigation Bar, click on the \"Settings\" icon",
+      "Tap on the Pencil icon on the Profile Picture circle at the top of the screen",
+      "Select \"Avatar\" as your choice, pick an avatar from the 3 available options and choose a background colour from the 18 available options",
+      "Once you're happy with your combination, click \"Save Avatar\"",
+    ],
+  },
+  {
+    name: "Forgot Password/Reset Password",
+    description: "Lets the user reset their password if they have forgotten it by sending a one time code their registered email. Their email must be registered in order to use this feature, otherwise the app won't proceed to do the password reset.",
+    steps: [
+      "From the Login Screen, click on the \"Forgot Password?\" link above the Login button",
+      "Enter your registered email address and click \"Send Recovery Code\", following this you will receive a pop-up notifying you that a code has been sent to your email if is registered",
+      "Clicking \"x\" on the pop-up will take you to the next step, where you must enter the one time code you received in your email along with your new password. When done, click \"Create New Password\"",
+      "Following this, you will be taken to the Welcome Screen and will receive a pop-up notification to alert you that your password has been reset successfully.",
+    ],
+  },
+  {
+    name: "App Streaks/Streaks Feature/Streaks Counter/Streaks Tracking",
+    description: "Whenever the user log ins once a day, they will be presented with a streaks screen which will show their current streak count (number of consecutive days they have logged in). If they miss a day, the streak will reset to 0. Every time they see the screen, it will be accompanied by a motivational message to keep them going. Streaks are tracked by the app and are NOT manually editable by the user.",
+    steps: [
+      "Here's some notes about the Streaks feature:",
+      "Every time you log in to the app, if you have logged in the previous day as well, your streak count will increase by 1",
+      "If you miss a day, your streak count will reset to 0",
+      "Every time you see the streaks screen, you will be presented with a motivational message to keep you going",
+      "Streaks are tracked by the app and cannot be manually edited by the user",
+    ],
+  },
+
+  // google ads
+  {
+    name: "Viewing/Closing/Interacting with Google Ads/Advertisements on the Home Screen",
+    description: "The app has one ad displaying on the Home Screen, the user is able to click on an \"X\" to make it disappear. It will re-appear every time the user goes to the Home Screen. It is NOT possible to disable ads in the current version of the app. Clicking on the ad will redirect the user to the advertiser's website in their native browser.",
+    steps: [
+      "Some notes about the Google Ads displayed on the Home Screen:",
+      "From the Home Screen, you will see a Google Ad banner below the Fitahi calendar",
+      "You can click on the \"X\" button on the top right corner of the ad to close it, it will re-appear every time you go back to the Home Screen",
+      "Clicking on the ad itself will redirect you to the advertiser's website in your device's native browser",
+      "There is currently no way to disable ads in the app",
+      "Thank you for supporting Fitahi!"
     ],
   },
 
   // gym finder
   {
-    name: "Nearby Gym Finder/Gym finder/Maps/Map",
-    description: "View interactive map, find nearest gyms in your area (given location permissions are allowed), and search up gyms through a search bar. See quick overall star review and open/close status of the gym. Google Maps/native Maps can be opened through this feature.",
+    name: "Nearby Gym Finder/Gym finder/Maps/Map/Map Filters/Filtering Gyms/Clear Gym Filters",
+    description: "View interactive map, find nearest gyms in your area (given location permissions are allowed), and search up gyms through a search bar. See quick overall star review and open/close status of the gym. Google Maps/native Maps can be opened through this feature. Filtering can ONLY be done by open/close times and star ratings, can be cleared too.",
     steps: [
       "From the Home Screen, go to the \"Gym Finder\" tab",
       "If asked, accept location permission request, otherwise feature will not work properly",
@@ -179,10 +225,11 @@ const features = [
       "Search up gyms in the search bar via address or name (any irrelevant searches will default to showing you nearby gyms)",
       "Interact with a global map that shows you Gym markers and your current location",
       "View a list of gyms being presented in the map, showing their overall star rating and open/closed status, as well as \"Map\" buttons next to each of them if you want to open the gym in your native Maps app",
+      "Filter gyms by open/close times and star ratings by clicking the \"Hours\" and \"Rating\" buttons below the search bar, click \"Clear filters\" to remove all filters applied",
     ],
   },
 
-  // analytics (viewing logs)
+  // analytics (viewing and filtering logs)
   {
     name: "See Analytics/View All Logs/View Graphs",
     description: "Lets the user view weekly graphs for their workout durations, nutrition breakdown (calories, carbs, fat, protein), water intake, and biometrics weight tracking. Clicking on the graphs allows them to see all logs/entries made for that graph's category. Details on respective logs include things like age, meal names, exercises finished in a workout log, etc...",
@@ -201,6 +248,21 @@ const features = [
       "- Nutrition: meal name, meal type (breakfast, lunch, dinner, snack), and nutrient breakdown (calories, protein, carbs, fat) per entry",
       "- Workouts: workout name, total minutes spent, and total exercises completed",
       "For workouts, tapping a single log entry will show precise details, including exact duration and exercises performed."
+    ]
+  },
+  {
+    name: "Filter Analytics Logs/Filter Logs/Clear Analytics Log Filters/Clear Logs/Sorting Analytics Logs",
+    description: "Lets the user view and filter all logs that fall under the analytics graphs (weekly graphs for their workout durations, nutrition breakdown (calories, carbs, fat, protein), water intake, and biometrics weight tracking.) Unique filtering CAN ONLY be done by selecting a specific graph to view logs for (ONLY FOR: workouts, nutrition, water, biometrics), clearing filters is an option. All of them can be sorted in ascending or descending order.",
+    steps: [
+      "From the Home Screen, navigate to the \"Your Analytics\" tab.",
+      "If you have logged entries for workouts, water, nutrition, or biometrics, the corresponding graphs will be visible.",
+      "Tap any graph to view all past, detailed logs for that category (only these four categories support graphs, log views and filtering). Each of them have their own filters to help you find specific entries faster, along with an option to clear the filters or sort them in ascending or descending order. (Filtering by dates includes only all time, today, yesterday and last 7 days. Also includes sorting in ascending/descending order (oldest/newest logs).)",
+      "Those detailed logs (per graph) and their filtering options include:",
+      "- Water: all intake entries and the daily goal (Filterable by dates and amount drunk)",
+      "- Biometrics: height, weight and BMI at that point in time, as well as your age (Filterable by dates, weight and BMI value)",
+      "- Nutrition: meal name, meal type (breakfast, lunch, dinner, snack), and nutrient breakdown (calories, protein, carbs, fat) per entry (Filterable by dates, meal type, calories, names of meals)",
+      "- Workouts: workout name, total minutes spent, and total exercises completed (Filterable by dates, duration, and exercises completed)",
+      "You can clear all filters by clicking on the \"Clear filters\" button at any time to see all logs again."
     ]
   },
 
@@ -240,6 +302,21 @@ const features = [
       "Scroll down the pop-up as needed, past all the editable fields.",
       "Click the \"Delete Reminder\" button.",
       "All notifications will be automatically deleted."
+    ],
+  },
+
+  // Darwin
+  {
+    name: "Inacivity Notifications/Inactivity Reminder/Inactivity Check-in/Inactivity Alert/Initiate Conversation on Inactivity/Start Conversation on Inactivity",
+    description: "This is a description of a capability you have as Darwin. You will send Inactivity Notifications to the user and initiate a conversation when they have been inactive (no workout, nutrition, water or biometrics logs made) for 5+ hours during the day. This is to help motivate them or check-in with them/their wellbeing, to make them feel cared for and stay on track with their fitness goals. This capability CANNOT be disabled at the moment.",
+    steps: [
+      "Notes about this capability of yours:",
+      "The user's activity in the app is monitored throughout the day",
+      "If the user has not made any logs (workout, nutrition, water, biometrics) for 5+ hours during the day, you will send them an Inactivity Notification to their phone",
+      "The notification will include a motivational message to encourage them to get moving and stay on track with their fitness goals",
+      "You will also initiate a conversation with the user in the app following that, motivating them to log an activity or workout, or have a friendly chat to you to keep them engaged",
+      "If multiple notifications are sent while the user is inactive, when they return, only the latest notification will trigger the conversation, to prevent spamming them",
+      "This capability is designed to help users stay motivated and engaged with their fitness journey and at the moment cannot be disabled"
     ],
   },
 ];
