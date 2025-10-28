@@ -16,6 +16,7 @@ import { Font } from "../../constants/Font";
 import * as messageService from "../../services/messageService";
 import CustomToast from "@/components/common/CustomToast";
 import Toast from "react-native-toast-message";
+import { scheduleWorkoutReminders } from "@/services/workoutNotifications";
 
 // Layout constants for consistent spacing and positioning
 const CHAT_TOP = 80;
@@ -71,8 +72,20 @@ export default function AIChatbox({ onClose, messages, setMessages }) {
 
     try {
       // Send message and get AI response
-      const { userMessage, aiMessage, conversationId } =
+      const { userMessage, aiMessage, createdWorkout, conversationId } =
         await messageService.sendMessage(clean, activeConvo?._id);
+
+      // If a workout was created, schedule reminders
+      if (createdWorkout) {
+        try {
+          await scheduleWorkoutReminders(createdWorkout);
+        } catch (reminderErr) {
+          console.warn(
+            "Failed to schedule reminders from AI created workout",
+            reminderErr
+          );
+        }
+      }
 
       // Stop if typing was cancelled
       if (typingController.current.cancelled) return;

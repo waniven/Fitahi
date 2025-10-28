@@ -4,7 +4,9 @@ const Message = require("../models/Message");
 const Conversation = require("../models/Conversation");
 const Feature = require("../models/Feature");
 const User = require("../models/User");
+const Workout = require("../models/Workout");
 const auth = require("../middleware/auth");
+const aiPrompts = require("../helpers/aiPrompts");
 require("dotenv").config();
 
 const { GoogleGenerativeAI } = require("@google/generative-ai");
@@ -43,24 +45,8 @@ router.post("/", auth, async (req, res) => {
         // fetch user profile with quiz + goals
         const me = await User.findById(userId).lean();
 
-        // build user context string
-        let userContext = "";
-        if (me) {
-            userContext = `
-User profile context:
-- Fitness Goal: ${me.quiz?.FitnessGoal || "Not set"}
-- Fitness Level: ${me.quiz?.FitnessLevel || "Not set"}
-- Training Days (per week): ${me.quiz?.TrainingDays || "Not set"}
-- Training Time (per session): ${me.quiz?.TrainingTime || "Not set"}
-- Dietary preference: ${me.quiz?.Diet || "Not set"}
-- Height (cm): ${me.quiz?.Height || "Not set"}
-- Weight (kg): ${me.quiz?.Weight || "Not set"}
-- Daily Water Goal (mL): ${me.intakeGoals?.dailyWater || "Not set"}
-- Daily Calories Goal (kcal): ${me.intakeGoals?.dailyCalories || "Not set"}
-
-ALWAYS keep this context in mind when chatting or giving suggestions, do not make up things about the user that aren't true.
-`;
-        }
+        // build user context string from helper
+        const userContext = aiPrompts.buildUserContext(me);
 
         // fetch last 4 messages for context + chat history remembering
         const pastMessages = await Message.find({ conversationId: convoId })
@@ -74,6 +60,70 @@ ALWAYS keep this context in mind when chatting or giving suggestions, do not mak
             .map((m) => `${m.fromAI ? "AI" : "User"}: ${m.text}`)
             .join("\n");
 
+        // detect if user wants a workout created
+        const wantsWorkout = await aiPrompts.isCreateWorkoutRequest(text, chatHistory);
+
+        if (wantsWorkout) {
+            try {
+                // generate workout data from AI with helper for prompt
+                const workoutData = await aiPrompts.generateWorkout(userContext, chatHistory, text);
+
+                // create workout for user
+                const createdWorkout = await Workout.create({
+                    ...workoutData,
+                    userId,
+                });
+
+                // let AI write its own friendly confirmation by prompting it upon successful creation of workout
+                const confirmationPrompt = aiPrompts.buildWorkoutConfirmationPrompt(createdWorkout);
+
+                // generate confirmation message
+                const confirmationResult = await model.generateContent({
+                    contents: [{ role: "user", parts: [{ text: confirmationPrompt }] }],
+                });
+
+                // clean AI response
+                const aiText = confirmationResult.response.text().replace(/\*/g, "");
+
+                // save AI message
+                const aiMessage = new Message({
+                    userId,
+                    text: aiText,
+                    fromAI: true,
+                    conversationId: convoId,
+                });
+                await aiMessage.save();
+
+                // update conversation timestamp
+                await Conversation.findByIdAndUpdate(convoId, { updatedAt: Date.now() });
+
+                // return user + AI messages along with created workout, to be handled by frontend
+                return res.json({ userMessage, aiMessage, createdWorkout, conversationId: convoId });
+            } catch (err) {
+                console.error("Workout generation failed:", err);
+
+                // send fallback message (AI generated apology) from helper
+                const fallbackResult = await model.generateContent({
+                    contents: [{ role: "user", parts: [{ text: aiPrompts.workoutCreationFallbackPrompt }] }],
+                });
+
+                // clean fallback response
+                const fallbackText = fallbackResult.response.text().replace(/\*/g, "");
+
+                // save fallback AI message
+                const fallbackMessage = new Message({
+                    userId,
+                    text: fallbackText,
+                    fromAI: true,
+                    conversationId: convoId,
+                });
+                await fallbackMessage.save();
+
+                // return user message + fallback AI message
+                return res.json({ userMessage, aiMessage: fallbackMessage, conversationId: convoId });
+            }
+        }
+
         // check if this is the first user message in convo
         const isFirstUserMessage = pastMessages.filter(m => !m.fromAI).length === 1;
 
@@ -82,20 +132,7 @@ ALWAYS keep this context in mind when chatting or giving suggestions, do not mak
         const featureList = features.map(f => `- ${f.name}: ${f.description}`).join("\n");
 
         // build classification prompt (first)
-        const classificationPrompt = `
-You are a classifier.
-
-Task: Decide if the user's message is about one of these Fitahi features or not.
-
-Features:
-${featureList}
-
-Rules:
-- If the user's message 100% relates to one of these, based on name AND description AND previous messages if applicable, respond with the feature's name exactly (only if the feature exists), otherwise respond with: NO_FEATURE
-- If the user is asking about anything else (recipes, motivation, fitness advice, casual talk), respond with: NO_FEATURE
-
-User: "${text}"
-`;
+        const classificationPrompt = aiPrompts.buildFeatureClassificationPrompt(featureList, text);
 
         // run classification
         const classificationResult = await model.generateContent({
@@ -116,56 +153,20 @@ User: "${text}"
 
         if (matchedFeature && matchedFeature.steps?.length > 0) {
             // feature flow
-            promptText = `
-You are Darwin, Fitahi's friendly AI assistant.
-Fitahi is a fitness app with features to log workouts, diet, supplements, water intake, and biometrics, plus account settings.
-Always respond like a casual text message. Emojis are always welcome. Be supportive, motivational and friendly.
-${isFirstUserMessage ? "Introduce yourself briefly with who you are." : "No need to say hello, continue the conversation naturally, considering conversation history."}
-
-Conversation history:
-${chatHistory}
-
-The user asked: "${text}".
-Here are the official steps for "${matchedFeature.name}":
-${matchedFeature.steps.map((s, i) => `${i + 1}. ${s}`).join("\n")}
-
-Instructions:
-- Keep steps in exact order
-- Do not skip or invent steps
-- Rewrite naturally like a friendly text message
-- Keep numbering intact
-- Scatter emojis naturally
-- End with encouraging note
-Plain text only.
-`;
+            promptText = aiPrompts.buildFeatureFlowPrompt(
+                isFirstUserMessage,
+                chatHistory,
+                text,
+                matchedFeature
+            );
         } else {
             // casual chat flow
-            promptText = `
-You are Darwin, Fitahi's friendly AI assistant.
-Fitahi is a fitness app with features to log workouts, diet, supplements, water intake, and biometrics, plus account settings.
-Always respond like a casual text message. Emojis are always welcome. Be supportive, motivational and friendly.
-${isFirstUserMessage ? "Introduce yourself briefly with who you are." : "No need to say hello, continue the conversation naturally, considering conversation history."}
-
-${userContext}
-Always briefly let the user know what you've considered from their profile while you're suggesting and/or chatting to them, still keeping things conversational and text-message styled.
-
-The user said: "${text}"
-Conversation history:
-${chatHistory}
-
-ONLY IF the user was asking about a feature: tell them Fitahi doesn't have that feature yet AND DON'T MAKE UP OR LIE ABOUT ALTERNATIVES. Suggest exploring ONE OF existing features instead: logging/creating workouts, water, nutrition, or supplements. DON'T ELBORATE.
-If the user was asking about being able to update their height and/or weight in settings, tell them they are read-only in settings (viewable in settings) and suggest that they make a biometric log to update those fields.
-
-Otherwise follow these instructions:
-- This is casual conversation.
-- You can chat about fitness in general, give encouragement, or answer questions about workouts, meal suggestions, supplements, or healthy habits.
-- If the user is asking about medical advice, tell them you are not a doctor and recommend they see a professional.
-- If the user asks for a meal plan, quick recipe, or fitness tip, you may provide it casually.
-- If the user asks about something unrelated to fitness, steer them back to fitness.
-- Use conversation history to make your replies flow naturally, like a real chat.
-- Scatter emojis naturally.
-Plain text only.
-`;
+            promptText = aiPrompts.buildCasualChatPrompt(
+                isFirstUserMessage,
+                userContext,
+                text,
+                chatHistory
+            );
         }
 
         // generate AI response
@@ -193,6 +194,114 @@ Plain text only.
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: "Failed to send message" });
+    }
+});
+
+/*
+ * GET /api/messages/inactivity-checkin
+ * Generates a batch of 10 supportive motivational messages + questions
+ * Used to trigger scheduled inactivity notifications
+ */
+router.get("/inactivity-checkin", auth, async (req, res) => {
+    try {
+        // get user id from auth middleware
+        const userId = req.user.id;
+
+        // fetch user profile with quiz + goals
+        const me = await User.findById(userId).lean();
+
+        // build user context string from helper
+        const userContext = aiPrompts.buildUserContext(me);
+
+        // create AI check-in prompt for 10 notifications
+        const prompt = aiPrompts.buildInactivityCheckinPrompt(userContext);
+
+        // log prompt sending
+        console.log("Inactivity check-in prompt about to be sent to AI");
+
+        // generate AI notification content
+        const result = await model.generateContent({
+            contents: [{ role: "user", parts: [{ text: prompt }] }],
+        });
+
+        // log response received
+        console.log("Inactivity check-in response received from AI");
+
+        // parse response as JSON
+        const raw = result.response.text().replace(/^```json\s*/, '').replace(/```$/, '').trim();
+
+        let notifications;
+        try {
+            notifications = JSON.parse(raw); // expecting an array of { title, body } objects
+            if (!Array.isArray(notifications)) throw new Error("Not an array");
+        } catch (e) {
+            // log parsing error
+            console.log(e);
+            // 10 generic fall-back notifications if parsing fails
+            notifications = aiPrompts.notifications;
+        }
+
+        // return batch of notifications
+        res.json({ notifications });
+    } catch (err) {
+        console.error("Failed to send inactivity check-in notifications: ", err);
+    }
+});
+
+/*
+ * POST /api/messages/inactivity-start
+ * Starts or continues the dedicated inactivity conversation with the AI
+ */
+router.post("/inactivity-start", auth, async (req, res) => {
+    try {
+        // extract title and body from request
+        const { title, body } = req.body;
+        // get user id from auth middleware
+        const userId = req.user.id;
+
+        // make sure we only have one inactivity convo per user
+        let convo = await Conversation.findOneAndUpdate(
+            { userId, type: "inactivity" },
+            { $setOnInsert: { userId, type: "inactivity" } },
+            { new: true, upsert: true }
+        );
+
+        // get conversation id
+        const convoId = convo._id.toString();
+
+        // fetch user profile with quiz + goals
+        const me = await User.findById(userId).lean();
+
+        // build user context string from helper
+        const userContext = aiPrompts.buildUserContext(me);
+
+        // create AI check-in message text
+        const starterPrompt = aiPrompts.buildInactivityMessagePrompt(userContext, title, body);
+
+        // generate AI response message
+        const result = await model.generateContent({
+            contents: [{ role: "user", parts: [{ text: starterPrompt }] }],
+        });
+
+        // clean AI response
+        const aiText = result.response.text().replace(/\*/g, "");
+
+        // save AI message under the same inactivity convo
+        const aiMessage = new Message({
+            userId,
+            text: aiText,
+            fromAI: true,
+            conversationId: convoId,
+        });
+        await aiMessage.save();
+
+        // update conversation timestamp
+        await Conversation.findByIdAndUpdate(convoId, { updatedAt: Date.now() });
+
+        // return AI message + conversation id
+        res.json({ aiMessage, conversationId: convoId });
+    } catch (err) {
+        console.error("Failed to start inactivity conversation: ", err);
     }
 });
 

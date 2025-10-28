@@ -22,6 +22,7 @@ import LogCards from "@/components/logcards/LogCards";
 import { useCalendarLogic } from "@/hooks/useCalendarLogic";
 import * as Notifications from "@/services/notificationService";
 import { scheduleWaterNotifications } from "@/services/waterNotifications";
+import { useInactivityMonitor } from "@/services/inactivityNotifications";
 import { Font } from "@/constants/Font";
 import { shouldShowStreakScreen } from "@/constants/utils/streakLogic";
 import StreakScreen from "../streak/StreakScreen";
@@ -36,6 +37,9 @@ export default function Home() {
   const router = useRouter();
   const [showStreak, setShowStreak] = useState(false);
 
+
+  // Start inactivity monitor for AI check-in notifications + conversations
+  useInactivityMonitor();
 
   // Request notification permissions on mount and reschedule reminders
   useEffect(() => {
