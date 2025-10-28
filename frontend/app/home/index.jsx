@@ -24,6 +24,8 @@ import * as Notifications from "@/services/notificationService";
 import { scheduleWaterNotifications } from "@/services/waterNotifications";
 import { useInactivityMonitor } from "@/services/inactivityNotifications";
 import { Font } from "@/constants/Font";
+import mobileAds, { MaxAdContentRating } from "react-native-google-mobile-ads";
+import ReminderBannerAd from "@/components/googleAds/BannerAd";
 import { shouldShowStreakScreen } from "@/constants/utils/streakLogic";
 import StreakScreen from "../streak/StreakScreen";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -35,8 +37,21 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 export default function Home() {
   const theme = Colors["dark"];
   const router = useRouter();
+  const [adsReady, setAdsReady] = useState(false);
   const [showStreak, setShowStreak] = useState(false);
-
+  
+  // Initialise AdMob once 
+  useEffect(() => {
+    mobileAds()
+      .setRequestConfiguration({
+        maxAdContentRating: MaxAdContentRating.G,
+        tagForChildDirectedTreatment: false,
+        tagForUnderAgeOfConsent: false,
+      })
+      .then(() => mobileAds().initialize())
+      .then(() => setAdsReady(true))
+      .catch((e) => console.log("AdMob init error:", e));
+  }, []);
 
   // Start inactivity monitor for AI check-in notifications + conversations
   useInactivityMonitor();
@@ -316,6 +331,9 @@ export default function Home() {
             })()}
           </View>
         </View>
+
+        {/* Ad below reminders */}
+        {adsReady && <ReminderBannerAd />}
 
         {/* Render quick access navigation cards */}
         <LogCards cards={quickLogCards} />
