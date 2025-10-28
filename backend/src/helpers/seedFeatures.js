@@ -199,18 +199,6 @@ const features = [
       "Streaks are tracked by the app and cannot be manually edited by the user",
     ],
   },
-  {
-    name: "Authenticating with Google/OAUTH via Google/Sign in, Sign up or Log In with Google",
-    description: "Lets the user sign up or log in using their Google account via OAUTH authentication (ONLY Google). The user must have a valid Google account to use this feature. If a user has already signed up using regular email and password, they cannot use this feature to sign in or switch to OAuth.",
-    steps: [
-      "From the Welcome Screen, click on the \"Sign in with Google\" button",
-      "You will be redirected to a Google Sign-In page, where you must enter your Google account credentials (email and password)",
-      "Once you have successfully signed in with your Google account, you will be redirected back to the app and signed-up automatically",
-      "If you are a new user, you will be taken to the Sign-Up Quiz, and a new account will be created for you using your Google account information",
-      "If you have already signed up with OAuth before, you can use the same \"Sign in with Google\" button to log back in using your Google account",
-      "If you have already signed up using regular email and password, you cannot use this feature to sign in or switch to OAuth",
-    ],
-  },
 
   // google ads
   {
