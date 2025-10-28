@@ -13,6 +13,7 @@ import { Colors } from "../constants/Colors";
 import FitahiLogo from "../constants/FitahiLogo";
 import CustomButton from "../components/common/CustomButton";
 import globalStyles from "../styles/globalStyles";
+import GoogleSignInButton from "../components/auth/GoogleSignInButton";
 
 /**
  * Main landing screen with animated logo and navigation to authentication flows
@@ -125,6 +126,14 @@ export default function Index() {
           size="large"
           style={styles.button}
         />
+
+        <GoogleSignInButton
+        title="Sign In with Google"
+        variant="priamry"
+        size="large"
+        rounded
+        style={styles.button}
+      />
       </Animated.View>
     </View>
   );
