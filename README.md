@@ -164,13 +164,19 @@ Before you start, make sure you have installed **Expo Go** on your phone:
    npm install
    ```
 
-3. Open another terminal and, in the **Fitahi** folder, navigate to the **frontend** directory:
+3. Start the backend server with **nodemon**:
+
+   ```bash
+   nodemon server
+   ```
+
+4. Open another terminal and, in the **Fitahi** folder, navigate to the **frontend** directory:
 
    ```bash
    cd frontend
    ```
 
-4. Install dependencies:
+5. Install dependencies:
 
    ```bash
    npm install
@@ -178,9 +184,9 @@ Before you start, make sure you have installed **Expo Go** on your phone:
 
 #
 
-5. Prepare an **Android** device (NOT a simulator). Connect your **Android phone** to your computer via **USB cable**.
+6. Prepare an **Android** device (NOT a simulator). Connect your **Android phone** to your computer via **USB cable**.
 
-6. On the phone, do the following:
+7. On the phone, do the following:
 
 - Go to **Settings** → **About phone** → **Build number**
 
@@ -194,7 +200,7 @@ Before you start, make sure you have installed **Expo Go** on your phone:
 
 #
 
-7. Install **Android Platform Tools (Android Debug Bridge)**
+8. Install **Android Platform Tools (Android Debug Bridge)**
 
 - **macOS (with Homebrew):**
 
@@ -218,7 +224,7 @@ adb version
 
 #
 
-8. **Authorise** your Android device:
+9. **Authorise** your Android device:
 
 - Ensure your phone is plugged into your computer via **USB cable**, then run the following command:
 
@@ -242,7 +248,7 @@ adb version
 
 #
 
-9. Prebuild the **native Android project**; in the **frontend** directory open a terminal and run the command outlined below. This will create or update the **android directory**, apply any config from **app.json**, and link **native modules** (ads).
+10. Prebuild the **native Android project**; in the **frontend** directory open a terminal and run the command outlined below. This will create or update the **android directory**, apply any config from **app.json**, and link **native modules** (ads).
 
    ```bash
    npx expo prebuild --platform android
@@ -250,7 +256,7 @@ adb version
 
 #
 
-10. Build and install the **dev client on the Android device**; in that same **frontend** directory terminal, run the command below. In doing so, you will build a compiled variant of the app and install it directly onto the connected device.
+11. Build and install the **dev client on the Android device**; in that same **frontend** directory terminal, run the command below. In doing so, you will build a compiled variant of the app and install it directly onto the connected device.
 
     ```bash
     npx expo run:android
@@ -258,7 +264,7 @@ adb version
 
 #
 
-11. Check out the Google Ads feature on the Home Screen!
+12. Check out the Google Ads feature on the Home Screen!
 
 #
 
